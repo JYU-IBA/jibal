@@ -9,7 +9,7 @@
 #define MAX_ISOTOPES 3500
 
 #ifndef AMEFILE
-#define AMEFILE "mass.mas12"
+#define AMEFILE "mass16.txt"
 #endif
 
 typedef struct {
@@ -115,10 +115,12 @@ int main(int argc, char **argv) {
     isotope_t *isotopes;
     isotopes=populate_isotopes(AMEFILE, &n_isotopes);
     if(!isotopes) {
-        fprintf(stderr, "Couldn't load file mass.mas12\n");
+        fprintf(stderr, "Couldn't load file %s\n", AMEFILE);
+        return -1;
     }
+    fprintf(stderr, "Masses from file %s\n", AMEFILE);
     print_isotopes(isotopes, n_isotopes);
-    return 1;
+    return 0;
 }
 
 
