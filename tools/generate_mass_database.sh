@@ -1,4 +1,7 @@
 #!/bin/bash
+datadir="../data/"
+
+
 amefile="mass16.txt"
 ameurl="https://www-nds.iaea.org/amdc/ame2016/$amefile"
 
@@ -7,43 +10,41 @@ ameurl="https://www-nds.iaea.org/amdc/ame2016/$amefile"
 #ameurl="https://www-nds.iaea.org/amdc/ame2012/$amefile"
 
 CC="gcc"
-outfile="../data/libiba_masses.dat"
+masses_outfile="$datadir/libiba_masses.dat"
+abundances_outfile="$datadir/libiba_abundances.dat"
 
 download_massfile() {
-    if [ ! -f "$amefile" ]; then
-        echo "Downloading $amefile from $ameurl using curl."
-        curl -O "$ameurl";
+    if [ ! -f "$datadir/$amefile" ]; then
+        echo "Downloading $amefile from $ameurl using curl (saving to $datadir/$amefile)."
+        curl "$ameurl" > "$datadir/$amefile";
     fi
 }
 
 compile_decoder() {
     if [ ! -f "ame_decoder" ]; then
         echo "Compiling ame_decoder with $CC"
-        $CC -Wall -DAMEFILE=\"$amefile\" ame_decoder.c -o ame_decoder
+        $CC -Wall -DAMEFILE=\"$datadir\/$amefile\" ame_decoder.c -o ame_decoder
     fi
 }
 
 convert_massfile() {
-    echo "Converting $amefile to $outfile"
-    ./ame_decoder > "$outfile"
+    echo "Converting $amefile to $masses_outfile"
+    ./ame_decoder > "$masses_outfile"
 }
 
-clean_temp_files() {
-    echo "Cleaning up."
-    rm "$amefile"
-    rm "ame_decoder"
+parse_abundances_from_html() {
+    ./abundance.py > "$abundances_outfile"
 }
 
 do_all() {
     download_massfile;
     compile_decoder;
     convert_massfile;
-    clean_temp_files;
 }
 
 
-if [ -f "$outfile" ]; then
-    read -p "File \"$outfile\" exists. Do you want to regenerate the mass database? (y/N)" reply
+if [ -f "$masses_outfile" ]; then
+    read -p "File \"$masses_outfile\" exists. Do you want to regenerate the mass database? (y/N)" reply
     case $reply in
         [Yy]* ) do_all;;
     esac
@@ -51,4 +52,12 @@ else
     do_all;
 fi
 
+if [ -f "$abundances_outfile" ]; then
+    read -p "File \"$abundances_outfile\" exists. Do you want to regenerate the abundances database? (y/N)" reply
+    case $reply in
+        [Yy]* ) parse_abundances_from_html;;
+    esac
+else
+    parse_abundances_from_html;
+fi
 exit;

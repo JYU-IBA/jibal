@@ -9,7 +9,7 @@
 #define MAX_ISOTOPES 3500
 
 #ifndef AMEFILE
-#define AMEFILE "mass16.txt"
+#define AMEFILE "../data/mass16.txt"
 #endif
 
 typedef struct {
