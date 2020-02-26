@@ -17,13 +17,21 @@
 */
 
 #include <stdio.h>
-#include "masses.c"
+#include "masses.h"
+#include "units.h"
 
 int main(int argc, char **argv) {
     iba_isotope *isotopes=isotopes_load(NULL);
+    iba_units *units=iba_units_default();
     if(!isotopes) {
         fprintf(stderr, "Couldn't load isotopes.\n");
     }
     iba_isotope *incident=isotope_find(isotopes, argv[1]);
     printf("mass=%g (%g u)\n", incident->mass, incident->mass/C_U);
+
+    double E=0.0;
+    if(argc>2) {
+        E=iba_get_val(units, UNIT_TYPE_ENERGY, argv[2]);
+        printf("E=%g keV\n", E/C_KEV);
+    }
 }

@@ -16,15 +16,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+#include <stdlib.h>
+#include <string.h>
 #include "units.h"
 
 iba_units *iba_units_add(iba_units *units, double f, char type, char *name) {
     iba_units *first=units;
     iba_units *this=malloc(sizeof(iba_units));
-    this->m=m;
-    this->type = malloc(sizeof(char)*strlen(type));
+    this->f=f;
+    this->type = type;
     this->next = NULL;
-    strcpy(this->type, type);
     this->name=name;
     if(!first) {
         return this;
@@ -38,15 +40,18 @@ iba_units *iba_units_add(iba_units *units, double f, char type, char *name) {
 
 iba_units *iba_units_default() {
     iba_units *units=NULL;
-    units=units_add(units, C_E, UNIT_TYPE_ENERGY, "eV");
-    units=units_add(units, C_U, UNIT_TYPE_MASS, "u");
-    units=units_add(units, C_DEG, UNIT_TYPE_ANGLE, "deg");
+    units=iba_units_add(units, C_E, UNIT_TYPE_ENERGY, "eV");
+    units=iba_units_add(units, C_U, UNIT_TYPE_MASS, "u");
+    units=iba_units_add(units, C_DEG, UNIT_TYPE_ANGLE, "deg");
     return units;
 }
 
-double iba_units_get(iba_units *units, char type, char *name) {
+double iba_units_get(const iba_units *units, char type, const char *name) {
     if(*name == '\0') /* Empty. */
         return 1.0;
+    while(*name == ' ') {
+        name++;
+    }
     while(units) {
         if(type && (units->type != type)) {
             units=units->next;
@@ -80,5 +85,14 @@ double iba_units_get(iba_units *units, char type, char *name) {
         }
         units=units->next;
     }
-    return 1.0;
+    return 1.0; /* Actually we should fail maybe with NaN? */
+}
+
+double iba_get_val(const iba_units *units, char type, const char *value) {
+    char *end;
+    double x=strtod(value, &end);
+    if(end) {
+        x *= iba_units_get(units, type, end);
+    }
+    return x;
 }

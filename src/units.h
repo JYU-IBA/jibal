@@ -22,14 +22,17 @@
 #ifndef _LIBIBA_UNITS_H_
 #define _LIBIBA_UNITS_H_
 
-#define C_U 1.66053906660e-27 /* atomic mass unit, kg */
-#define C_C 299792458.0 /* speed of light, in m/s */
+#include <math.h>
+
+#define C_PI M_PI
+#define C_U (1.66053906660e-27) /* atomic mass unit, kg */
+#define C_C (299792458.0) /* speed of light, in m/s */
 #define C_C2 (C_C*C_C) /* speed of light, squared */
-#define C_E 1.602176634e-19 /* elementary charge, in C */
+#define C_E (1.602176634e-19) /* elementary charge, in C */
 #define C_EV (C_E) /* electronvolt, in J */
 #define C_KEV (1.0e3*C_EV) /* keV */
 #define C_MEV (1.0e6*C_EV) /* MeV */
-#define C_DEG (2.0*PI/360.0)
+#define C_DEG (2.0*C_PI/360.0)
 
 #define UNIT_TYPE_ENERGY 'E'
 #define UNIT_TYPE_ANGLE 'A'
@@ -53,5 +56,6 @@ iba_units *iba_units_default();
  @param type Type of unit (see defines)
  @param name Name of the unit
  */
-double iba_units_get(iba_units *units, char type, char *name);
+double iba_units_get(const iba_units *units, char type, const char *name);
+double iba_get_val(const iba_units *units, char type, const char *value);
 #endif /* _LIBIBA_UNITS_H_ */
