@@ -34,4 +34,6 @@ int main(int argc, char **argv) {
         E=iba_get_val(units, UNIT_TYPE_ENERGY, argv[2]);
         printf("E=%g keV\n", E/C_KEV);
     }
+
+    iba_units_free(units);
 }

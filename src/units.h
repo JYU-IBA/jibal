@@ -58,4 +58,5 @@ iba_units *iba_units_default();
  */
 double iba_units_get(const iba_units *units, char type, const char *name);
 double iba_get_val(const iba_units *units, char type, const char *value);
+void iba_units_free(iba_units *units);
 #endif /* _LIBIBA_UNITS_H_ */

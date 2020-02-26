@@ -96,3 +96,13 @@ double iba_get_val(const iba_units *units, char type, const char *value) {
     }
     return x;
 }
+
+void iba_units_free(iba_units *units) {
+    iba_units *this;
+    this=units;
+    while(this != NULL) {
+        iba_units *next=this->next;
+        free(this);
+        this=next;
+    }
+}
