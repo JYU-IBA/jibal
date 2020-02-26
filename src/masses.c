@@ -4,7 +4,7 @@
 #include <inttypes.h>
 #include <ctype.h>
 #include <math.h>
-#include "libiba_masses.h"
+#include "masses.h"
 //#include "win_compat.h"
 
 int add_isotope_to_table(isotopes_t *isotopes, int Z, int N, int A, double mass, char name[MASSES_ELEMENT_LENGTH]) {

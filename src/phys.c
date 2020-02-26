@@ -1,4 +1,4 @@
-#include "libiba_phys.h"
+#include "phys.h"
 
 double velocity_classical(double E, double m) {
     return sqrt(2*E/m);
