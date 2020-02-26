@@ -22,15 +22,6 @@
 
 #include "gsto.h"
 
-int get_single_stop(gsto_table_t *table, iba_isotope *incident, double E, int Z2) {
-    double v;
-    v=velocity(E, incident->mass);
-    fprintf(stderr, "Printing stopping for %i in %i at v=%e m/s from file %s.\n", incident->Z, Z2, v, table->assigned_files[incident->Z][Z2]->name);
-    printf("%e\n", gsto_sto_v(table, incident->Z, Z2, v));
-    return 1; 
-}
-
-
 int main(int argc, char **argv) {
     iba_isotope *isotopes=isotopes_load(NULL);
     iba_units *units=iba_units_default();
@@ -39,7 +30,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Couldn't load isotopes.\n");
     }
     iba_isotope *incident=isotope_find(isotopes, argv[1]);
-    printf("mass=%g (%g u)\n", incident->mass, incident->mass/C_U);
+    fprintf(stderr, "m_1=%g kg (%g u)\n", incident->mass, incident->mass/C_U);
 
     double E=0.0;
     if(argc<=2) {
@@ -54,18 +45,27 @@ int main(int argc, char **argv) {
         fprintf(stderr, "No element %s found\n", target_name);
             return -1;
     }
+    fprintf(stderr, "Z1=%i, Z2=%i\n", incident->Z, Z2);
     table=gsto_init(91, "stoppings.txt");
     if(!table)
         return -1;
     if(!gsto_auto_assign(table, incident->Z, Z2))
             return -1;
+    fprintf(stderr, "Stopping data from file %s\n", table->assigned_files[incident->Z][Z2]->name);
     gsto_load(table);
 
+    if(argc==3) {
+        while(fscanf(stdin, "%lg\n", &E)==1) {
+            E *= C_KEV; 
+            printf("%e %e\n", E/C_KEV, gsto_sto_v(table, incident->Z, Z2, velocity(E, incident->mass)));
+        }
+        return 0;
+    }
     int i;
     for(i=3; i<argc; i++) {
         E=iba_get_val(units, UNIT_TYPE_ENERGY, argv[i]);
-        printf("E=%g keV\n", E/C_KEV);
-        get_single_stop(table, incident, E, Z2);
+        fprintf(stderr, "E=%g keV\n", E/C_KEV);
+        printf("%e %e\n", E/C_KEV, gsto_sto_v(table, incident->Z, Z2, velocity(E, incident->mass)));
     }
     iba_units_free(units);
 }
