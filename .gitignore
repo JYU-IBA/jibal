@@ -8,3 +8,9 @@ ltmain.sh
 configure
 depcomp
 install-sh
+Makefile
+libtool
+*.la
+*.lo
+*.o
+stamp-*
