@@ -4,4 +4,4 @@ libiba_la_LDFLAGS = -version-info 0:0:0
 
 bin_PROGRAMS = mass
 mass_SOURCES = mass.c
-mass_LDADD = libgettext.la
+mass_LDADD = libiba.la
