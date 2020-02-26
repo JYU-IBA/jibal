@@ -18,9 +18,9 @@
 
 #include "units.h"
 
-t_units *iba_units_add(t_units *units, double f, char type, char *name) {
-    t_iba_units *first=units;
-    t_iba_units *this=malloc(sizeof(t_units));
+iba_units *iba_units_add(iba_units *units, double f, char type, char *name) {
+    iba_units *first=units;
+    iba_units *this=malloc(sizeof(iba_units));
     this->m=m;
     this->type = malloc(sizeof(char)*strlen(type));
     this->next = NULL;
@@ -36,15 +36,15 @@ t_units *iba_units_add(t_units *units, double f, char type, char *name) {
     return first;
 }
 
-t_units *iba_units_default() {
-    t_iba_units *units=NULL;
+iba_units *iba_units_default() {
+    iba_units *units=NULL;
     units=units_add(units, C_E, UNIT_TYPE_ENERGY, "eV");
     units=units_add(units, C_U, UNIT_TYPE_MASS, "u");
     units=units_add(units, C_DEG, UNIT_TYPE_ANGLE, "deg");
     return units;
 }
 
-double iba_units_get(t_iba_units *units, char type, char *name) {
+double iba_units_get(iba_units *units, char type, char *name) {
     if(*name == '\0') /* Empty. */
         return 1.0;
     while(units) {

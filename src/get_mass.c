@@ -20,7 +20,10 @@
 #include "masses.c"
 
 int main(int argc, char **argv) {
-    isotopes_t *isotopes=isotopes_load(NULL);
-    isotope_t *incident=isotope_find(isotopes, argv[1]);
+    iba_isotope *isotopes=isotopes_load(NULL);
+    if(!isotopes) {
+        fprintf(stderr, "Couldn't load isotopes.\n");
+    }
+    iba_isotope *incident=isotope_find(isotopes, argv[1]);
     printf("mass=%g (%g u)\n", incident->mass, incident->mass/C_U);
 }

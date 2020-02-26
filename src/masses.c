@@ -24,16 +24,11 @@
 #include "masses.h"
 //#include "win_compat.h"
 
-int add_isotope_to_table(isotopes_t *isotopes, int Z, int N, int A, double mass, char name[MASSES_ELEMENT_LENGTH]) {
+int isotope_set(iba_isotope *isotope, int Z, int N, int A, double mass, isotope_name name) {
     int i;
-    isotope_t *isotope;
-    if(!isotopes) {
-        return 0;
+    if(!isotope) {
+        return -1;
     }
-    i=isotopes->n_isotopes;
-    if(i>=MASSES_ISOTOPES || i<0) 
-        return 0;
-    isotope=&isotopes->i[i];
     isotope->N=N;
     isotope->Z=Z;
     isotope->A=A;
@@ -42,58 +37,57 @@ int add_isotope_to_table(isotopes_t *isotopes, int Z, int N, int A, double mass,
     if(N+Z != A) {
         fprintf(stderr, "Mass number A=%i does not match with N=%i and Z=%i\n", A, N, Z);
     }
-    strncpy(isotope->name, name, MASSES_ELEMENT_LENGTH);
-    isotopes->n_isotopes++;
-    return 1;
+    strncpy(isotope->name, name, sizeof(isotope_name));
+    return 0;
 }
 
 
-isotopes_t *isotopes_load(const char *filename) {
+iba_isotope *isotopes_load(const char *filename) {
     char *line, *line_split;
     char *columns[6];
     char **col;
-    char name[MASSES_ELEMENT_LENGTH];
+    isotope_name name;
     if(!filename) {
-        filename=MASSES_FILE;
+        filename=IBA_MASSES_FILE;
     } 
     FILE *in_file=fopen(filename, "r");
     if(!in_file) {
         fprintf(stderr, "Could not load isotope table from file %s\n", filename);
         return NULL;
     }
-    line=malloc(sizeof(char)*MASSES_LINE_LENGTH);
+    line=malloc(sizeof(char)*IBA_MASSES_LINE_LENGTH);
     if(!line) 
         return NULL;
-    isotopes_t *isotopes=malloc(sizeof(isotopes_t));
-    if(!isotopes)
-        return NULL;
-    isotopes->n_isotopes=0;
-    isotopes->i = malloc(sizeof(isotope_t)*MASSES_ISOTOPES);
-    if(!isotopes->i)
-        return NULL;
-    while(fgets(line, MASSES_LINE_LENGTH, in_file) != NULL) {
+    iba_isotope *isotopes=malloc(sizeof(iba_isotope)*(IBA_MASSES_ISOTOPES+1));
+    int n=0;
+    while(fgets(line, IBA_MASSES_LINE_LENGTH, in_file) != NULL) {
         line_split=line; /* strsep will screw up line_split, reset for every new line */
         for (col = columns; (*col = strsep(&line_split, " \t")) != NULL;)
             if (**col != '\0')
                 if (++col >= &columns[6])
                     break;
-        snprintf(name, MASSES_ELEMENT_LENGTH, "%i%s", (int)strtol(columns[4], NULL, 10), columns[1]);
-        add_isotope_to_table(isotopes,
+        snprintf(name, sizeof(isotope_name), "%i%s", (int)strtol(columns[4], NULL, 10), columns[1]);
+        isotope_set(isotopes+n,
                                 strtoimax(columns[3], NULL, 10), 
                                 strtoimax(columns[2], NULL, 10), 
                                 strtoimax(columns[4], NULL, 10), 
                                 strtod(columns[5], NULL),
                                 name);
+        if(n>=IBA_MASSES_ISOTOPES) {
+            fprintf(stderr, "Too many isotopes! I was expecting a maximum of %i.\n", IBA_MASSES_ISOTOPES);
+            return NULL;
+        }
+        n++;
     }
+    isotopes[n].A=0; /* "Null terminate" */
     fclose(in_file);
     return isotopes;
 }
 
-isotope_t *find_first_isotope(isotopes_t *isotopes, int Z) {
+iba_isotope *find_first_isotope(iba_isotope *isotopes, int Z) {
     int i;
-    isotope_t *isotope;
-    for(i=0; i<isotopes->n_isotopes; i++) {
-        isotope=&isotopes->i[i];
+    iba_isotope *isotope;
+    for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(isotope->Z == Z) { /* The right element */
             return isotope;
         }
@@ -102,12 +96,11 @@ isotope_t *find_first_isotope(isotopes_t *isotopes, int Z) {
 }
 
 
-double find_mass(isotopes_t *isotopes, int Z, int A) { /* if A=0 calculate average mass, otherwise return isotope mass */
+double find_mass(iba_isotope *isotopes, int Z, int A) { /* if A=0 calculate average mass, otherwise return isotope mass */
     double mass=0.0;
-    isotope_t *isotope;
+    iba_isotope *isotope;
     int i;
-    for(i=0; i<isotopes->n_isotopes; i++) {
-        isotope=&isotopes->i[i];
+    for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(isotope->Z == Z) {
             if(isotope->A == A) {
                 return isotope->mass;
@@ -120,12 +113,11 @@ double find_mass(isotopes_t *isotopes, int Z, int A) { /* if A=0 calculate avera
     return mass;
 }
 
-int find_Z_by_name(isotopes_t *isotopes, char *name) { /* Give just element name e.g. "Cu" */
-    isotope_t *isotope;
+int find_Z_by_name(iba_isotope *isotopes, char *name) { /* Give just element name e.g. "Cu" */
+    iba_isotope *isotope;
     char *isotope_name;
     int i;
-    for(i=0; i<isotopes->n_isotopes; i++) {
-        isotope=&isotopes->i[i];
+    for(isotope=isotopes; isotope->A != 0; isotope++) {
         isotope_name=isotope->name;
         while(isdigit(*isotope_name)) /* Skip numbers */
             isotope_name++;
@@ -138,13 +130,12 @@ int find_Z_by_name(isotopes_t *isotopes, char *name) { /* Give just element name
     return 0;
 }
 
-isotope_t *find_most_abundant_isotope(isotopes_t *isotopes, int Z) {
+iba_isotope *find_most_abundant_isotope(iba_isotope *isotopes, int Z) {
     int i;
-    isotope_t *isotope;
-    isotope_t *most_abundant_isotope=NULL;
+    iba_isotope *isotope;
+    iba_isotope *most_abundant_isotope=NULL;
     double abundance=0;
-    for(i=0; i<isotopes->n_isotopes; i++) {
-        isotope=&isotopes->i[i];
+    for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(isotope->Z == Z) { /* The right element */
             if(isotope->abundance > abundance) { /* Has higher abundance than anything found so far */
                 abundance=isotope->abundance;
@@ -155,11 +146,10 @@ isotope_t *find_most_abundant_isotope(isotopes_t *isotopes, int Z) {
     return most_abundant_isotope;
 }
 
-isotope_t *find_isotope(isotopes_t *isotopes, int Z, int A) {
-    isotope_t *isotope;
+iba_isotope *find_isotope(iba_isotope *isotopes, int Z, int A) {
+    iba_isotope *isotope;
     int i;
-    for(i=0; i<isotopes->n_isotopes; i++) {
-        isotope=&isotopes->i[i];
+    for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(isotope->Z == Z && isotope->A == A) {
             return isotope;
         }
@@ -167,12 +157,12 @@ isotope_t *find_isotope(isotopes_t *isotopes, int Z, int A) {
     return NULL;
 }
 
-int find_all_isotopes(isotopes_t *isotopes, isotope_t **isotopes_out, int Z) {
-    isotope_t *isotope;
+iba_isotope *tisotopes_find_all(iba_isotope *isotopes, int Z) {
+    iba_isotope *isotope;
+    iba_isotope *isotopes_out; /*!< Table, size to be determined */
     int i, j;
     int n_isotopes=0;
-    for(i=0; i<isotopes->n_isotopes; i++) {
-        isotope=&isotopes->i[i];
+    for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(isotope->Z == Z)
            n_isotopes++;
     }
@@ -180,24 +170,22 @@ int find_all_isotopes(isotopes_t *isotopes, isotope_t **isotopes_out, int Z) {
         fprintf(stderr, "Did not find any isotopes matching Z=%i\n", Z);
         return 0;
     }
-    *isotopes_out=malloc(sizeof(isotope_t)*n_isotopes);
+    isotopes_out=malloc(sizeof(iba_isotope)*n_isotopes);
     j=0;
-    for(i=0; i<isotopes->n_isotopes; i++) {
-        isotope=&isotopes->i[i];
+    for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(isotope->Z == Z) {
             if(j>=n_isotopes)
                 break;
-            isotopes_out[j]=isotope;
+            memcpy(isotopes_out+j, isotope, sizeof(iba_isotope));
             j++;
         }
     } 
-    return n_isotopes;
+    return isotopes_out;
 }
-isotope_t *isotope_find(isotopes_t *isotopes, const char *name) {
-    isotope_t *isotope;
-    int i;
-    for(i=0; i<isotopes->n_isotopes; i++) {
-        isotope=&isotopes->i[i];
+iba_isotope *isotope_find(iba_isotope *isotopes, const char *name) {
+    iba_isotope *isotope;
+    int i=0;
+    for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(strcmp(isotope->name, name) == 0) {
             return isotope;
         }

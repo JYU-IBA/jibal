@@ -19,9 +19,9 @@
 #ifndef _LIBIBA_DEFAULTS_H_
 #define _LIBIBA_DEFAULTS_H_
 
-#ifndef DATADIR
-#define DATADIR "../data/"
+#ifndef IBA_DATADIR
+#define IBA_DATADIR "../data/"
 #endif
 
-#define MASSES_FILE DATADIR "libiba_masses.dat"
+#define IBA_MASSES_FILE IBA_DATADIR "libiba_masses.dat"
 #endif

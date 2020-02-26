@@ -41,10 +41,10 @@ typedef struct iba_units {
     char type; /*!< Physically relevant type, use defines above. UNIT_TYPE_MASS for a unit of mass. */
     char *name; /*!< E.g. "u" */
     struct iba_units *next; /*!< Linked list */
-} t_iba_units;
+} iba_units;
 
-t_iba_units *iba_units_add(t_iba_units *units, double f, char type, char *name);
-t_iba_units *iba_units_default();
+iba_units *iba_units_add(iba_units *units, double f, char type, char *name);
+iba_units *iba_units_default();
 
 /*!
  Get a unit
@@ -53,5 +53,5 @@ t_iba_units *iba_units_default();
  @param type Type of unit (see defines)
  @param name Name of the unit
  */
-double iba_units_get(t_units *units, char type, char *name);
+double iba_units_get(iba_units *units, char type, char *name);
 #endif /* _LIBIBA_UNITS_H_ */
