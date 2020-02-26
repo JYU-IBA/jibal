@@ -18,8 +18,8 @@
 
 /* Elementary physics */
 
-#define energy(a,b) energy_relativistic(a,b)
-#define velocity(a,b) energy_relativistic(a,b)
+#define energy(a,b) iba_energy_relativistic(a,b)
+#define velocity(a,b) iba_velocity_relativistic(a,b)
 
 
 double iba_velocity_relativistic(double E, double mass);

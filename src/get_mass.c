@@ -20,9 +20,21 @@
 #include "masses.h"
 #include "units.h"
 
+#include "gsto.h"
+
+int get_single_stop(gsto_table_t *table, iba_isotope *incident, double E, int Z2) {
+    double v;
+    v=velocity(E, incident->mass);
+    fprintf(stderr, "Printing stopping for %i in %i at v=%e m/s from file %s.\n", incident->Z, Z2, v, table->assigned_files[incident->Z][Z2]->name);
+    printf("%e\n", gsto_sto_v(table, incident->Z, Z2, v));
+    return 1; 
+}
+
+
 int main(int argc, char **argv) {
     iba_isotope *isotopes=isotopes_load(NULL);
     iba_units *units=iba_units_default();
+    gsto_table_t *table; /* TODO: rename */
     if(!isotopes) {
         fprintf(stderr, "Couldn't load isotopes.\n");
     }
@@ -30,10 +42,30 @@ int main(int argc, char **argv) {
     printf("mass=%g (%g u)\n", incident->mass, incident->mass/C_U);
 
     double E=0.0;
-    if(argc>2) {
-        E=iba_get_val(units, UNIT_TYPE_ENERGY, argv[2]);
-        printf("E=%g keV\n", E/C_KEV);
-    }
+    if(argc<=2) {
+        return -1;
 
+    }
+    char *target_name;
+ 
+    target_name=argv[2];
+    int Z2=iba_find_Z_by_name(isotopes, target_name);
+    if(!Z2) {
+        fprintf(stderr, "No element %s found\n", target_name);
+            return -1;
+    }
+    table=gsto_init(91, "stoppings.txt");
+    if(!table)
+        return -1;
+    if(!gsto_auto_assign(table, incident->Z, Z2))
+            return -1;
+    gsto_load(table);
+
+    int i;
+    for(i=3; i<argc; i++) {
+        E=iba_get_val(units, UNIT_TYPE_ENERGY, argv[i]);
+        printf("E=%g keV\n", E/C_KEV);
+        get_single_stop(table, incident, E, Z2);
+    }
     iba_units_free(units);
 }

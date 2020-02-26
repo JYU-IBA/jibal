@@ -113,7 +113,7 @@ double find_mass(iba_isotope *isotopes, int Z, int A) { /* if A=0 calculate aver
     return mass;
 }
 
-int find_Z_by_name(iba_isotope *isotopes, char *name) { /* Give just element name e.g. "Cu" */
+int iba_find_Z_by_name(iba_isotope *isotopes, char *name) { /* Give just element name e.g. "Cu" */
     iba_isotope *isotope;
     char *isotope_name;
     int i;
