@@ -1,9 +1,9 @@
 #ifndef _LIBIBA_MASSES_H_
 #define _LIBIBA_MASSES_H_
 
-#include "libiba_defaults.h"
-#include "libiba_units.h"
-#include "libiba_phys.h"
+#include "defaults.h"
+#include "units.h"
+#include "phys.h"
 
 
 #define MASSES_LINE_LENGTH 80
