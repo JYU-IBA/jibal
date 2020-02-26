@@ -1,0 +1,10 @@
+aclocal.m4
+autom4te.cache/
+*.in
+compile
+missing
+config.*
+ltmain.sh
+configure
+depcomp
+install-sh
