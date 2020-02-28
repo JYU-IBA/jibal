@@ -23,4 +23,9 @@ PKG_CHECK_MODULES([GSL], [gsl >= 2.2])
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile])
+
+CFLAGS="$CFLAGS $GSL_CFLAGS"
+LIBS="$LIBS $GSL_LIBS"
+
+AX_CREATE_PKGCONFIG_INFO
 AC_OUTPUT
