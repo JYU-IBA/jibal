@@ -1,5 +1,8 @@
+#ifndef _JIBAL_PHYS_H_
+#define _JIBAL_PHYS_H_
+
 /*
-    LibIBA - Library for ion beam analysis
+    JIBAL - Library for ion beam analysis
     Copyright (C) 2020 Jaakko Julin <jaakko.julin@jyu.fi>
 
     This program is free software: you can redistribute it and/or modify
@@ -18,6 +21,7 @@
 
 /* Elementary physics */
 
+
 #define energy(a,b) iba_energy_relativistic(a,b)
 #define velocity(a,b) iba_velocity_relativistic(a,b)
 
@@ -27,3 +31,4 @@ double iba_energy_relativistic(double v, double mass);
 
 double iba_velocity_classical(double E, double mass);
 double iba_velocity_classical(double v, double mass);
+#endif /* _JIBAL_PHYS_H_ */

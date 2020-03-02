@@ -1,5 +1,5 @@
 /*
-    LibIBA - Library for ion beam analysis
+    JIBAL - Library for ion beam analysis
     Copyright (C) 2020 Jaakko Julin <jaakko.julin@jyu.fi>
 
     This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 /* Constants and other units */
 
 
-#ifndef _LIBIBA_UNITS_H_
-#define _LIBIBA_UNITS_H_
+#ifndef _JIBAL_UNITS_H_
+#define _JIBAL_UNITS_H_
 
 #include <math.h>
 
@@ -59,4 +59,4 @@ iba_units *iba_units_default();
 double iba_units_get(const iba_units *units, char type, const char *name);
 double iba_get_val(const iba_units *units, char type, const char *value);
 void iba_units_free(iba_units *units);
-#endif /* _LIBIBA_UNITS_H_ */
+#endif /* _JIBAL_UNITS_H_ */

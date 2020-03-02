@@ -1,5 +1,5 @@
-#ifndef _LIBIBA_GSTO_H_
-#define _LIBIBA_GSTO_H_
+#ifndef _JIBAL_GSTO_H_
+#define _JIBAL_GSTO_H_
 
 #define GSTO_MAX_LINE_LEN 1024
 #define GSTO_END_OF_HEADERS "==END-OF-HEADER=="
@@ -102,6 +102,4 @@ double *gsto_sto_v_table(gsto_table_t *table, int Z1, int Z2, double v_min, doub
 double gsto_sto_raw(gsto_table_t *table, int Z1, int Z2, int point_number);
 int gsto_auto_assign_range(gsto_table_t *table, int Z1_min, int Z1_max, int Z2_min, int Z2_max);
 int gsto_auto_assign(gsto_table_t *table, int Z1, int Z2);
-
-
 #endif

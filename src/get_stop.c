@@ -17,10 +17,10 @@
 */
 
 #include <stdio.h>
-#include "masses.h"
-#include "units.h"
+#include <jibal/jibal_masses.h>
+#include <jibal/jibal_units.h>
 
-#include "gsto.h"
+#include <jibal/jibal_gsto.h>
 
 int main(int argc, char **argv) {
     iba_isotope *isotopes=isotopes_load(NULL);

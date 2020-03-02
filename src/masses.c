@@ -21,7 +21,7 @@
 #include <inttypes.h>
 #include <ctype.h>
 #include <math.h>
-#include "masses.h"
+#include <jibal/jibal_masses.h>
 //#include "win_compat.h"
 
 int isotope_set(iba_isotope *isotope, int Z, int N, int A, double mass, isotope_name name) {
@@ -48,19 +48,19 @@ iba_isotope *isotopes_load(const char *filename) {
     char **col;
     isotope_name name;
     if(!filename) {
-        filename=IBA_MASSES_FILE;
+        filename=JIBAL_MASSES_FILE;
     } 
     FILE *in_file=fopen(filename, "r");
     if(!in_file) {
         fprintf(stderr, "Could not load isotope table from file %s\n", filename);
         return NULL;
     }
-    line=malloc(sizeof(char)*IBA_MASSES_LINE_LENGTH);
+    line=malloc(sizeof(char)*JIBAL_MASSES_LINE_LENGTH);
     if(!line) 
         return NULL;
-    iba_isotope *isotopes=malloc(sizeof(iba_isotope)*(IBA_MASSES_ISOTOPES+1));
+    iba_isotope *isotopes=malloc(sizeof(iba_isotope)*(JIBAL_MASSES_ISOTOPES+1));
     int n=0;
-    while(fgets(line, IBA_MASSES_LINE_LENGTH, in_file) != NULL) {
+    while(fgets(line, JIBAL_MASSES_LINE_LENGTH, in_file) != NULL) {
         line_split=line; /* strsep will screw up line_split, reset for every new line */
         for (col = columns; (*col = strsep(&line_split, " \t")) != NULL;)
             if (**col != '\0')
@@ -73,8 +73,8 @@ iba_isotope *isotopes_load(const char *filename) {
                                 strtoimax(columns[4], NULL, 10), 
                                 strtod(columns[5], NULL),
                                 name);
-        if(n>=IBA_MASSES_ISOTOPES) {
-            fprintf(stderr, "Too many isotopes! I was expecting a maximum of %i.\n", IBA_MASSES_ISOTOPES);
+        if(n>=JIBAL_MASSES_ISOTOPES) {
+            fprintf(stderr, "Too many isotopes! I was expecting a maximum of %i.\n", JIBAL_MASSES_ISOTOPES);
             return NULL;
         }
         n++;

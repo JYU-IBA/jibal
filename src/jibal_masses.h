@@ -16,27 +16,26 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LIBIBA_MASSES_H_
-#define _LIBIBA_MASSES_H_
+#ifndef _JIBAL_MASSES_H_
+#define _JIBAL_MASSES_H_
 
+#include <jibal/jibal_units.h>
+#include <jibal/jibal_phys.h>
 #include "defaults.h"
-#include "units.h"
-#include "phys.h"
 
+#define JIBAL_MASSES_LINE_LENGTH 80
+#define JIBAL_MASSES_ELEMENT_LENGTH 8 /* AAAxx, e.g. 241Am, max size = 3+2+1 = 6 (zero terminated). Round up to 8. */
 
-#define IBA_MASSES_LINE_LENGTH 80
-#define IBA_MASSES_ELEMENT_LENGTH 8 /* AAAxx, e.g. 241Am, max size = 3+2+1 = 6 (zero terminated). Round up to 8. */
-
-#ifndef IBA_MASSES_ISOTOPES
-#define IBA_MASSES_ISOTOPES 4095 /* Maximum number of isotopes.  */
+#ifndef JIBAL_MASSES_ISOTOPES
+#define JIBAL_MASSES_ISOTOPES 4095 /* Maximum number of isotopes.  */
 #endif
 
-#define IBA_STOPPING_DATA DATAPATH/stoppings.txt
-#define IBA_MASSES_DATA DATAPATH/masses.dat
+#define JIBAL_STOPPING_DATA DATAPATH/stoppings.txt
+#define JIBAL_MASSES_DATA DATAPATH/masses.dat
 #define XSTR(x) STR(x)
 #define STR(x) #x
 
-typedef char isotope_name[IBA_MASSES_ELEMENT_LENGTH] ;
+typedef char isotope_name[JIBAL_MASSES_ELEMENT_LENGTH] ;
 
 typedef struct {
     isotope_name name; /* "A-Xx eg. 239-Pu" */
