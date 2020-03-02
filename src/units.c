@@ -21,9 +21,9 @@
 #include <string.h>
 #include <jibal/jibal_units.h>
 
-iba_units *iba_units_add(iba_units *units, double f, char type, char *name) {
-    iba_units *first=units;
-    iba_units *this=malloc(sizeof(iba_units));
+jibal_units *jibal_units_add(jibal_units *units, double f, char type, char *name) {
+    jibal_units *first=units;
+    jibal_units *this=malloc(sizeof(jibal_units));
     this->f=f;
     this->type = type;
     this->next = NULL;
@@ -38,15 +38,15 @@ iba_units *iba_units_add(iba_units *units, double f, char type, char *name) {
     return first;
 }
 
-iba_units *iba_units_default() {
-    iba_units *units=NULL;
-    units=iba_units_add(units, C_E, UNIT_TYPE_ENERGY, "eV");
-    units=iba_units_add(units, C_U, UNIT_TYPE_MASS, "u");
-    units=iba_units_add(units, C_DEG, UNIT_TYPE_ANGLE, "deg");
+jibal_units *jibal_units_default() {
+    jibal_units *units=NULL;
+    units=jibal_units_add(units, C_E, UNIT_TYPE_ENERGY, "eV");
+    units=jibal_units_add(units, C_U, UNIT_TYPE_MASS, "u");
+    units=jibal_units_add(units, C_DEG, UNIT_TYPE_ANGLE, "deg");
     return units;
 }
 
-double iba_units_get(const iba_units *units, char type, const char *name) {
+double jibal_units_get(const jibal_units *units, char type, const char *name) {
     if(*name == '\0') /* Empty. */
         return 1.0;
     while(*name == ' ') {
@@ -88,20 +88,20 @@ double iba_units_get(const iba_units *units, char type, const char *name) {
     return 1.0; /* Actually we should fail maybe with NaN? */
 }
 
-double iba_get_val(const iba_units *units, char type, const char *value) {
+double jibal_get_val(const jibal_units *units, char type, const char *value) {
     char *end;
     double x=strtod(value, &end);
     if(end) {
-        x *= iba_units_get(units, type, end);
+        x *= jibal_units_get(units, type, end);
     }
     return x;
 }
 
-void iba_units_free(iba_units *units) {
-    iba_units *this;
+void jibal_units_free(jibal_units *units) {
+    jibal_units *this;
     this=units;
     while(this != NULL) {
-        iba_units *next=this->next;
+        jibal_units *next=this->next;
         free(this);
         this=next;
     }

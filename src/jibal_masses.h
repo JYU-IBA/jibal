@@ -44,7 +44,7 @@ typedef struct {
     int A; /* A=Z+N */
     double mass;
     double abundance;
-} iba_isotope;
+} jibal_isotope;
 
 typedef struct {
     double v_max;
@@ -52,21 +52,21 @@ typedef struct {
     int z_max;
     double ***sto; /* sto[Z1][Z2][v_index] */
     double *v; /* v=v[v_index] */
-} iba_stopping;
+} jibal_stopping;
 
 
-double iba_find_average_mass(iba_isotope *isotopes, int Z);
-int iba_find_Z_by_name(iba_isotope *isotopes, char *name);
-double iba_find_mass(iba_isotope *isotope, int Z, int A); /* find isotope mass, but if A=0 calculate average mass of elem. */
+double jibal_find_average_mass(jibal_isotope *isotopes, int Z);
+int jibal_find_Z_by_name(jibal_isotope *isotopes, char *name);
+double jibal_find_mass(jibal_isotope *isotope, int Z, int A); /* find isotope mass, but if A=0 calculate average mass of elem. */
 
-iba_isotope *isotopes_load(const char *filename);
-iba_isotope *find_first_isotope(iba_isotope *isotopes, int Z);
-iba_isotope *find_most_abundant_isotope(iba_isotope *isotopes, int Z);
-iba_isotope *find_isotope(iba_isotope *isotopes, int Z, int A);
-iba_isotope *isotopes_find_all(iba_isotope *isotopes, int Z);
-iba_isotope *isotope_find(iba_isotope *isotopes, const char *name);
-iba_stopping *init_stopping_table(char *filename);
-int delete_stopping_table(iba_stopping);
+jibal_isotope *isotopes_load(const char *filename);
+jibal_isotope *find_first_isotope(jibal_isotope *isotopes, int Z);
+jibal_isotope *find_most_abundant_isotope(jibal_isotope *isotopes, int Z);
+jibal_isotope *find_isotope(jibal_isotope *isotopes, int Z, int A);
+jibal_isotope *isotopes_find_all(jibal_isotope *isotopes, int Z);
+jibal_isotope *isotope_find(jibal_isotope *isotopes, const char *name);
+jibal_stopping *init_stopping_table(char *filename);
+int delete_stopping_table(jibal_stopping);
 
 
 double velocity(double E, double mass); /* Use SI units */

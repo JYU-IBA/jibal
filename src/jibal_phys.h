@@ -22,13 +22,13 @@
 /* Elementary physics */
 
 
-#define energy(a,b) iba_energy_relativistic(a,b)
-#define velocity(a,b) iba_velocity_relativistic(a,b)
+#define energy(a,b) jibal_energy_relativistic(a,b)
+#define velocity(a,b) jibal_velocity_relativistic(a,b)
 
 
-double iba_velocity_relativistic(double E, double mass);
-double iba_energy_relativistic(double v, double mass);
+double jibal_velocity_relativistic(double E, double mass);
+double jibal_energy_relativistic(double v, double mass);
 
-double iba_velocity_classical(double E, double mass);
-double iba_velocity_classical(double v, double mass);
+double jibal_velocity_classical(double E, double mass);
+double jibal_velocity_classical(double v, double mass);
 #endif /* _JIBAL_PHYS_H_ */

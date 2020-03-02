@@ -20,19 +20,19 @@
 #include <jibal/jibal_phys.h>
 #include <jibal/jibal_units.h>
 
-double iba_velocity_classical(double E, double m) {
+double jibal_velocity_classical(double E, double m) {
     return sqrt(2*E/m);
 }
 
-double iba_energy_classical(double v, double m) {
+double jibal_energy_classical(double v, double m) {
     return 0.5*m*v*v;
 }
 
-double iba_velocity_relativistic(double E, double m) {
+double jibal_velocity_relativistic(double E, double m) {
     double gamma=1.0+E/(m*C_C2);
     return sqrt((1-pow(gamma,-2.0))*C_C2);
 }
 
-double iba_energy_relativistic(double v, double m) {
+double jibal_energy_relativistic(double v, double m) {
     return (m*C_C2*(pow(1-pow(v/C_C,2.0),-0.5)-1));
 }

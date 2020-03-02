@@ -39,15 +39,15 @@
 #define UNIT_TYPE_DISTANCE 'L'
 #define UNIT_TYPE_MASS 'M'
 
-typedef struct iba_units {
+typedef struct jibal_units {
     double f; /*!< Factor, i.e. this unit in Si units (e.g. 1.66e-27 for the atomic mass unit) */
     char type; /*!< Physically relevant type, use defines above. UNIT_TYPE_MASS for a unit of mass. */
     char *name; /*!< E.g. "u" */
-    struct iba_units *next; /*!< Linked list */
-} iba_units;
+    struct jibal_units *next; /*!< Linked list */
+} jibal_units;
 
-iba_units *iba_units_add(iba_units *units, double f, char type, char *name);
-iba_units *iba_units_default();
+jibal_units *jibal_units_add(jibal_units *units, double f, char type, char *name);
+jibal_units *jibal_units_default();
 
 /*!
  Get a unit
@@ -56,7 +56,7 @@ iba_units *iba_units_default();
  @param type Type of unit (see defines)
  @param name Name of the unit
  */
-double iba_units_get(const iba_units *units, char type, const char *name);
-double iba_get_val(const iba_units *units, char type, const char *value);
-void iba_units_free(iba_units *units);
+double jibal_units_get(const jibal_units *units, char type, const char *name);
+double jibal_get_val(const jibal_units *units, char type, const char *value);
+void jibal_units_free(jibal_units *units);
 #endif /* _JIBAL_UNITS_H_ */

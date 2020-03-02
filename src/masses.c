@@ -24,7 +24,7 @@
 #include <jibal/jibal_masses.h>
 //#include "win_compat.h"
 
-int isotope_set(iba_isotope *isotope, int Z, int N, int A, double mass, isotope_name name) {
+int isotope_set(jibal_isotope *isotope, int Z, int N, int A, double mass, isotope_name name) {
     int i;
     if(!isotope) {
         return -1;
@@ -42,7 +42,7 @@ int isotope_set(iba_isotope *isotope, int Z, int N, int A, double mass, isotope_
 }
 
 
-iba_isotope *isotopes_load(const char *filename) {
+jibal_isotope *isotopes_load(const char *filename) {
     char *line, *line_split;
     char *columns[6];
     char **col;
@@ -58,7 +58,7 @@ iba_isotope *isotopes_load(const char *filename) {
     line=malloc(sizeof(char)*JIBAL_MASSES_LINE_LENGTH);
     if(!line) 
         return NULL;
-    iba_isotope *isotopes=malloc(sizeof(iba_isotope)*(JIBAL_MASSES_ISOTOPES+1));
+    jibal_isotope *isotopes=malloc(sizeof(jibal_isotope)*(JIBAL_MASSES_ISOTOPES+1));
     int n=0;
     while(fgets(line, JIBAL_MASSES_LINE_LENGTH, in_file) != NULL) {
         line_split=line; /* strsep will screw up line_split, reset for every new line */
@@ -84,9 +84,9 @@ iba_isotope *isotopes_load(const char *filename) {
     return isotopes;
 }
 
-iba_isotope *find_first_isotope(iba_isotope *isotopes, int Z) {
+jibal_isotope *find_first_isotope(jibal_isotope *isotopes, int Z) {
     int i;
-    iba_isotope *isotope;
+    jibal_isotope *isotope;
     for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(isotope->Z == Z) { /* The right element */
             return isotope;
@@ -96,9 +96,9 @@ iba_isotope *find_first_isotope(iba_isotope *isotopes, int Z) {
 }
 
 
-double find_mass(iba_isotope *isotopes, int Z, int A) { /* if A=0 calculate average mass, otherwise return isotope mass */
+double find_mass(jibal_isotope *isotopes, int Z, int A) { /* if A=0 calculate average mass, otherwise return isotope mass */
     double mass=0.0;
-    iba_isotope *isotope;
+    jibal_isotope *isotope;
     int i;
     for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(isotope->Z == Z) {
@@ -113,8 +113,8 @@ double find_mass(iba_isotope *isotopes, int Z, int A) { /* if A=0 calculate aver
     return mass;
 }
 
-int iba_find_Z_by_name(iba_isotope *isotopes, char *name) { /* Give just element name e.g. "Cu" */
-    iba_isotope *isotope;
+int jibal_find_Z_by_name(jibal_isotope *isotopes, char *name) { /* Give just element name e.g. "Cu" */
+    jibal_isotope *isotope;
     char *isotope_name;
     int i;
     for(isotope=isotopes; isotope->A != 0; isotope++) {
@@ -130,10 +130,10 @@ int iba_find_Z_by_name(iba_isotope *isotopes, char *name) { /* Give just element
     return 0;
 }
 
-iba_isotope *find_most_abundant_isotope(iba_isotope *isotopes, int Z) {
+jibal_isotope *find_most_abundant_isotope(jibal_isotope *isotopes, int Z) {
     int i;
-    iba_isotope *isotope;
-    iba_isotope *most_abundant_isotope=NULL;
+    jibal_isotope *isotope;
+    jibal_isotope *most_abundant_isotope=NULL;
     double abundance=0;
     for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(isotope->Z == Z) { /* The right element */
@@ -146,8 +146,8 @@ iba_isotope *find_most_abundant_isotope(iba_isotope *isotopes, int Z) {
     return most_abundant_isotope;
 }
 
-iba_isotope *find_isotope(iba_isotope *isotopes, int Z, int A) {
-    iba_isotope *isotope;
+jibal_isotope *find_isotope(jibal_isotope *isotopes, int Z, int A) {
+    jibal_isotope *isotope;
     int i;
     for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(isotope->Z == Z && isotope->A == A) {
@@ -157,9 +157,9 @@ iba_isotope *find_isotope(iba_isotope *isotopes, int Z, int A) {
     return NULL;
 }
 
-iba_isotope *tisotopes_find_all(iba_isotope *isotopes, int Z) {
-    iba_isotope *isotope;
-    iba_isotope *isotopes_out; /*!< Table, size to be determined */
+jibal_isotope *tisotopes_find_all(jibal_isotope *isotopes, int Z) {
+    jibal_isotope *isotope;
+    jibal_isotope *isotopes_out; /*!< Table, size to be determined */
     int i, j;
     int n_isotopes=0;
     for(isotope=isotopes; isotope->A != 0; isotope++) {
@@ -170,20 +170,20 @@ iba_isotope *tisotopes_find_all(iba_isotope *isotopes, int Z) {
         fprintf(stderr, "Did not find any isotopes matching Z=%i\n", Z);
         return 0;
     }
-    isotopes_out=malloc(sizeof(iba_isotope)*n_isotopes);
+    isotopes_out=malloc(sizeof(jibal_isotope)*n_isotopes);
     j=0;
     for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(isotope->Z == Z) {
             if(j>=n_isotopes)
                 break;
-            memcpy(isotopes_out+j, isotope, sizeof(iba_isotope));
+            memcpy(isotopes_out+j, isotope, sizeof(jibal_isotope));
             j++;
         }
     } 
     return isotopes_out;
 }
-iba_isotope *isotope_find(iba_isotope *isotopes, const char *name) {
-    iba_isotope *isotope;
+jibal_isotope *isotope_find(jibal_isotope *isotopes, const char *name) {
+    jibal_isotope *isotope;
     int i=0;
     for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(strcmp(isotope->name, name) == 0) {

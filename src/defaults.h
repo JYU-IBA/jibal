@@ -23,5 +23,5 @@
 #define JIBAL_DATADIR "../data/"
 #endif
 
-#define JIBAL_MASSES_FILE JIBAL_DATADIR "libiba_masses.dat"
+#define JIBAL_MASSES_FILE JIBAL_DATADIR "masses.dat"
 #endif

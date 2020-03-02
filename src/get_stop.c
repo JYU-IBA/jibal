@@ -23,13 +23,14 @@
 #include <jibal/jibal_gsto.h>
 
 int main(int argc, char **argv) {
-    iba_isotope *isotopes=isotopes_load(NULL);
-    iba_units *units=iba_units_default();
+    jibal_isotope *isotopes=isotopes_load(NULL);
+    jibal_units *units=jibal_units_default();
     gsto_table_t *table; /* TODO: rename */
     if(!isotopes) {
         fprintf(stderr, "Couldn't load isotopes.\n");
+        return -1;
     }
-    iba_isotope *incident=isotope_find(isotopes, argv[1]);
+    jibal_isotope *incident=isotope_find(isotopes, argv[1]);
     fprintf(stderr, "m_1=%g kg (%g u)\n", incident->mass, incident->mass/C_U);
 
     double E=0.0;
@@ -40,7 +41,7 @@ int main(int argc, char **argv) {
     char *target_name;
  
     target_name=argv[2];
-    int Z2=iba_find_Z_by_name(isotopes, target_name);
+    int Z2=jibal_find_Z_by_name(isotopes, target_name);
     if(!Z2) {
         fprintf(stderr, "No element %s found\n", target_name);
             return -1;
@@ -63,9 +64,9 @@ int main(int argc, char **argv) {
     }
     int i;
     for(i=3; i<argc; i++) {
-        E=iba_get_val(units, UNIT_TYPE_ENERGY, argv[i]);
+        E=jibal_get_val(units, UNIT_TYPE_ENERGY, argv[i]);
         fprintf(stderr, "E=%g keV\n", E/C_KEV);
         printf("%e %e\n", E/C_KEV, gsto_sto_v(table, incident->Z, Z2, velocity(E, incident->mass)));
     }
-    iba_units_free(units);
+    jibal_units_free(units);
 }
