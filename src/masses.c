@@ -22,6 +22,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <jibal/jibal_masses.h>
+#include "defaults.h"
 //#include "win_compat.h"
 
 int isotope_set(jibal_isotope *isotope, int Z, int N, int A, double mass, isotope_name name) {

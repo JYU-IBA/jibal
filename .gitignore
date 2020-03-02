@@ -1,9 +1,9 @@
 aclocal.m4
 autom4te.cache/
-*.in
-compile
-missing
+build-aux/
 config.*
+*.in
+missing
 ltmain.sh
 configure
 depcomp
@@ -16,3 +16,5 @@ libtool
 stamp-*
 *.pc
 *-uninstalled.sh
+jibal-*.*.*.tar.gz
+jibal-*.*.*/

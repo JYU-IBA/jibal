@@ -21,7 +21,6 @@
 
 #include <jibal/jibal_units.h>
 #include <jibal/jibal_phys.h>
-#include "defaults.h"
 
 #define JIBAL_MASSES_LINE_LENGTH 80
 #define JIBAL_MASSES_ELEMENT_LENGTH 8 /* AAAxx, e.g. 241Am, max size = 3+2+1 = 6 (zero terminated). Round up to 8. */
@@ -29,11 +28,6 @@
 #ifndef JIBAL_MASSES_ISOTOPES
 #define JIBAL_MASSES_ISOTOPES 4095 /* Maximum number of isotopes.  */
 #endif
-
-#define JIBAL_STOPPING_DATA DATAPATH/stoppings.txt
-#define JIBAL_MASSES_DATA DATAPATH/masses.dat
-#define XSTR(x) STR(x)
-#define STR(x) #x
 
 typedef char isotope_name[JIBAL_MASSES_ELEMENT_LENGTH] ;
 

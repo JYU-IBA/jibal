@@ -5,7 +5,7 @@
 #include <jibal/jibal_units.h>
 #include <jibal/jibal_phys.h>
 #include <jibal/jibal_gsto.h>
-
+#include <defaults.h>
 
 static char *gsto_stopping_types[] ={ /* The first three characters are tested with e.g. strncmp(stopping_types[i], "tot", 3*sizeof(char)). So make them unique. */ 
     "none",
@@ -61,15 +61,17 @@ header_properties_t gsto_get_headers_property(const char *property) {
 int gsto_add_file(gsto_table_t *table, char *name, char *filename, int Z1_min, int Z1_max, int Z2_min, int Z2_max, char *type) {
     int success=1;
     int i;
-#ifdef DEBUG
-    fprintf(stderr, "Adding file %s (%s), %i<=Z1<=%i, %i<=Z2<=%i to database.\n", name, filename, Z1_min, Z1_max, Z2_min, Z2_max);  
-#endif
+    fprintf(stderr, "Adding file %s (%s), %i<=Z1<=%i, %i<=Z2<=%i to database.\n", name, filename, Z1_min, Z1_max, Z2_min, Z2_max);
     table->files = realloc(table->files, sizeof(gsto_file_t)*(table->n_files+1));
     gsto_file_t *new_file=&table->files[table->n_files];
-    new_file->name = calloc(strlen(name), sizeof(char));
-    new_file->filename = calloc(strlen(filename), sizeof(char));
-    strcpy(new_file->name, name);
-    strcpy(new_file->filename, filename);    
+    new_file->name = strdup(name);
+    if(*filename == '/') { /* Absolute path, just copy the file name */
+        new_file->filename=strdup(filename);
+    } else { /* Relative path. Append to datadir path. */
+        new_file->filename=calloc(strlen(JIBAL_DATADIR)+strlen(filename)+1, sizeof(char));
+        strcat(new_file->filename, JIBAL_DATADIR);
+        strcat(new_file->filename, filename);
+    }
     for(i=GSTO_N_STOPPING_TYPES-1; i >=0; i--) {
         if(strncmp(gsto_stopping_types[i], type, 3*sizeof(char))==0) {
             break;
@@ -438,20 +440,12 @@ gsto_table_t *gsto_init(int Z_max, char *stoppings_file_name) {
     FILE *settings_file=NULL;
     gsto_table_t *table;
     table = gsto_allocate(Z_max, Z_max); /* Allocate memory for assignment table, initialize some variables */
-    env_path=getenv(GSTO_DATA_PATH_ENV_VARIABLE);
-    if(!stoppings_file_name && env_path) { /* No file name given, but environment variable set */
-        stoppings_file_name=calloc(strlen(env_path)+1+strlen(GSTO_DATA_DEFAULT_FILE)+1,sizeof(char));
-        sprintf(stoppings_file_name, "%s/%s", env_path, GSTO_DATA_DEFAULT_FILE);
+    if(!stoppings_file_name) { /* If filename given (not NULL), attempt to load settings file */
+        stoppings_file_name=GSTO_DATA_DEFAULT_FILE;
     }
-    if(stoppings_file_name) { /* If filename given (not NULL), attempt to load settings file */
-        settings_file=fopen(stoppings_file_name, "r");
-    } else {
-#ifdef DEBUG
-        fprintf(stderr, "GSTO: No settings file given.\n");
-#endif
-    }
-
+    settings_file=fopen(stoppings_file_name, "r");
     if(settings_file) { /* If file could be opened, try to read it */
+        fprintf(stderr, "Settings from %s\n", stoppings_file_name);
         while (fgets(line, GSTO_MAX_LINE_LEN, settings_file) != NULL) {
             i++;
             if(line[0] == '#') /* Strip comments */
@@ -473,7 +467,7 @@ gsto_table_t *gsto_init(int Z_max, char *stoppings_file_name) {
 #endif
         fclose(settings_file);
     } else {
-        fprintf(stderr, "GSTO: Could not open settings file! No stopping files added.\n");
+        fprintf(stderr, "GSTO: Could not open settings file (%s)! No stopping files added.\n", stoppings_file_name);
     }
     return table;
 }

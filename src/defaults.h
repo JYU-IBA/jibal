@@ -24,4 +24,5 @@
 #endif
 
 #define JIBAL_MASSES_FILE JIBAL_DATADIR "masses.dat"
+
 #endif

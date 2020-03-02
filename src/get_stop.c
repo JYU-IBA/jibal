@@ -47,12 +47,12 @@ int main(int argc, char **argv) {
             return -1;
     }
     fprintf(stderr, "Z1=%i, Z2=%i\n", incident->Z, Z2);
-    table=gsto_init(91, "stoppings.txt");
+    table=gsto_init(91, NULL);
     if(!table)
         return -1;
     if(!gsto_auto_assign(table, incident->Z, Z2))
             return -1;
-    fprintf(stderr, "Stopping data from file %s\n", table->assigned_files[incident->Z][Z2]->name);
+    fprintf(stderr, "Stopping data from file %s (%s)\n", table->assigned_files[incident->Z][Z2]->name, table->assigned_files[incident->Z][Z2]->filename);
     gsto_load(table);
 
     if(argc==3) {
