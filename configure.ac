@@ -23,6 +23,7 @@ PKG_CHECK_MODULES([GSL], [gsl >= 2.2])
 
 AC_CONFIG_FILES([Makefile
                  jibal/Makefile
+                 data/Makefile
                  src/Makefile
                  ])
 

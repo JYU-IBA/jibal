@@ -1,5 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = jibal src .
+SUBDIRS = jibal data src .
 
 pkgconfiglibdir = $(libdir)/pkgconfig
-pkgconfiglib_DATA = libiba.pc
+pkgconfiglib_DATA = jibal.pc
+
+DISCLEANFILES = jibal.pc jibal.pc.in jibal-uninstalled.sh jibal-uninstalled.pc
