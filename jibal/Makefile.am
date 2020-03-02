@@ -3,7 +3,6 @@
 
 
 header-links: remove-links
-#	HEADERLIST="$(top_srcdir)/jibal*.h $(top_srcdir)/*/jibal*.h"; \
 	HEADERLIST="$(top_srcdir)/*/jibal*.h"; \
 	for h in $$HEADERLIST; do \
 	  BASENAME=`basename $$h`; \
