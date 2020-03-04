@@ -29,7 +29,7 @@ compile_decoder() {
 
 convert_massfile() {
     echo "Converting $amefile to $masses_outfile"
-    ./ame_decoder > "$masses_outfile"
+    ./ame_decoder | sed -e s/Ed/Nh/ -e s/Ef/Mc/ -e s/Eh/Ts/ -e s/Ei/Og/ > "$masses_outfile"
 }
 
 parse_abundances_from_html() {
