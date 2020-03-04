@@ -26,13 +26,22 @@
 
 #define C_PI M_PI
 #define C_U (1.66053906660e-27) /* atomic mass unit, kg */
-#define C_C (299792458.0) /* speed of light, in m/s */
+#define C_C (299792458.0) /* speed of light, in m/s, exact. */
 #define C_C2 (C_C*C_C) /* speed of light, squared */
-#define C_E (1.602176634e-19) /* elementary charge, in C */
+#define C_E (1.602176634e-19) /* elementary charge, in C, exact. */
 #define C_EV (C_E) /* electronvolt, in J */
 #define C_KEV (1.0e3*C_EV) /* keV */
 #define C_MEV (1.0e6*C_EV) /* MeV */
-#define C_DEG (2.0*C_PI/360.0)
+#define C_DEG (2.0*C_PI/360.0) /* degree */
+#define C_H (6.62607015e-34) /* Planck constant, exact. */
+#define C_HBAR (C_H/(2*C_PI))
+#define C_ALPHA (0.0072973525693) /* fine structure constant. Using CODATA 2018 recommended value. */
+#define C_MU0  (2*C_ALPHA*C_H/(C_E  /* vacuum permeability */
+#define C_EPSILON0 (1/(C_MU0*C_C2)) /* vacuum permittivity */
+#define C_ME (9.1093837015e-31) /* electron mass */
+#define C_BOHR_RADIUS (C_HBAR/(C_ALPHA*C_ME*C_C)) /* Bohr radius */
+#define C_TFU (1.0e19) /* Thin film units, i.e. 1e15 at./cm2 is actually 1e19/m^2 in SI-units */
+#define C_EV_TFU (C_EV/C_TFU) /* Units for stopping cross sections (eV/(1e15 at./cm2)) */
 
 #define UNIT_TYPE_ENERGY 'E'
 #define UNIT_TYPE_ANGLE 'A'
