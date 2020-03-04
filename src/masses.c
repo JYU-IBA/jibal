@@ -76,13 +76,19 @@ jibal_isotope *isotopes_load(const char *filename) {
                                 name);
         if(n>=JIBAL_MASSES_ISOTOPES) {
             fprintf(stderr, "Too many isotopes! I was expecting a maximum of %i.\n", JIBAL_MASSES_ISOTOPES);
+            free(line);
             return NULL;
         }
         n++;
     }
     isotopes[n].A=0; /* "Null terminate" */
     fclose(in_file);
+    free(line);
     return isotopes;
+}
+
+void isotopes_free(jibal_isotope *isotopes) {
+    free(isotopes);
 }
 
 jibal_element *elements_populate(jibal_isotope *isotopes) {
@@ -120,6 +126,16 @@ jibal_element *elements_populate(jibal_isotope *isotopes) {
         e->isotopes[i]=isotope;
     }
     return elements;
+}
+
+void elements_free(jibal_element *elements) {
+    int Z;
+    for(Z=0; Z <= JIBAL_ELEMENTS; Z++) {
+        if(elements[Z].n_isotopes > 0 && elements[Z].isotopes) {
+            free(elements[Z].isotopes);
+        }
+    }
+    free(elements);
 }
 
 

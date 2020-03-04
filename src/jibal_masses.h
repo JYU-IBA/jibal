@@ -67,7 +67,9 @@ int jibal_find_Z_by_name(jibal_isotope *isotopes, char *name);
 double jibal_find_mass(jibal_isotope *isotope, int Z, int A); /* find isotope mass, but if A=0 calculate average mass of elem. */
 
 jibal_isotope *isotopes_load(const char *filename);
+void isotopes_free(jibal_isotope *isotopes);
 jibal_element *elements_populate(jibal_isotope *isotopes);
+void elements_free(jibal_element *elements);
 jibal_isotope *find_first_isotope(jibal_isotope *isotopes, int Z);
 jibal_isotope *find_most_abundant_isotope(jibal_isotope *isotopes, int Z);
 jibal_isotope *find_isotope(jibal_isotope *isotopes, int Z, int A);

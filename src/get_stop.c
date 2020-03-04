@@ -24,6 +24,7 @@
 
 int main(int argc, char **argv) {
     jibal_isotope *isotopes=isotopes_load(NULL);
+    jibal_element *elements=elements_populate(isotopes);
     jibal_units *units=jibal_units_default();
     gsto_table_t *table; /* TODO: rename */
     if(!isotopes) {
@@ -70,4 +71,6 @@ int main(int argc, char **argv) {
         printf("%e %e\n", E/C_KEV, gsto_sto_v(table, incident->Z, Z2, velocity(E, incident->mass)));
     }
     jibal_units_free(units);
+    elements_free(elements);
+    isotopes_free(isotopes);
 }
