@@ -495,6 +495,26 @@ double gsto_sto_raw(gsto_table_t *table, int Z1, int Z2, int point_number) {
     return table->ele[Z1][Z2][point_number];
 }
 
+double gsto_sto_nuclear_universal(double E, int Z1, double m1, int Z2, double m2) {
+    double a_u=0.8854*C_BOHR_RADIUS/(pow(Z1, 0.23)+pow(Z2, 0.23));
+    double gamma = 4.0*m1*m2/pow(m1+m2, 2.0);
+    double epsilon=(E/C_KEV)*32.53*m2/(Z1*Z2*(m1+m2)*(pow(Z1, 0.23)+pow(Z2, 0.23)));
+    double S_ne;
+#ifdef DEBUG
+    fprintf(stderr, "Nuclear stopping of Z2=%i (m2=%g) for Z1=%i (m2=%g). a_u=%g, gamma=%g, epsilon=%g\n", Z2, m2, Z1, m2, a_u, gamma, epsilon);
+#endif
+    if(epsilon <= 30.0) {
+         S_ne=log(1+1.1383*epsilon)/(2*(epsilon+0.01321*pow(epsilon, 0.21226)+0.19593*pow(epsilon, 0.5)));
+    } else {
+         S_ne=log(epsilon)/(2*epsilon);
+    }
+    double S=S_ne*C_PI*pow(a_u, 2.0)*gamma*E/epsilon;
+#ifdef DEBUG
+    fprintf(stderr, "Reduced S_ne=%g, S=%g (eV/tfu)\n", S_ne, S/C_EV_TFU);
+#endif
+    return S;
+}
+
 double gsto_sto_v(gsto_table_t *table, int Z1, int Z2, double v) { /* Simplest way to access stopping data */
     int i;
     double i_float, x, gamma, sto_low, sto_high, sto;
