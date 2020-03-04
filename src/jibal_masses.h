@@ -23,13 +23,19 @@
 #include <jibal/jibal_phys.h>
 
 #define JIBAL_MASSES_LINE_LENGTH 80
-#define JIBAL_MASSES_ELEMENT_LENGTH 8 /* AAAxx, e.g. 241Am, max size = 3+2+1 = 6 (zero terminated). Round up to 8. */
 
 #ifndef JIBAL_MASSES_ISOTOPES
 #define JIBAL_MASSES_ISOTOPES 4095 /* Maximum number of isotopes.  */
 #endif
 
-typedef char isotope_name[JIBAL_MASSES_ELEMENT_LENGTH] ;
+#ifndef JIBAL_ELEMENTS
+#define JIBAL_ELEMENTS 118
+#endif
+
+#define ABUNDANCE_THRESHOLD (1e-6)
+
+typedef char isotope_name[8]; /* These should be null terminated */
+typedef char element_name[4];
 
 typedef struct {
     isotope_name name; /* "A-Xx eg. 239-Pu" */
@@ -39,6 +45,13 @@ typedef struct {
     double mass;
     double abundance;
 } jibal_isotope;
+
+typedef struct {
+    element_name name;
+    int Z;
+    int n_isotopes;
+    jibal_isotope **isotopes; /* Array of length n_isotopes, contents are pointers to isotopes */
+} jibal_element;
 
 typedef struct {
     double v_max;
@@ -54,6 +67,7 @@ int jibal_find_Z_by_name(jibal_isotope *isotopes, char *name);
 double jibal_find_mass(jibal_isotope *isotope, int Z, int A); /* find isotope mass, but if A=0 calculate average mass of elem. */
 
 jibal_isotope *isotopes_load(const char *filename);
+jibal_element *elements_populate(jibal_isotope *isotopes);
 jibal_isotope *find_first_isotope(jibal_isotope *isotopes, int Z);
 jibal_isotope *find_most_abundant_isotope(jibal_isotope *isotopes, int Z);
 jibal_isotope *find_isotope(jibal_isotope *isotopes, int Z, int A);

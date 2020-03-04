@@ -85,6 +85,44 @@ jibal_isotope *isotopes_load(const char *filename) {
     return isotopes;
 }
 
+jibal_element *elements_populate(jibal_isotope *isotopes) {
+    jibal_element *elements=calloc(JIBAL_ELEMENTS+1, sizeof(jibal_element));
+    jibal_isotope *isotope;
+    for(isotope=isotopes; isotope->A != 0; isotope++) {
+        if(isotope->Z < 0 || isotope->Z > JIBAL_ELEMENTS) {
+            continue;
+        }
+        jibal_element *e=&elements[isotope->Z];
+        if(e->n_isotopes == 0) { /* We encounter this element for the first time */
+            char *isotope_name;
+            for(isotope_name=isotope->name; isdigit(*isotope_name); isotope_name++);
+            strncpy(e->name, isotope_name, sizeof(element_name)-1);
+        }
+
+        e->n_isotopes++;
+    }
+    int Z;
+    for(Z=0; Z <= JIBAL_ELEMENTS; Z++) {
+        if(elements[Z].n_isotopes > 0) {
+            elements[Z].isotopes=malloc(sizeof(jibal_isotope)*elements[Z].n_isotopes);
+        }
+#ifdef DEBUG
+        fprintf(stderr, "Element %i, name %s, %i isotopes\n", Z, elements[Z].name, elements[Z].n_isotopes);
+#endif
+    }
+    for(isotope=isotopes; isotope->A != 0; isotope++) {
+        if(isotope->Z < 0 || isotope->Z >= JIBAL_ELEMENTS) {
+            continue;
+        }
+        jibal_element *e=&elements[isotope->Z];
+        int i;
+        for(i=0; i < e->n_isotopes && e->isotopes[i] == NULL; i++);
+        e->isotopes[i]=isotope;
+    }
+    return elements;
+}
+
+
 jibal_isotope *find_first_isotope(jibal_isotope *isotopes, int Z) {
     int i;
     jibal_isotope *isotope;
