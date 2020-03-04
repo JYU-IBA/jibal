@@ -66,6 +66,7 @@ int main(int argc, char **argv) {
     for(i=3; i<argc; i++) {
         E=jibal_get_val(units, UNIT_TYPE_ENERGY, argv[i]);
         fprintf(stderr, "E=%g keV\n", E/C_KEV);
+        fprintf(stderr, "Nuclear stopping: %g (eV/(10^15 at./cm2))\n", gsto_sto_nuclear_universal(E, incident->Z, incident->mass, Z2, 26.982*C_U)/C_EV_TFU);
         printf("%e %e\n", E/C_KEV, gsto_sto_v(table, incident->Z, Z2, velocity(E, incident->mass)));
     }
     jibal_units_free(units);
