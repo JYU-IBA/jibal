@@ -17,8 +17,8 @@
 */
 
 #include <math.h>
-#include <jibal/jibal_phys.h>
-#include <jibal/jibal_units.h>
+#include <jibal_phys.h>
+#include <jibal_units.h>
 
 double jibal_velocity_classical(double E, double m) {
     return sqrt(2*E/m);

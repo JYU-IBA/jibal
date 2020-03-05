@@ -19,8 +19,8 @@
 #ifndef _JIBAL_MASSES_H_
 #define _JIBAL_MASSES_H_
 
-#include <jibal/jibal_units.h>
-#include <jibal/jibal_phys.h>
+#include <jibal_units.h>
+#include <jibal_phys.h>
 
 #define JIBAL_MASSES_LINE_LENGTH 80
 
@@ -43,14 +43,15 @@ typedef struct {
     int Z;
     int A; /* A=Z+N */
     double mass;
-    double abundance;
-} jibal_isotope;
+    double abundance; /* Do not change this. It is not a concentration. */
+} jibal_isotope; /* All jibal_isotopes are supposed to be static data */
 
 typedef struct {
     element_name name;
     int Z;
     int n_isotopes;
-    jibal_isotope **isotopes; /* Array of length n_isotopes, contents are pointers to isotopes */
+    jibal_isotope const **isotopes; /* Array of length n_isotopes, contents are pointers to isotopes */
+    double *concs; /* This is NULL in "elements" table, but when used by jibal_material the concentrations of isotopes goes in an array here. */
 } jibal_element;
 
 typedef struct {
@@ -68,8 +69,9 @@ double jibal_find_mass(jibal_isotope *isotope, int Z, int A); /* find isotope ma
 
 jibal_isotope *isotopes_load(const char *filename);
 void isotopes_free(jibal_isotope *isotopes);
-jibal_element *elements_populate(jibal_isotope *isotopes);
+jibal_element *elements_populate(const jibal_isotope *isotopes);
 void elements_free(jibal_element *elements);
+jibal_element *jibal_element_copy(jibal_element *element, int A); /* Create a copy of a single element, either with all known isotopes (A=-1), naturally abundant isotopes (A=0) or a single isotope (A = mass number) */
 jibal_isotope *find_first_isotope(jibal_isotope *isotopes, int Z);
 jibal_isotope *find_most_abundant_isotope(jibal_isotope *isotopes, int Z);
 jibal_isotope *find_isotope(jibal_isotope *isotopes, int Z, int A);

@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <jibal/jibal_units.h>
-#include <jibal/jibal_phys.h>
-#include <jibal/jibal_gsto.h>
+#include <jibal_units.h>
+#include <jibal_phys.h>
+#include <jibal_gsto.h>
 #include <defaults.h>
 
 static char *gsto_stopping_types[] ={ /* The first three characters are tested with e.g. strncmp(stopping_types[i], "tot", 3*sizeof(char)). So make them unique. */ 

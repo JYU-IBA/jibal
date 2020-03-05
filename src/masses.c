@@ -21,8 +21,9 @@
 #include <inttypes.h>
 #include <ctype.h>
 #include <math.h>
-#include <jibal/jibal_masses.h>
+#include <jibal_masses.h>
 #include "defaults.h"
+
 //#include "win_compat.h"
 
 int isotope_set(jibal_isotope *isotope, int Z, int N, int A, double mass, isotope_name name) {
@@ -91,16 +92,16 @@ void isotopes_free(jibal_isotope *isotopes) {
     free(isotopes);
 }
 
-jibal_element *elements_populate(jibal_isotope *isotopes) {
+jibal_element *elements_populate(const jibal_isotope *isotopes) {
     jibal_element *elements=calloc(JIBAL_ELEMENTS+1, sizeof(jibal_element));
-    jibal_isotope *isotope;
+    const jibal_isotope *isotope;
     for(isotope=isotopes; isotope->A != 0; isotope++) {
         if(isotope->Z < 0 || isotope->Z > JIBAL_ELEMENTS) {
             continue;
         }
         jibal_element *e=&elements[isotope->Z];
         if(e->n_isotopes == 0) { /* We encounter this element for the first time */
-            char *isotope_name;
+            const char *isotope_name;
             for(isotope_name=isotope->name; isdigit(*isotope_name); isotope_name++);
             strncpy(e->name, isotope_name, sizeof(element_name)-1);
         }
@@ -136,6 +137,40 @@ void elements_free(jibal_element *elements) {
         }
     }
     free(elements);
+}
+
+jibal_element *jibal_element_new(const element_name name, int Z, int n_isotopes) {
+    jibal_element *e=malloc(sizeof(jibal_element));
+    e->Z=Z;
+    e->n_isotopes=n_isotopes;
+    e->isotopes=malloc(n_isotopes*sizeof(jibal_isotope));
+    e->concs=malloc(n_isotopes* sizeof(double));
+    return e;
+}
+
+jibal_element *jibal_element_copy(jibal_element *element, int A) {
+    jibal_element *e=malloc(sizeof(jibal_element));
+    e->Z=element->Z;
+    strncpy(e->name, element->name, sizeof(element_name)-1);
+    int n=element->n_isotopes;
+    int i;
+    switch (A) {
+        case -1:
+            e->n_isotopes=n;
+            e->concs=malloc(n*sizeof(double));
+            for(i=0; i < n; i++) {
+                e->isotopes[i]=element->isotopes[i];
+                e->concs[i]=e->isotopes[i]->abundance; /* Default concentration of isotope in element is of course the abundance */
+            }
+            break;
+        case 0:
+            /* TODO */
+            break;
+        default:
+            /* TODO */
+            break;
+    }
+    return e;
 }
 
 

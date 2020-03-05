@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <jibal/jibal_units.h>
+#include <jibal_units.h>
 
 jibal_units *jibal_units_add(jibal_units *units, double f, char type, char *name) {
     jibal_units *first=units;
