@@ -2,7 +2,7 @@ aclocal.m4
 autom4te.cache/
 build-aux/
 config.*
-*.in
+Makefile.in
 missing
 ltmain.sh
 configure
