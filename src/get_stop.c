@@ -42,8 +42,14 @@ int main(int argc, char **argv) {
     char *target_name;
  
     target_name=argv[2];
+
+#ifdef MATERIAL_TEST
     fprintf(stderr, "Creating material %s\n", argv[2]);
-    jibal_material_create(argv[2]);
+    jibal_material *material=jibal_material_create(elements, argv[2]);
+    jibal_material_print(stderr, material);
+    jibal_material_free(material);
+    return 0;
+#endif
     
     int Z2=jibal_find_Z_by_name(isotopes, target_name);
     if(!Z2) {

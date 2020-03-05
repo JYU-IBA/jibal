@@ -32,7 +32,7 @@ const char *parse_element(const char *start, const char **end_ptr, int *A_out, c
         a++;
         for (; islower(*a); a++); /* Advance until we run out of lower case elements */
         size_t name_size=a-elem_start;
-        char *elem=malloc(name_size * sizeof(char));
+        char *elem=calloc(name_size, sizeof(char));
         strncpy(elem, elem_start, a - elem_start);
 #ifdef DEBUG
         fprintf(stderr, "Element = \"%s\"\n", elem);
@@ -65,28 +65,73 @@ const char *parse_element(const char *start, const char **end_ptr, int *A_out, c
     return  NULL; /* We shouldn't reach this point */
 }
 
-jibal_material *jibal_material_create(const char *formula) {
+jibal_material *jibal_material_create(jibal_element *elements, const char *formula) {
     jibal_material *material=malloc(sizeof(jibal_material));
-
+    material->n_elements=0;
+    material->name=strdup(formula); /* Default name is the formula */
     const char *a=formula;
     const char *b;
     char *name;
     const char *line_end=formula+strlen(formula);
-    while(a < line_end) {
-        int A;
-        double conc;
+    int A;
+    double conc;
+    int i_element=0;
+    for(a=formula; a < line_end; material->n_elements++) { /* Count the number of elements */
+        if(!parse_element(a, &b, &A, &name, &conc)) {
+            break;
+        }
+        a=b;
+    }
+    fprintf(stderr, "%i elements!!\n", material->n_elements);
+    material->elements=calloc(material->n_elements, sizeof(jibal_element));
+    material->concs=calloc(material->n_elements, sizeof(double));
+
+    for(a=formula; a < line_end; i_element++) {
+
         if(!parse_element(a, &b, &A, &name, &conc)) {
             return NULL;
         }
+#ifdef DEBUG
         fprintf(stderr, "Parsed. Name = %s, A = %i, conc = %g. Remaining to be parsed: \"%s\"\n", name, A, conc, b);
+#endif
+        jibal_element *element=jibal_element_copy(jibal_element_find(elements, name), A);
+        fprintf(stderr, "Element: %p\n", element);
+        free(name);
+        if(!element) {
+            return NULL;
+        }
+#ifdef DEBUG
+        fprintf(stderr, "Found element Z=%i (aka %s)\n", element->Z, element->name);
+#endif
+        material->elements[i_element]=*element; /* Deep copy */
+        material->concs[i_element]=conc;
+        free(element);
         a=b;
     }
     return material;
 }
 
-void jibal_material_free(jibal_material *material) {
-    if(material) {
-        free(material);
+void jibal_material_print(FILE * restrict stream, jibal_material *material) {
+    int i;
+    fprintf(stream, "Material %s has %i elements.\n", material->name, material->n_elements);
+    for(i=0; i < material -> n_elements; i++) {
+        jibal_element *element = &material->elements[i];
+        fprintf(stream, "  %6.3f%% elements[%i]: %s (Z=%i), %i isotopes\n", material->concs[i]/C_PERCENT, i, element->name, element->Z, element->n_isotopes);
+        int j;
+        for(j=0; j < element->n_isotopes; j++) {
+            const jibal_isotope *isotope = element->isotopes[j];
+            fprintf(stream, "    %6.3f%% isotopes[%i]: %s (A=%i)\n", element->concs[i]/C_PERCENT, j, isotope->name, isotope->A);
+        }
     }
+}
+
+void jibal_material_free(jibal_material *material) {
+    if(!material) {
+        return;
+    }
+    int i;
+    free(material->elements);
+    free(material->concs);
+    free(material);
     /* TODO: free names of elements and formulae */
 }

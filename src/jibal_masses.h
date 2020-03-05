@@ -71,6 +71,8 @@ jibal_isotope *isotopes_load(const char *filename);
 void isotopes_free(jibal_isotope *isotopes);
 jibal_element *elements_populate(const jibal_isotope *isotopes);
 void elements_free(jibal_element *elements);
+jibal_element *jibal_element_find(jibal_element *elements, element_name name);
+int jibal_element_number_of_isotopes(jibal_element *element, double abundance_threshold);
 jibal_element *jibal_element_copy(jibal_element *element, int A); /* Create a copy of a single element, either with all known isotopes (A=-1), naturally abundant isotopes (A=0) or a single isotope (A = mass number) */
 jibal_isotope *find_first_isotope(jibal_isotope *isotopes, int Z);
 jibal_isotope *find_most_abundant_isotope(jibal_isotope *isotopes, int Z);

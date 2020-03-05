@@ -25,6 +25,7 @@
 #include <math.h>
 
 #define C_PI M_PI
+#define C_PERCENT 0.01
 #define C_U (1.66053906660e-27) /* atomic mass unit, kg */
 #define C_C (299792458.0) /* speed of light, in m/s, exact. */
 #define C_C2 (C_C*C_C) /* speed of light, squared */
