@@ -4,6 +4,8 @@ Library that provides stopping forces, straggling models, cross sections and var
 
 ## Installation from sources
 
+Install GNU Scientific library and GNU Autotools and a compiler. After this, on Linux and MacOS you should run:
+
 ~~~~
 ./autogen.sh
 ./configure
