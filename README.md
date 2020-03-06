@@ -16,5 +16,5 @@ make install
 The get\_stop function can be used to extract stopping like this:
 
 ~~~~
-get\_stop 4He SiO2 "1 MeV"
+get_stop 4He SiO2 "1 MeV"
 ~~~~
