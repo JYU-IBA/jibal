@@ -40,51 +40,31 @@ int main(int argc, char **argv) {
         return -1;
 
     }
-    char *target_name;
- 
-    target_name=argv[2];
-
-#ifdef MATERIAL_TEST
+    char *target_string=argv[2];
     fprintf(stderr, "Creating material %s\n", argv[2]);
-    jibal_material *material=jibal_material_create(elements, argv[2]);
+    jibal_material *material=jibal_material_create(elements, target_string);
     if(!material) {
-        fprintf(stderr, "\"%s\" is not a valid material formula\n", argv[2]);
+        fprintf(stderr, "\"%s\" is not a valid material formula\n", target_string);
         return -1;
     }
     jibal_material_print(stderr, material);
-    jibal_material_free(material);
-    return 0;
-#endif
-    
-    int Z2=jibal_find_Z_by_name(isotopes, target_name);
-    if(!Z2) {
-        fprintf(stderr, "No element %s found\n", target_name);
-            return -1;
-    }
-    fprintf(stderr, "Z1=%i, Z2=%i\n", incident->Z, Z2);
     table=gsto_init(91, NULL);
     if(!table)
         return -1;
-    if(!gsto_auto_assign(table, incident->Z, Z2))
-            return -1;
-    fprintf(stderr, "Stopping data from file %s (%s)\n", table->assigned_files[incident->Z][Z2]->name, table->assigned_files[incident->Z][Z2]->filename);
+    if(!jibal_stop_auto_assign(table, incident, material))
+        return -1;
     gsto_load(table);
 
-    if(argc==3) {
-        while(fscanf(stdin, "%lg\n", &E)==1) {
-            E *= C_KEV; 
-            printf("%e %e\n", E/C_KEV, gsto_sto_v(table, incident->Z, Z2, velocity(E, incident->mass)));
-        }
-        return 0;
-    }
+
     int i;
     for(i=3; i<argc; i++) {
-        E=jibal_get_val(units, UNIT_TYPE_ENERGY, argv[i]);
-        fprintf(stderr, "E=%g keV\n", E/C_KEV);
-        fprintf(stderr, "Nuclear stopping: %g (eV/(10^15 at./cm2))\n", gsto_sto_nuclear_universal(E, incident->Z, incident->mass, Z2, 26.982*C_U)/C_EV_TFU);
-        printf("%e %e\n", E/C_KEV, gsto_sto_v(table, incident->Z, Z2, velocity(E, incident->mass)));
+        double E=jibal_get_val(units, UNIT_TYPE_ENERGY, argv[i]);
+        double S=jibal_stop(table, incident, material, E);
+        fprintf(stdout, "%e %e\n", E/C_KEV, S/C_EV_TFU);
     }
+    jibal_material_free(material);
     jibal_units_free(units);
     elements_free(elements);
     isotopes_free(isotopes);
+    return 0;
 }

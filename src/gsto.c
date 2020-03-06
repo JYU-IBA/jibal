@@ -570,18 +570,26 @@ double gsto_sto_v(gsto_table_t *table, int Z1, int Z2, double v) { /* Simplest w
 
     switch (file->xscale) {
         case GSTO_XSCALE_LOG10:
-            i_float = (log10(x)-log10(file->xmin))/(log10(file->xmax)-log10(file->xmin)) * (file->xpoints-1);
+            i_float = (log10(x) - log10(file->xmin)) / (log10(file->xmax) - log10(file->xmin)) * (file->xpoints - 1);
             break;
         case GSTO_XSCALE_LINEAR:
         default:
-            i_float = (x-file->xmin)/(file->xmax-file->xmin) * (file->xpoints-1);
+            i_float = (x - file->xmin) / (file->xmax - file->xmin) * (file->xpoints - 1);
             break;
     }
     i = (int) floor(i_float);
     sto_low = table->ele[Z1][Z2][i];
     sto_high = table->ele[Z1][Z2][i+1];
     sto = ((sto_high-sto_low)*(i_float-1.0*i))+sto_low;
-    return sto;
+
+    switch (file->stounit) {
+        case GSTO_STO_UNIT_NONE:
+            return sto;
+        case GSTO_STO_UNIT_EV15CM2:
+            return sto*C_EV_TFU;
+        default:
+            return sto;
+    }
 }
 
 double *gsto_sto_v_table(gsto_table_t *table, int Z1, int Z2, double v_min, double v_max, int points) {
@@ -599,3 +607,53 @@ double *gsto_sto_v_table(gsto_table_t *table, int Z1, int Z2, double v_min, doub
     return stoppings_out;
 }
 
+double jibal_stop(gsto_table_t *table, const jibal_isotope *incident, const jibal_material *target, double E) {
+    /* Note: using this for fast calculations is not recommended since we have loops over elements and isotopes. */
+    int i, j;
+    double sum = 0.0;
+    for (i = 0; i < target->n_elements; i++) {
+        jibal_element *element = &target->elements[i];
+        for(j=0; j < element->n_isotopes; j++) {
+            const jibal_isotope *isotope = element->isotopes[j];
+            sum += target->concs[i]*element->concs[j]*(
+                    gsto_sto_nuclear_universal(E, incident->Z, incident->mass, element->Z, isotope->mass)
+                    +gsto_sto_v(table, incident->Z, element->Z, velocity(E, incident->mass)));
+        }
+    }
+    return sum;
+}
+
+double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *target, double E) {
+    int i, j;
+    double sum = 0.0;
+    for (i = 0; i < target->n_elements; i++) {
+        jibal_element *element = &target->elements[i];
+        for(j=0; j < element->n_isotopes; j++) {
+            const jibal_isotope *isotope = element->isotopes[j];
+            sum += target->concs[i]*element->concs[j]*gsto_sto_nuclear_universal(E, incident->Z, incident->mass, element->Z, isotope->mass);
+        }
+    }
+    return sum;
+}
+
+double jibal_stop_ele(gsto_table_t *table, const jibal_isotope *incident, const jibal_material *target, double E) {
+    int i, j;
+    double sum = 0.0;
+    for (i = 0; i < target->n_elements; i++) {
+        jibal_element *element = &target->elements[i];
+        for(j=0; j < element->n_isotopes; j++) {
+            const jibal_isotope *isotope = element->isotopes[j];
+            sum += target->concs[i]*element->concs[j]*gsto_sto_v(table, incident->Z, element->Z, velocity(E, incident->mass));
+        }
+    }
+    return sum;
+}
+
+int jibal_stop_auto_assign(gsto_table_t *table, const jibal_isotope *incident, jibal_material *target) {
+    int i;
+    int success = 0;
+    for (i = 0; i < target->n_elements; i++) {
+        success += gsto_auto_assign(table, incident->Z, target->elements[i].Z);
+    }
+    return success;
+}

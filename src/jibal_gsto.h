@@ -1,6 +1,9 @@
 #ifndef _JIBAL_GSTO_H_
 #define _JIBAL_GSTO_H_
 
+#include <jibal_masses.h>
+#include <jibal_material.h>
+
 #define GSTO_MAX_LINE_LEN 1024
 #define GSTO_END_OF_HEADERS "==END-OF-HEADER=="
 #define GSTO_DATA_PATH_ENV_VARIABLE "POTKU_DATA_PATH"
@@ -103,4 +106,10 @@ double gsto_sto_raw(gsto_table_t *table, int Z1, int Z2, int point_number);
 int gsto_auto_assign_range(gsto_table_t *table, int Z1_min, int Z1_max, int Z2_min, int Z2_max);
 int gsto_auto_assign(gsto_table_t *table, int Z1, int Z2);
 double gsto_sto_nuclear_universal(double E, int Z1, double m1, int Z2, double m2);
+
+/* These are "NEW" wrapper functions for the "OLD" gsto stuff. The contents may be rewritten */
+double jibal_stop(gsto_table_t *table, const jibal_isotope *incident, const jibal_material *target, double E);
+double jibal_stop_ele(gsto_table_t *table, const jibal_isotope *incident, const jibal_material *target, double E);
+double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *target, double E);
+int jibal_stop_auto_assign(gsto_table_t *table, const jibal_isotope *incident, jibal_material *target); /* TODO: energy range */
 #endif
