@@ -193,7 +193,6 @@ jibal_element *jibal_element_find(jibal_element *elements, element_name name) {
     int Z;
     for(Z=0; Z <= JIBAL_ELEMENTS; Z++) {
         if(strncmp(elements[Z].name, name, sizeof(element_name))==0) {
-            fprintf(stderr, "Match with Z=%i, also Z=%i\n", Z, elements[Z].Z);
             return &elements[Z];
         }
     }
@@ -207,7 +206,9 @@ int jibal_element_number_of_isotopes(jibal_element *element, double abundance_th
     for(i=0; i < element->n_isotopes; i++) {
         if(element->isotopes[i]->abundance >= abundance_threshold) {
             n++;
+#ifdef DEBUG
             fprintf(stderr, "A=%i above threshold, since %g > %g\n", element->isotopes[i]->A, element->isotopes[i]->abundance, abundance_threshold);
+#endif
         }
     }
     return n;
@@ -266,7 +267,9 @@ jibal_element *jibal_element_copy(jibal_element *element, int A) {
                 break;
         }
     }
+#ifdef DEBUG
     fprintf(stderr, "Found %i isotopes out of %i\n", j, n);
+#endif
     if(j==n) { /* We found all the isotopes we were looking for */
         jibal_element_normalize(e);
         return e;

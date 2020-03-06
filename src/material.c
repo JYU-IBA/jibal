@@ -82,7 +82,6 @@ jibal_material *jibal_material_create(jibal_element *elements, const char *formu
         }
         a=b;
     }
-    fprintf(stderr, "%i elements!!\n", material->n_elements);
     material->elements=calloc(material->n_elements, sizeof(jibal_element));
     material->concs=calloc(material->n_elements, sizeof(double));
 
@@ -95,7 +94,6 @@ jibal_material *jibal_material_create(jibal_element *elements, const char *formu
         fprintf(stderr, "Parsed. Name = %s, A = %i, conc = %g. Remaining to be parsed: \"%s\"\n", name, A, conc, b);
 #endif
         jibal_element *element=jibal_element_copy(jibal_element_find(elements, name), A);
-        fprintf(stderr, "Element: %p\n", element);
         free(name);
         if(!element) {
             return NULL;
@@ -130,7 +128,7 @@ void jibal_material_print(FILE * restrict stream, jibal_material *material) {
     fprintf(stream, "Material %s has %i elements.\n", material->name, material->n_elements);
     for(i=0; i < material -> n_elements; i++) {
         jibal_element *element = &material->elements[i];
-        fprintf(stream, "    %9.5f%% elements[%i]: %s (Z=%i), %i isotopes:\n", material->concs[i]/C_PERCENT, i, element->name, element->Z, element->n_isotopes);
+        fprintf(stream, "    %2i. %s (Z=%i): %9.5f%%  with %i isotopes:\n", i+1, element->name, element->Z, material->concs[i]/C_PERCENT, element->n_isotopes);
         int j;
         for(j=0; j < element->n_isotopes; j++) {
             const jibal_isotope *isotope = element->isotopes[j];

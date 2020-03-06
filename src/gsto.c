@@ -61,7 +61,9 @@ header_properties_t gsto_get_headers_property(const char *property) {
 int gsto_add_file(gsto_table_t *table, char *name, char *filename, int Z1_min, int Z1_max, int Z2_min, int Z2_max, char *type) {
     int success=1;
     int i;
+#ifdef DEBUG
     fprintf(stderr, "Adding file %s (%s), %i<=Z1<=%i, %i<=Z2<=%i to database.\n", name, filename, Z1_min, Z1_max, Z2_min, Z2_max);
+#endif
     table->files = realloc(table->files, sizeof(gsto_file_t)*(table->n_files+1));
     gsto_file_t *new_file=&table->files[table->n_files];
     new_file->name = strdup(name);
@@ -445,7 +447,9 @@ gsto_table_t *gsto_init(int Z_max, char *stoppings_file_name) {
     }
     settings_file=fopen(stoppings_file_name, "r");
     if(settings_file) { /* If file could be opened, try to read it */
+#ifdef DEBUG
         fprintf(stderr, "Settings from %s\n", stoppings_file_name);
+#endif
         while (fgets(line, GSTO_MAX_LINE_LEN, settings_file) != NULL) {
             i++;
             if(line[0] == '#') /* Strip comments */

@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
         return -1;
     }
     jibal_isotope *incident=isotope_find(isotopes, argv[1], 0,0 );
-    fprintf(stderr, "m_1=%g kg (%g u)\n", incident->mass, incident->mass/C_U);
+    fprintf(stderr, "Z1=%i\nm1=%g kg (%g u)\n", incident->Z, incident->mass, incident->mass/C_U);
 
     double E=0.0;
     if(argc<=2) {
@@ -41,17 +41,17 @@ int main(int argc, char **argv) {
 
     }
     char *target_string=argv[2];
-    fprintf(stderr, "Creating material %s\n", argv[2]);
-    jibal_material *material=jibal_material_create(elements, target_string);
-    if(!material) {
+
+    jibal_material *target=jibal_material_create(elements, target_string);
+    if(!target) {
         fprintf(stderr, "\"%s\" is not a valid material formula\n", target_string);
         return -1;
     }
-    jibal_material_print(stderr, material);
+    jibal_material_print(stderr, target);
     table=gsto_init(91, NULL);
     if(!table)
         return -1;
-    if(!jibal_stop_auto_assign(table, incident, material))
+    if(!jibal_stop_auto_assign(table, incident, target))
         return -1;
     gsto_load(table);
 
@@ -59,10 +59,10 @@ int main(int argc, char **argv) {
     int i;
     for(i=3; i<argc; i++) {
         double E=jibal_get_val(units, UNIT_TYPE_ENERGY, argv[i]);
-        double S=jibal_stop(table, incident, material, E);
+        double S=jibal_stop(table, incident, target, E);
         fprintf(stdout, "%e %e\n", E/C_KEV, S/C_EV_TFU);
     }
-    jibal_material_free(material);
+    jibal_material_free(target);
     jibal_units_free(units);
     elements_free(elements);
     isotopes_free(isotopes);
