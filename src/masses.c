@@ -45,7 +45,7 @@ int isotope_set(jibal_isotope *isotope, int Z, int N, int A, double mass, isotop
 
 
 jibal_isotope *isotopes_load(const char *filename) {
-    char *line, *line_split;
+    char *line_split;
     char *columns[6];
     char **col;
     isotope_name name;
@@ -57,12 +57,10 @@ jibal_isotope *isotopes_load(const char *filename) {
         fprintf(stderr, "Could not load isotope table from file %s\n", filename);
         return NULL;
     }
-    line=malloc(sizeof(char)*JIBAL_MASSES_LINE_LENGTH);
-    if(!line) 
-        return NULL;
+    char line[JIBAL_LINE_LENGTH];
     jibal_isotope *isotopes=malloc(sizeof(jibal_isotope)*(JIBAL_MASSES_ISOTOPES+1));
     int n=0;
-    while(fgets(line, JIBAL_MASSES_LINE_LENGTH, in_file) != NULL) {
+    while(fgets(line, JIBAL_LINE_LENGTH, in_file) != NULL) {
         line_split=line; /* strsep will screw up line_split, reset for every new line */
         for (col = columns; (*col = strsep(&line_split, " \t")) != NULL;)
             if (**col != '\0')
@@ -83,9 +81,46 @@ jibal_isotope *isotopes_load(const char *filename) {
         n++;
     }
     isotopes[n].A=0; /* "Null terminate" */
+#ifdef DEBUG
+    fprintf(stderr, "Loaded %i isotopes (maximum set at %i) from %s\n", n, JIBAL_MASSES_ISOTOPES, filename);
+#endif
     fclose(in_file);
-    free(line);
     return isotopes;
+}
+
+int abundances_load(jibal_isotope *isotopes, const char *filename) {
+    int n;
+    if(!filename) {
+        filename=JIBAL_ABUNDANCES_FILE;
+    }
+    FILE *in_file=fopen(filename, "r");
+    if(!in_file) {
+        fprintf(stderr, "Could not load isotope table from file %s\n", filename);
+        return 0;
+    }
+    char line[JIBAL_LINE_LENGTH];
+    for(n=0; fgets(line, JIBAL_LINE_LENGTH, in_file) != NULL; n++) {
+        int Z, A;
+        double abundance;
+        if(sscanf(line, "%i %i %lf", &Z, &A, &abundance) != 3) { /* Failure (problem with data). Let's keep the good data anyway. */
+            return n;
+        }
+        jibal_isotope *isotope=isotope_find(isotopes, NULL, Z, A);
+        if(!isotope) {
+#ifdef DEBUG
+            fprintf(stderr, "Couldn't find isotope with Z=%i and A=%i\n", Z, A);
+#endif
+            return n;
+        }
+        isotope->abundance=abundance;
+#ifdef DEBUG
+        fprintf(stderr, "Abundance of %s is now %.8lf.%s\n", isotope->name, abundance, abundance<ABUNDANCE_THRESHOLD?" WARNING: This is below threshold!":"");
+#endif
+    }
+#ifdef DEBUG
+    fprintf(stderr, "Successfully loaded %i abundances from %s\n", n, filename);
+#endif
+    return n;
 }
 
 void isotopes_free(jibal_isotope *isotopes) {
@@ -128,7 +163,7 @@ jibal_element *elements_populate(const jibal_isotope *isotopes) {
         for(i=0; i < e->n_isotopes && e->isotopes[i] != NULL; i++); /* Find next free slot */
         e->isotopes[i]=isotope; /* Shallow copy */
 #ifdef DEBUG
-        fprintf(stderr, "Element %i isotope %i is A=%i, abundance=%.6f\n", isotope->Z, i, isotope->A, isotope->abundance);
+        fprintf(stderr, "Element %i isotope %i is A=%i\n", isotope->Z, i, isotope->A);
 #endif
     }
     return elements;
@@ -148,8 +183,8 @@ jibal_element *jibal_element_new(const element_name name, int Z, int n_isotopes)
     jibal_element *e=malloc(sizeof(jibal_element));
     e->Z=Z;
     e->n_isotopes=n_isotopes;
-    e->isotopes=malloc(n_isotopes*sizeof(jibal_isotope *));
-    e->concs=malloc(n_isotopes* sizeof(double));
+    e->isotopes=calloc(n_isotopes, sizeof(jibal_isotope *));
+    e->concs=calloc(n_isotopes, sizeof(double));
     strncpy(e->name, name, sizeof(element_name)-1);
     return e;
 }
@@ -172,15 +207,16 @@ int jibal_element_number_of_isotopes(jibal_element *element, double abundance_th
     for(i=0; i < element->n_isotopes; i++) {
         if(element->isotopes[i]->abundance >= abundance_threshold) {
             n++;
-            fprintf(stderr, "A=%i\n", element->isotopes[i]->A);
+            fprintf(stderr, "A=%i above threshold, since %g > %g\n", element->isotopes[i]->A, element->isotopes[i]->abundance, abundance_threshold);
         }
     }
     return n;
 }
 
 jibal_element *jibal_element_copy(jibal_element *element, int A) {
-    if(!element)
+    if(!element || A < -1) {
         return NULL;
+    }
     jibal_element *e=malloc(sizeof(jibal_element)); /* output */
     e->Z=element->Z;
     strncpy(e->name, element->name, sizeof(element_name)-1);
@@ -199,19 +235,44 @@ jibal_element *jibal_element_copy(jibal_element *element, int A) {
             n=1;
             break;
     }
-    fprintf(stderr, "%i isotopes\n", n);
-
+#ifdef DEBUG
+    fprintf(stderr, "The answer is %i isotopes\n", n);
+#endif
     e=jibal_element_new(element->name, element->Z, n);
-    int i;
+    int i,j=0;
     for(i=0; i < element->n_isotopes; i++) {
-        if(A>0 && element->isotopes[i]->A == A) { /* Single isotope case */
-            e->isotopes[0] = element->isotopes[i];
-            e->concs[0] = 1.0;
-            return e;
+        switch(A) {
+            case -1: /* All isotopes */
+                e->isotopes[i] = element->isotopes[i];
+                e->concs[i] = element->isotopes[i]->abundance;
+                j++;
+                break;
+            case 0: /* Natural isotopes (above threshold) */
+                if(element->isotopes[i]->abundance >= ABUNDANCE_THRESHOLD && j < n) {
+                    e->isotopes[j] = element->isotopes[i];
+                    e->concs[j] = element->isotopes[i]->abundance;
+#ifdef DEBUG
+                    fprintf(stderr, "Assigned isotope %i from isotope %i (element %s), abundance %.6f\n", j, i, element->name, element->isotopes[i]->abundance);
+#endif
+                    j++;
+                }
+                break;
+            default: /* Single isotope case */
+                if(element->isotopes[i]->A == A) {
+                    e->isotopes[0] = element->isotopes[i];
+                    e->concs[0] = 1.0;
+                    j++;
+                }
+                break;
         }
-        /* TODO TODO TODO: CASES WITH MULTIPLE ISOTOPES */
     }
-    return e;
+    fprintf(stderr, "Found %i isotopes out of %i\n", j, n);
+    if(j==n) { /* We found all the isotopes we were looking for */
+        return e;
+    } else {
+        free(e);
+        return NULL;
+    }
 }
 
 
@@ -261,65 +322,22 @@ int jibal_find_Z_by_name(jibal_isotope *isotopes, char *name) { /* Give just ele
     return 0;
 }
 
-jibal_isotope *find_most_abundant_isotope(jibal_isotope *isotopes, int Z) {
-    int i;
-    jibal_isotope *isotope;
-    jibal_isotope *most_abundant_isotope=NULL;
-    double abundance=0;
-    for(isotope=isotopes; isotope->A != 0; isotope++) {
-        if(isotope->Z == Z) { /* The right element */
-            if(isotope->abundance > abundance) { /* Has higher abundance than anything found so far */
-                abundance=isotope->abundance;
-                most_abundant_isotope=isotope;
-            }
-        }
-    }
-    return most_abundant_isotope;
-}
-
-jibal_isotope *find_isotope(jibal_isotope *isotopes, int Z, int A) {
-    jibal_isotope *isotope;
-    int i;
-    for(isotope=isotopes; isotope->A != 0; isotope++) {
-        if(isotope->Z == Z && isotope->A == A) {
-            return isotope;
-        }
-    }
-    return NULL;
-}
-
-jibal_isotope *isotopes_find_all(jibal_isotope *isotopes, int Z) {
-    jibal_isotope *isotope;
-    jibal_isotope *isotopes_out; /*!< Table, size to be determined */
-    int i, j;
-    int n_isotopes=0;
-    for(isotope=isotopes; isotope->A != 0; isotope++) {
-        if(isotope->Z == Z)
-           n_isotopes++;
-    }
-    if(!n_isotopes) {
-        fprintf(stderr, "Did not find any isotopes matching Z=%i\n", Z);
-        return 0;
-    }
-    isotopes_out=malloc(sizeof(jibal_isotope)*n_isotopes);
-    j=0;
-    for(isotope=isotopes; isotope->A != 0; isotope++) {
-        if(isotope->Z == Z) {
-            if(j>=n_isotopes)
-                break;
-            memcpy(isotopes_out+j, isotope, sizeof(jibal_isotope));
-            j++;
-        }
-    } 
-    return isotopes_out;
-}
-jibal_isotope *isotope_find(jibal_isotope *isotopes, const char *name) {
+jibal_isotope *isotope_find(jibal_isotope *isotopes, const char *name, int Z, int A) {
     jibal_isotope *isotope;
     int i=0;
-    for(isotope=isotopes; isotope->A != 0; isotope++) {
-        if(strcmp(isotope->name, name) == 0) {
-            return isotope;
+    if(name != NULL) {
+        for (isotope = isotopes; isotope->A != 0; isotope++) {
+            if (strcmp(isotope->name, name) == 0) {
+                return isotope;
+            }
         }
+        return  NULL;
+    } else {
+        for (isotope = isotopes; isotope->A != 0; isotope++) {
+            if(isotope->Z == Z && isotope->A == A) {
+                return isotope;
+            }
+        }
+        return NULL;
     }
-    return NULL;
 }

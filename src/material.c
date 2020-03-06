@@ -120,7 +120,7 @@ void jibal_material_print(FILE * restrict stream, jibal_material *material) {
         int j;
         for(j=0; j < element->n_isotopes; j++) {
             const jibal_isotope *isotope = element->isotopes[j];
-            fprintf(stream, "    %6.3f%% isotopes[%i]: %s (A=%i)\n", element->concs[i]/C_PERCENT, j, isotope->name, isotope->A);
+            fprintf(stream, "    %6.3f%% isotopes[%i]: %s (A=%i)\n", element->concs[j]/C_PERCENT, j, isotope->name, isotope->A);
         }
     }
 }

@@ -22,7 +22,7 @@
 #include <jibal_units.h>
 #include <jibal_phys.h>
 
-#define JIBAL_MASSES_LINE_LENGTH 80
+#define JIBAL_LINE_LENGTH 80 /* Maximum length of a single line in any data input file */
 
 #ifndef JIBAL_MASSES_ISOTOPES
 #define JIBAL_MASSES_ISOTOPES 4095 /* Maximum number of isotopes.  */
@@ -54,33 +54,19 @@ typedef struct {
     double *concs; /* This is NULL in "elements" table, but when used by jibal_material the concentrations of isotopes goes in an array here. */
 } jibal_element;
 
-typedef struct {
-    double v_max;
-    int vsteps;
-    int z_max;
-    double ***sto; /* sto[Z1][Z2][v_index] */
-    double *v; /* v=v[v_index] */
-} jibal_stopping;
-
-
 double jibal_find_average_mass(jibal_isotope *isotopes, int Z);
 int jibal_find_Z_by_name(jibal_isotope *isotopes, char *name);
 double jibal_find_mass(jibal_isotope *isotope, int Z, int A); /* find isotope mass, but if A=0 calculate average mass of elem. */
 
 jibal_isotope *isotopes_load(const char *filename);
+int abundances_load(jibal_isotope *isotopes, const char *filename);
 void isotopes_free(jibal_isotope *isotopes);
 jibal_element *elements_populate(const jibal_isotope *isotopes);
 void elements_free(jibal_element *elements);
 jibal_element *jibal_element_find(jibal_element *elements, element_name name);
 int jibal_element_number_of_isotopes(jibal_element *element, double abundance_threshold);
 jibal_element *jibal_element_copy(jibal_element *element, int A); /* Create a copy of a single element, either with all known isotopes (A=-1), naturally abundant isotopes (A=0) or a single isotope (A = mass number) */
-jibal_isotope *find_first_isotope(jibal_isotope *isotopes, int Z);
-jibal_isotope *find_most_abundant_isotope(jibal_isotope *isotopes, int Z);
-jibal_isotope *find_isotope(jibal_isotope *isotopes, int Z, int A);
-jibal_isotope *isotopes_find_all(jibal_isotope *isotopes, int Z);
-jibal_isotope *isotope_find(jibal_isotope *isotopes, const char *name);
-jibal_stopping *init_stopping_table(char *filename);
-int delete_stopping_table(jibal_stopping);
+jibal_isotope *isotope_find(jibal_isotope *isotopes, const char *name, int Z, int A); /* Give either name or Z and A. If name is NULL Z and A are used. */
 
 
 double velocity(double E, double mass); /* Use SI units */

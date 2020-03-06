@@ -24,6 +24,7 @@
 
 int main(int argc, char **argv) {
     jibal_isotope *isotopes=isotopes_load(NULL);
+    abundances_load(isotopes, NULL);
     jibal_element *elements=elements_populate(isotopes);
     jibal_units *units=jibal_units_default();
     gsto_table_t *table; /* TODO: rename */
@@ -31,7 +32,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Couldn't load isotopes.\n");
         return -1;
     }
-    jibal_isotope *incident=isotope_find(isotopes, argv[1]);
+    jibal_isotope *incident=isotope_find(isotopes, argv[1], 0,0 );
     fprintf(stderr, "m_1=%g kg (%g u)\n", incident->mass, incident->mass/C_U);
 
     double E=0.0;
@@ -46,6 +47,10 @@ int main(int argc, char **argv) {
 #ifdef MATERIAL_TEST
     fprintf(stderr, "Creating material %s\n", argv[2]);
     jibal_material *material=jibal_material_create(elements, argv[2]);
+    if(!material) {
+        fprintf(stderr, "\"%s\" is not a valid material formula\n", argv[2]);
+        return -1;
+    }
     jibal_material_print(stderr, material);
     jibal_material_free(material);
     return 0;
