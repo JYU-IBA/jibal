@@ -35,7 +35,6 @@ int main(int argc, char **argv) {
     jibal_isotope *incident=isotope_find(isotopes, argv[1], 0,0 );
     fprintf(stderr, "Z1=%i\nm1=%g kg (%g u)\n", incident->Z, incident->mass, incident->mass/C_U);
 
-    double E=0.0;
     if(argc<=2) {
         return -1;
 
@@ -57,8 +56,16 @@ int main(int argc, char **argv) {
 
 
     int i;
-    for(i=3; i<argc; i++) {
-        double E=jibal_get_val(units, UNIT_TYPE_ENERGY, argv[i]);
+    double E, E_low, E_step=0.0, E_high=0.0;
+    if(argc >= 4) {
+        E_low=jibal_get_val(units, UNIT_TYPE_ENERGY, argv[3]);
+    }
+    if(argc >= 6) {
+        E_step=jibal_get_val(units, UNIT_TYPE_ENERGY, argv[4]);
+        E_high=jibal_get_val(units, UNIT_TYPE_ENERGY, argv[5]);
+    }
+    fprintf(stderr, "E_low=%g, E_high=%g, E_step=%g\n", E_low/C_KEV, E_high/C_KEV, E_step/C_KEV);
+    for(E=E_low; E <= E_high; E += E_step) {
         double S=jibal_stop(table, incident, target, E);
         fprintf(stdout, "%e %e\n", E/C_KEV, S/C_EV_TFU);
     }
