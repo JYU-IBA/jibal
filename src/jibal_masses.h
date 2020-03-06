@@ -66,6 +66,7 @@ void elements_free(jibal_element *elements);
 jibal_element *jibal_element_find(jibal_element *elements, element_name name);
 int jibal_element_number_of_isotopes(jibal_element *element, double abundance_threshold);
 jibal_element *jibal_element_copy(jibal_element *element, int A); /* Create a copy of a single element, either with all known isotopes (A=-1), naturally abundant isotopes (A=0) or a single isotope (A = mass number) */
+void jibal_element_normalize(jibal_element *element);
 jibal_isotope *isotope_find(jibal_isotope *isotopes, const char *name, int Z, int A); /* Give either name or Z and A. If name is NULL Z and A are used. */
 
 

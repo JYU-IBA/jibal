@@ -268,10 +268,25 @@ jibal_element *jibal_element_copy(jibal_element *element, int A) {
     }
     fprintf(stderr, "Found %i isotopes out of %i\n", j, n);
     if(j==n) { /* We found all the isotopes we were looking for */
+        jibal_element_normalize(e);
         return e;
     } else {
         free(e);
         return NULL;
+    }
+}
+
+void jibal_element_normalize(jibal_element *element) {
+    double sum=0.0;
+    int i;
+    for(i=0; i < element->n_isotopes; i++) {
+        sum += element->concs[i];
+    }
+    if(sum == 0.0) {
+        return;
+    }
+    for(i=0; i < element->n_isotopes; i++) {
+        element->concs[i] /= sum;
     }
 }
 

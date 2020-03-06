@@ -108,7 +108,21 @@ jibal_material *jibal_material_create(jibal_element *elements, const char *formu
         free(element);
         a=b;
     }
+    jibal_material_normalize(material);
     return material;
+}
+void jibal_material_normalize(jibal_material *material) {
+    double sum=0.0;
+    int i;
+    for(i=0; i < material->n_elements; i++) {
+        sum += material->concs[i];
+    }
+    if(sum == 0.0) { /* TODO: threshold? */
+        return;
+    }
+    for(i=0; i < material->n_elements; i++) {
+        material->concs[i] /= sum;
+    }
 }
 
 void jibal_material_print(FILE * restrict stream, jibal_material *material) {
@@ -116,11 +130,12 @@ void jibal_material_print(FILE * restrict stream, jibal_material *material) {
     fprintf(stream, "Material %s has %i elements.\n", material->name, material->n_elements);
     for(i=0; i < material -> n_elements; i++) {
         jibal_element *element = &material->elements[i];
-        fprintf(stream, "  %6.3f%% elements[%i]: %s (Z=%i), %i isotopes\n", material->concs[i]/C_PERCENT, i, element->name, element->Z, element->n_isotopes);
+        fprintf(stream, "    %9.5f%% elements[%i]: %s (Z=%i), %i isotopes:\n", material->concs[i]/C_PERCENT, i, element->name, element->Z, element->n_isotopes);
         int j;
         for(j=0; j < element->n_isotopes; j++) {
             const jibal_isotope *isotope = element->isotopes[j];
-            fprintf(stream, "    %6.3f%% isotopes[%i]: %s (A=%i)\n", element->concs[j]/C_PERCENT, j, isotope->name, isotope->A);
+            fprintf(stream, "      %2i. %5s: %9.5lf%%  (A=%i, abundance=%.5lf%%)\n", j+1, isotope->name, element->concs[j]/C_PERCENT,
+                    isotope->A, isotope->abundance / C_PERCENT);
         }
     }
 }
