@@ -13,4 +13,8 @@ make install
 
 ## Usage
 
+The get\_stop function can be used to extract stopping like this:
 
+~~~~
+get\_stop 4He SiO2 "1 MeV"
+~~~~
