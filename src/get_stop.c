@@ -27,7 +27,11 @@ int main(int argc, char **argv) {
     abundances_load(isotopes, NULL);
     jibal_element *elements=elements_populate(isotopes);
     jibal_units *units=jibal_units_default();
-    jibal_gsto *table; /* TODO: rename */
+    jibal_gsto *table; /* TODO: rename */ 
+    if(argc<=2) {
+        return -1;
+
+    }
     if(!isotopes) {
         fprintf(stderr, "Couldn't load isotopes.\n");
         return -1;
@@ -35,10 +39,6 @@ int main(int argc, char **argv) {
     jibal_isotope *incident=isotope_find(isotopes, argv[1], 0,0 );
     fprintf(stderr, "Z1=%i\nm1=%g kg (%g u)\n", incident->Z, incident->mass, incident->mass/C_U);
 
-    if(argc<=2) {
-        return -1;
-
-    }
     char *target_string=argv[2];
 
     jibal_material *target=jibal_material_create(elements, target_string);
