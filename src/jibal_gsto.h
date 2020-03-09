@@ -89,26 +89,25 @@ typedef struct {
     int n_comb;
     gsto_file_t *files; /* table of gsto_file_t */
     gsto_file_t **assignments; /* TODO: what is this */
-} gsto_table_t;
+} jibal_gsto;
 
-int gsto_add_file(gsto_table_t *table, char *name, char *filename, int Z1_min, int Z1_max, int Z2_min, int Z2_max, char *type);
-gsto_table_t *gsto_allocate(int Z1_max, int Z2_max);
-int jibal_gsto_assign(gsto_table_t *table, int Z1, int Z2, gsto_file_t *file);
-int gsto_load_binary_file(gsto_table_t *table, gsto_file_t *file);
-int gsto_load_ascii_file(gsto_table_t *table, gsto_file_t *file);
-int gsto_load(gsto_table_t *table);
 
-int jibal_gsto_table_get_index(gsto_table_t *table, int Z1, int Z2);
-int gsto_print_files(gsto_table_t *table);
-int gsto_print_assignments(gsto_table_t *table);
-gsto_table_t *gsto_init(int Z_max, char *stoppings_file_name);
+jibal_gsto *gsto_init(int Z_max, char *stoppings_file_name);
+int gsto_add_file(jibal_gsto *workspace, char *name, char *filename, int Z1_min, int Z1_max, int Z2_min, int Z2_max, char *type);
+int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file);
+int gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file);
+int gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file);
+int gsto_load(jibal_gsto *workspace);
+
+int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2);
+int jibal_gsto_print_files(jibal_gsto *workspace);
+int jibal_gsto_print_assignments(jibal_gsto *workspace);
+
 
 double jibal_gsto_scale_velocity_to_x(const gsto_file_t *file, double v); /* from SI units */
 double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y); /* to SI units */
-double gsto_sto_v(gsto_table_t *table, int Z1, int Z2, double v);
-double *gsto_sto_v_table(gsto_table_t *table, int Z1, int Z2, double v_min, double v_max, int points);
-int gsto_auto_assign_range(gsto_table_t *table, int Z1_min, int Z1_max, int Z2_min, int Z2_max);
-int gsto_auto_assign(gsto_table_t *table, int Z1, int Z2);
+double gsto_sto_v(jibal_gsto *workspace, int Z1, int Z2, double v);
+double *gsto_sto_v_table(jibal_gsto *workspace, int Z1, int Z2, double v_min, double v_max, int points);
 double gsto_sto_nuclear_universal(double E, int Z1, double m1, int Z2, double m2);
 
 
@@ -116,14 +115,17 @@ int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2);
 const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2);
 double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2);
 
-gsto_file_t *jibal_gsto_get_file(gsto_table_t *table, int Z1, int Z2);
+gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, int Z1, int Z2);
 
-/* These are "NEW" wrapper functions for the "OLD" gsto stuff. The contents may be rewritten */
-double jibal_stop(gsto_table_t *table, const jibal_isotope *incident, const jibal_material *target, double E);
-double jibal_stop_ele(gsto_table_t *table, const jibal_isotope *incident, const jibal_material *target, double E);
+double jibal_stop(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E);
+double jibal_stop_ele(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E);
 double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *target, double E);
-int jibal_stop_auto_assign(gsto_table_t *table, const jibal_isotope *incident, jibal_material *target); /* TODO: energy range */
+int jibal_stop_auto_assign(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target); /* TODO: energy range */
 
 void jibal_gsto_file_free(gsto_file_t *file);
-void jibal_gsto_table_free(gsto_table_t *table);
+void jibal_gsto_free(jibal_gsto *workspace);
+
+
+/* The following are mostly internal */
+jibal_gsto *gsto_allocate(int Z1_max, int Z2_max);
 #endif

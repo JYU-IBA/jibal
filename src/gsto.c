@@ -59,7 +59,7 @@ header_properties_t gsto_get_headers_property(const char *property) {
     return 0;
 }
 
-int gsto_add_file(gsto_table_t *table, char *name, char *filename, int Z1_min, int Z1_max, int Z2_min, int Z2_max, char *type) {
+int gsto_add_file(jibal_gsto *table, char *name, char *filename, int Z1_min, int Z1_max, int Z2_min, int Z2_max, char *type) {
     int success=1;
     int i;
 #ifdef DEBUG
@@ -112,9 +112,9 @@ int gsto_add_file(gsto_table_t *table, char *name, char *filename, int Z1_min, i
     
 }
 
-gsto_table_t *gsto_allocate(int Z1_max, int Z2_max) {
+jibal_gsto *gsto_allocate(int Z1_max, int Z2_max) {
     int Z1;
-    gsto_table_t *table = malloc(sizeof(gsto_table_t));
+    jibal_gsto *table = malloc(sizeof(jibal_gsto));
     table->Z1_max=Z1_max;
     table->Z2_max=Z2_max;
     table->n_files=0;
@@ -140,31 +140,32 @@ void jibal_gsto_file_free(gsto_file_t *file) {
     free(file);
 }
 
-void jibal_gsto_table_free(gsto_table_t *table) {
+void jibal_gsto_free(jibal_gsto *workspace) {
     int i;
-    for(i=0; i<table->n_files; i++) {
-        gsto_file_t *file=&table->files[i];
+    for(i=0; i < workspace->n_files; i++) {
+        gsto_file_t *file=&workspace->files[i];
         jibal_gsto_file_free(file);
     }
+    free(workspace->assignments);
 }
 
-int jibal_gsto_assign(gsto_table_t *table, int Z1, int Z2, gsto_file_t *file) { /* Used internally, can be used after init to override autoinit */
-    int i=jibal_gsto_table_get_index(table, Z1, Z2);
+int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file) { /* Used internally, can be used after init to override autoinit */
+    int i=jibal_gsto_table_get_index(workspace, Z1, Z2);
     if(i < 0) {
         return 0;
     }
-    table->assignments[jibal_gsto_table_get_index(table, Z1, Z2)]=file;
+    workspace->assignments[jibal_gsto_table_get_index(workspace, Z1, Z2)]=file;
     return 1;
 }
 
-int gsto_load_binary_file(gsto_table_t *table, gsto_file_t *file) {
+int gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
     int Z1, Z2;
 #ifdef DEBUG
     fprintf(stderr, "Loading binary data.\n");
 #endif
     for (Z1=file->Z1_min; Z1<=file->Z1_max; Z1++) {
         for (Z2=file->Z2_min; Z2<=file->Z2_max; Z2++) {
-            if (file == jibal_gsto_get_file(table, Z1, Z2)) {
+            if (file == jibal_gsto_get_file(workspace, Z1, Z2)) {
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
                 fread(data, sizeof(double), file->xpoints, file->fp);
             } else {
@@ -175,16 +176,16 @@ int gsto_load_binary_file(gsto_table_t *table, gsto_file_t *file) {
     return 1;
 }
 
-int jibal_gsto_table_get_index(gsto_table_t *table, int Z1, int Z2) {
-    if(Z1 < 1 || Z1 > table->Z1_max || Z2 < 1 || Z2 > table->Z2_max) {
+int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2) {
+    if(Z1 < 1 || Z1 > workspace->Z1_max || Z2 < 1 || Z2 > workspace->Z2_max) {
         return -1;
     }
     int z1 = (Z1 - 1);
     int z2 = (Z2 - 1);
-    int n_z1 = (table->Z1_max - 1 + 1);
-    int n_z2 = (table->Z2_max - 1 + 1);
+    int n_z1 = (workspace->Z1_max - 1 + 1);
+    int n_z2 = (workspace->Z2_max - 1 + 1);
     int i = (n_z2 * z1 + z2);
-    assert(i >= 0 && i < table->n_comb);
+    assert(i >= 0 && i < workspace->n_comb);
     return i;
 }
 
@@ -218,7 +219,7 @@ double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2) {
     return file->data[i];
 }
 
-int gsto_load_ascii_file(gsto_table_t *table, gsto_file_t *file) { 
+int gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
     int Z1, Z2, previous_Z1=file->Z1_min, previous_Z2=file->Z2_min-1, skip, i;
     char *line = calloc(GSTO_MAX_LINE_LEN, sizeof(char));
     int actually_skipped=0;
@@ -226,9 +227,9 @@ int gsto_load_ascii_file(gsto_table_t *table, gsto_file_t *file) {
     fprintf(stderr, "Loading ascii data.\n");
 #endif
     
-    for (Z1=file->Z1_min; Z1<=file->Z1_max && Z1<=table->Z1_max; Z1++) {
+    for (Z1=file->Z1_min; Z1<=file->Z1_max && Z1 <= workspace->Z1_max; Z1++) {
         for (Z2=file->Z2_min; Z2<=file->Z2_max && Z2<=file->Z2_max; Z2++) {
-            if (file == jibal_gsto_get_file(table, Z1, Z2)) { /* This file is assigned to this Z1, Z2 combination, so we have to load the stopping in. */
+            if (file == jibal_gsto_get_file(workspace, Z1, Z2)) { /* This file is assigned to this Z1, Z2 combination, so we have to load the stopping in. */
                 skip=file->xpoints*((Z1-previous_Z1)*(file->Z2_max-file->Z2_min+1)+(Z2-previous_Z2-1)); /* Not sure if correct, but it works. */
 #ifdef DEBUG
                 fprintf(stderr, "Skipping %i*(%i*%i+%i)=%i lines.\n", file->xpoints, Z1-previous_Z1, file->Z1_max-file->Z2_min+1, Z2-previous_Z2-1, skip);
@@ -283,7 +284,7 @@ int gsto_load_ascii_file(gsto_table_t *table, gsto_file_t *file) {
 
 
 
-int gsto_load(gsto_table_t *table) { /* For every file, load combinations from file */
+int gsto_load(jibal_gsto *workspace) { /* For every file, load combinations from file */
     int i;
     gsto_file_t *file;
     char *line=calloc(GSTO_MAX_LINE_LEN, sizeof(char));
@@ -291,8 +292,8 @@ int gsto_load(gsto_table_t *table) { /* For every file, load combinations from f
     char *columns[3];
     char **col;
     int header=0, property;
-    for(i=0; i<table->n_files; i++) {
-        file=&table->files[i];
+    for(i=0; i < workspace->n_files; i++) {
+        file=&workspace->files[i];
         file->lineno=0;
         file->fp=fopen(file->filename, "r");
         if(!file->fp) {
@@ -398,11 +399,11 @@ int gsto_load(gsto_table_t *table) { /* For every file, load combinations from f
         file->data = calloc(file->n_comb, sizeof(double *));
         switch (file->data_format) {
             case GSTO_DF_DOUBLE:
-                gsto_load_binary_file(table, file);
+                gsto_load_binary_file(workspace, file);
                 break;
             case GSTO_DF_ASCII:
             default:
-                gsto_load_ascii_file(table, file);
+                gsto_load_ascii_file(workspace, file);
                 break;
         }
         fclose(file->fp);
@@ -411,18 +412,18 @@ int gsto_load(gsto_table_t *table) { /* For every file, load combinations from f
     return 1;
 }
 
-int gsto_print_files(gsto_table_t *table) {
+int jibal_gsto_print_files(jibal_gsto *workspace) {
     int i, Z1, Z2;
     int assignments;
     gsto_file_t *file;
     fprintf(stderr, "LIST OF AVAILABLE STOPPING FILES FOLLOWS\n=====\n");
     
-    for(i=0; i<table->n_files; i++) {
+    for(i=0; i < workspace->n_files; i++) {
         assignments=0;
-        file=&table->files[i];
-        for (Z1=1; Z1<=table->Z1_max; Z1++) {
-            for (Z2=1; Z2<=table->Z2_max; Z2++) {
-                if(jibal_gsto_get_file(table, Z1, Z2)==file) {
+        file=&workspace->files[i];
+        for (Z1=1; Z1 <= workspace->Z1_max; Z1++) {
+            for (Z2=1; Z2 <= workspace->Z2_max; Z2++) {
+                if(jibal_gsto_get_file(workspace, Z1, Z2) == file) {
                     assignments++;
                 }
             }        
@@ -433,12 +434,12 @@ int gsto_print_files(gsto_table_t *table) {
     return 1;
 }
 
-int gsto_print_assignments(gsto_table_t *table) {
+int jibal_gsto_print_assignments(jibal_gsto *workspace) {
     int Z1, Z2;
     fprintf(stderr, "LIST OF ASSIGNED STOPPING FILES FOLLOWS\n=====\n");
-    for (Z1=1; Z1<=table->Z1_max; Z1++) {
-        for (Z2=1; Z2<=table->Z2_max; Z2++) {
-            gsto_file_t *file=jibal_gsto_get_file(table, Z1, Z2);
+    for (Z1=1; Z1 <= workspace->Z1_max; Z1++) {
+        for (Z2=1; Z2 <= workspace->Z2_max; Z2++) {
+            gsto_file_t *file=jibal_gsto_get_file(workspace, Z1, Z2);
             if(file) {
                 fprintf(stderr, "Stopping for Z1=%i in Z2=%i assigned to file %s.\n", Z1, Z2, file->name);
             } else {
@@ -452,32 +453,13 @@ int gsto_print_assignments(gsto_table_t *table) {
     return 1;
 }
 
-int gsto_auto_assign_range(gsto_table_t *table, int Z1_min, int Z1_max, int Z2_min, int Z2_max) {
-    int Z1, Z2;
-    int success=1, ret;
-    if(Z1_max > table->Z1_max)
-        Z1_max=table->Z1_max;
-    if(Z2_max > table->Z2_max)
-        Z2_max=table->Z2_max;
-    for(Z1=Z1_min; Z1<=Z1_max; Z1++) {
-        for(Z2=Z2_min; Z2<=Z2_max; Z2++) {
-            ret=gsto_auto_assign(table, Z1, Z2);
-            if(!ret) {
-                fprintf(stderr, "Error in assigning stopping Z1=%i in Z2=%i\n", Z1, Z2);
-            }
-            success &= ret;
-        }
-    }
-    return success;
-}
-
-int gsto_auto_assign(gsto_table_t *table, int Z1, int Z2) {
+int gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
     gsto_file_t *file;
     int success=0, i;
-    for (i=0; i<table->n_files; i++) {
-        file=&table->files[i];
+    for (i=0; i < workspace->n_files; i++) {
+        file=&workspace->files[i];
         if (file->Z1_min<=Z1 && file->Z1_max >= Z1 && file->Z2_min <= Z2 && file->Z2_max >= Z2) { /*File includes this Z1, Z2 combination*/
-            jibal_gsto_assign(table, Z1, Z2, file);
+            jibal_gsto_assign(workspace, Z1, Z2, file);
             success=1;
             break; /* Stop when the first file to include this combination is found */
         }
@@ -485,7 +467,7 @@ int gsto_auto_assign(gsto_table_t *table, int Z1, int Z2) {
     return success;
 }
 
-gsto_table_t *gsto_init(int Z_max, char *stoppings_file_name) {
+jibal_gsto *gsto_init(int Z_max, char *stoppings_file_name) {
     int i=0, n_files=0, n_errors=0;
     char *env_path;
     char *line=calloc(GSTO_MAX_LINE_LEN, sizeof(char));
@@ -493,40 +475,39 @@ gsto_table_t *gsto_init(int Z_max, char *stoppings_file_name) {
     char *columns[8];
     char **col;
     FILE *settings_file=NULL;
-    gsto_table_t *table;
-    table = gsto_allocate(Z_max, Z_max); /* Allocate memory for assignment table, initialize some variables */
+    jibal_gsto *workspace;
+    workspace = gsto_allocate(Z_max, Z_max);
     if(!stoppings_file_name) { /* If filename given (not NULL), attempt to load settings file */
         stoppings_file_name=GSTO_DATA_DEFAULT_FILE;
     }
     settings_file=fopen(stoppings_file_name, "r");
-    if(settings_file) { /* If file could be opened, try to read it */
-#ifdef DEBUG
-        fprintf(stderr, "Settings from %s\n", stoppings_file_name);
-#endif
-        while (fgets(line, GSTO_MAX_LINE_LEN, settings_file) != NULL) {
-            i++;
-            if(line[0] == '#') /* Strip comments */
-                continue;
-            line_split=line; /* strsep will screw up line_split, reset for every new line */
-            for (col = columns; (*col = strsep(&line_split, " \t\r\n")) != NULL;)
-                if (**col != '\0')
-                    if (++col >= &columns[8])
-                        break;
-            if(gsto_add_file(table, columns[7], columns[0], strtol(columns[2], NULL, 10), strtol(columns[3], NULL, 10), strtol(columns[4], NULL, 10), strtol(columns[5], NULL, 10), columns[1])) {
-                n_files++;
-            } else {
-                n_errors++;
-            }
-            
-        }
-#ifdef DEBUG
-        fprintf(stderr, "GSTO: Read %i lines from settings file, added %i files, attempt to add %i files failed.\n", i, n_files, n_errors);
-#endif
-        fclose(settings_file);
-    } else {
-        fprintf(stderr, "GSTO: Could not open settings file (%s)! No stopping files added.\n", stoppings_file_name);
+    if(!settings_file) {
+        return NULL;
     }
-    return table;
+#ifdef DEBUG
+    fprintf(stderr, "Settings from %s\n", stoppings_file_name);
+#endif
+    while (fgets(line, GSTO_MAX_LINE_LEN, settings_file) != NULL) {
+        i++;
+        if(line[0] == '#') /* Strip comments */
+            continue;
+        line_split=line; /* strsep will screw up line_split, reset for every new line */
+        for (col = columns; (*col = strsep(&line_split, " \t\r\n")) != NULL;)
+            if (**col != '\0')
+                if (++col >= &columns[8])
+                    break;
+        if(gsto_add_file(workspace, columns[7], columns[0], strtol(columns[2], NULL, 10), strtol(columns[3], NULL, 10), strtol(columns[4], NULL, 10), strtol(columns[5], NULL, 10), columns[1])) {
+            n_files++;
+        } else {
+            n_errors++;
+        }
+
+    }
+#ifdef DEBUG
+    fprintf(stderr, "GSTO: Read %i lines from settings file, added %i files, attempt to add %i files failed.\n", i, n_files, n_errors);
+#endif
+    fclose(settings_file);
+    return workspace;
 }
 
 double gsto_sto_nuclear_universal(double E, int Z1, double m1, int Z2, double m2) {
@@ -549,11 +530,11 @@ double gsto_sto_nuclear_universal(double E, int Z1, double m1, int Z2, double m2
     return S;
 }
 
-gsto_file_t *jibal_gsto_get_file(gsto_table_t *table, int Z1, int Z2) {
-    int i = jibal_gsto_table_get_index(table, Z1, Z2);
+gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, int Z1, int Z2) {
+    int i = jibal_gsto_table_get_index(workspace, Z1, Z2);
     if(i < 0)
         return NULL;
-    return table->assignments[i];
+    return workspace->assignments[i];
 }
 
 double jibal_gsto_scale_velocity_to_x(const gsto_file_t *file, double v) {
@@ -606,8 +587,8 @@ double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y) {
 
 
 
-double gsto_sto_v(gsto_table_t *table, int Z1, int Z2, double v) { /* Simplest way to access stopping data */
-    gsto_file_t *file=jibal_gsto_get_file(table, Z1, Z2);
+double gsto_sto_v(jibal_gsto *workspace, int Z1, int Z2, double v) { /* Simplest way to access stopping data */
+    gsto_file_t *file=jibal_gsto_get_file(workspace, Z1, Z2);
     if(!file) {
 #ifdef DEBUG
         fprintf(stderr, "No stopping file assigned to Z1=%i Z2=%i\n", Z1, Z2);
@@ -627,14 +608,14 @@ double gsto_sto_v(gsto_table_t *table, int Z1, int Z2, double v) { /* Simplest w
     return jibal_gsto_scale_y_to_stopping(file, sto);
 }
 
-double *gsto_sto_v_table(gsto_table_t *table, int Z1, int Z2, double v_min, double v_max, int points) {
+double *gsto_sto_v_table(jibal_gsto *workspace, int Z1, int Z2, double v_min, double v_max, int points) {
     double *stoppings_out = malloc(sizeof(double)*points);
     double v_step=(v_max-v_min)/(points-1.0);
     double v;
     int i;
     for(i=0; i<points; i++) {
         v=v_step*i+v_min;
-        stoppings_out[i]=gsto_sto_v(table, Z1, Z2, v);
+        stoppings_out[i]=gsto_sto_v(workspace, Z1, Z2, v);
 #ifdef DEBUG
         fprintf(stderr, "%i/%i Calculating stopping for Z1=%i Z2=%i v=%e. Got %e.\n", i, points, Z1, Z2, v, stoppings_out[i]);
 #endif
@@ -642,8 +623,8 @@ double *gsto_sto_v_table(gsto_table_t *table, int Z1, int Z2, double v_min, doub
     return stoppings_out;
 }
 
-double jibal_stop(gsto_table_t *table, const jibal_isotope *incident, const jibal_material *target, double E) {
-    return jibal_stop_nuc(incident, target, E) + jibal_stop_ele(table, incident, target, E);
+double jibal_stop(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {
+    return jibal_stop_nuc(incident, target, E) + jibal_stop_ele(workspace, incident, target, E);
 }
 
 double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *target, double E) {
@@ -664,21 +645,21 @@ double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *targe
     return sum;
 }
 
-double jibal_stop_ele(gsto_table_t *table, const jibal_isotope *incident, const jibal_material *target, double E) {
+double jibal_stop_ele(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {
     int i;
     double sum = 0.0;
     for (i = 0; i < target->n_elements; i++) {
         jibal_element *element = &target->elements[i];
-        sum += target->concs[i]*gsto_sto_v(table, incident->Z, element->Z, velocity(E, incident->mass));
+        sum += target->concs[i]*gsto_sto_v(workspace, incident->Z, element->Z, velocity(E, incident->mass));
     }
     return sum;
 }
 
-int jibal_stop_auto_assign(gsto_table_t *table, const jibal_isotope *incident, jibal_material *target) {
+int jibal_stop_auto_assign(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target) {
     int i;
     int success = 0;
     for (i = 0; i < target->n_elements; i++) {
-        success += gsto_auto_assign(table, incident->Z, target->elements[i].Z);
+        success += gsto_auto_assign(workspace, incident->Z, target->elements[i].Z);
     }
     return success;
 }

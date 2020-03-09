@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
     abundances_load(isotopes, NULL);
     jibal_element *elements=elements_populate(isotopes);
     jibal_units *units=jibal_units_default();
-    gsto_table_t *table; /* TODO: rename */
+    jibal_gsto *table; /* TODO: rename */
     if(!isotopes) {
         fprintf(stderr, "Couldn't load isotopes.\n");
         return -1;
@@ -77,6 +77,6 @@ int main(int argc, char **argv) {
     jibal_units_free(units);
     elements_free(elements);
     isotopes_free(isotopes);
-    jibal_gsto_table_free(table);
+    jibal_gsto_free(table);
     return 0;
 }
