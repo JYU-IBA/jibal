@@ -67,10 +67,11 @@ typedef struct {
     int Z2_min;
     int Z1_max;
     int Z2_max;
+    int n_comb;
     int xpoints; /* How many points of stopping per Z1, Z2 combination */
     double xmin; /* The first point of stopping corresponds to x=xmin */
     double xmax; /* The last point of stopping corresponds to x=xmax */
-    stopping_xscale_t xscale; /* The scale specifies how stopping points are spread between min and max (linear, log...) */ 
+    stopping_xscale_t xscale; /* The scale specifies how stopping points are spread between min and max (linear, log...) */
     stopping_xunit_t xunit; /* Stopping as a function of what? */
     stopping_stounit_t stounit; /* Stopping unit */
     stopping_type_t type; /* does this file contain nuclear, electronic or total stopping? */
@@ -78,6 +79,7 @@ typedef struct {
     FILE *fp;
     char *name; /* Descriptive name of the file, from the settings file */
     char *filename; /* Filename (relative or full path, whatever fopen can chew) */
+    double **data; /* Data is stored here. Array of pointers. Access with functions. */
 } gsto_file_t;
 
 typedef struct {
@@ -86,13 +88,10 @@ typedef struct {
     int n_files;
     gsto_file_t *files; /* table of gsto_file_t */
     gsto_file_t ***assigned_files; /* files[Z1][Z2] pointers */
-    double ***ele; /* ele[Z1][Z2] tables */
-    double ***nuc; /* nuc[Z1][Z2] tables */
 } gsto_table_t;
 
 int gsto_add_file(gsto_table_t *table, char *name, char *filename, int Z1_min, int Z1_max, int Z2_min, int Z2_max, char *type);
 gsto_table_t *gsto_allocate(int Z1_max, int Z2_max);
-int gsto_deallocate(gsto_table_t *table);
 int gsto_assign(gsto_table_t *table, int Z1, int Z2, gsto_file_t *file);
 int gsto_load_binary_file(gsto_table_t *table, gsto_file_t *file);
 int gsto_load_ascii_file(gsto_table_t *table, gsto_file_t *file);
@@ -105,11 +104,14 @@ double jibal_gsto_scale_velocity_to_x(const gsto_file_t *file, double v); /* fro
 double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y); /* to SI units */
 double gsto_sto_v(gsto_table_t *table, int Z1, int Z2, double v);
 double *gsto_sto_v_table(gsto_table_t *table, int Z1, int Z2, double v_min, double v_max, int points);
-double gsto_sto_raw(gsto_table_t *table, int Z1, int Z2, int point_number);
 int gsto_auto_assign_range(gsto_table_t *table, int Z1_min, int Z1_max, int Z2_min, int Z2_max);
 int gsto_auto_assign(gsto_table_t *table, int Z1, int Z2);
 double gsto_sto_nuclear_universal(double E, int Z1, double m1, int Z2, double m2);
 
+
+int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2);
+const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2);
+double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2);
 
 gsto_file_t *jibal_gsto_get_file(gsto_table_t *table, int Z1, int Z2);
 void jibal_gsto_set_file(gsto_table_t *table, int Z1, int Z2, gsto_file_t *file);
@@ -120,4 +122,7 @@ double jibal_stop(gsto_table_t *table, const jibal_isotope *incident, const jiba
 double jibal_stop_ele(gsto_table_t *table, const jibal_isotope *incident, const jibal_material *target, double E);
 double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *target, double E);
 int jibal_stop_auto_assign(gsto_table_t *table, const jibal_isotope *incident, jibal_material *target); /* TODO: energy range */
+
+void jibal_gsto_file_free(gsto_file_t *file);
+void jibal_gsto_table_free(gsto_table_t *table);
 #endif

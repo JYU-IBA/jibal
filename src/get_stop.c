@@ -76,5 +76,6 @@ int main(int argc, char **argv) {
     jibal_units_free(units);
     elements_free(elements);
     isotopes_free(isotopes);
+    jibal_gsto_table_free(table);
     return 0;
 }

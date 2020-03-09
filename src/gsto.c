@@ -84,7 +84,7 @@ int gsto_add_file(gsto_table_t *table, char *name, char *filename, int Z1_min, i
         return 0; /* No stopping type specified or "none" specified. Perhaps it is not necessary to take this file into account... */
     }
     
-    new_file->Z1_min=Z1_min;
+    new_file->Z1_min=Z1_min; /* These will be rewritten when the file is loaded. */
     new_file->Z1_max=Z1_max;
     new_file->Z2_min=Z2_min;
     new_file->Z2_max=Z2_max;
@@ -93,6 +93,8 @@ int gsto_add_file(gsto_table_t *table, char *name, char *filename, int Z1_min, i
     new_file->xscale=0; /* and this */
     new_file->stounit=0;
     new_file->xunit=0;
+    new_file->data=NULL; /* this is allocated also when the file is loaded */
+
     if(Z1_min > Z1_max) {
         success=0;
     }
@@ -118,32 +120,34 @@ gsto_table_t *gsto_allocate(int Z1_max, int Z2_max) {
     table->n_files=0;
     table->files=NULL; /* These will be allocated by gsto_new_file */
     table->assigned_files = (gsto_file_t ***)calloc(Z1_max+1, sizeof(gsto_file_t **));
-    table->ele = (double ***)calloc(Z2_max+1, sizeof(double *));
     for(Z1=0; Z1<=Z1_max; Z1++) {
             table->assigned_files[Z1] = (gsto_file_t **)calloc(Z2_max+1, sizeof(gsto_file_t *));
-            table->ele[Z1] = (double **)calloc(Z2_max+1, sizeof(double *));
     }
     return table;
 }
 
-int gsto_deallocate(gsto_table_t *table) {
-    int Z1, i;
-    gsto_file_t *file;
-    if(!table) {
-        return 0;
+
+void jibal_gsto_file_free(gsto_file_t *file) {
+    int i;
+    if(file->data) {
+        for(i=0; i < file->n_comb; i++) {
+            if(file->data[i] != NULL) {
+                free(file->data[i]);
+            }
+        }
+        free(file->data);
     }
+    free(file->name);
+    free(file->filename);
+    free(file);
+}
+
+void jibal_gsto_table_free(gsto_table_t *table) {
+    int i;
     for(i=0; i<table->n_files; i++) {
-        file=&table->files[i];
-        /*free(file->filename);
-        free(file->name);*/
+        gsto_file_t *file=&table->files[i];
+        jibal_gsto_file_free(file);
     }
-    /*free(table->files);*/
-    for(Z1=0; Z1<=table->Z1_max; Z1++) {
-        free(table->assigned_files[Z1]);
-        free(table->ele[Z1]);
-    }
-    free(table);
-    return 1;
 }
 
 int gsto_assign(gsto_table_t *table, int Z1, int Z2, gsto_file_t *file) { /* Used internally, can be used after init to override autoinit */
@@ -159,14 +163,44 @@ int gsto_load_binary_file(gsto_table_t *table, gsto_file_t *file) {
     for (Z1=file->Z1_min; Z1<=file->Z1_max; Z1++) {
         for (Z2=file->Z2_min; Z2<=file->Z2_max; Z2++) {
             if (table->assigned_files[Z1][Z2] == file) {
-                table->ele[Z1][Z2] = malloc(sizeof(double)*file->xpoints);
-                fread(&table->ele[Z1][Z2], sizeof(double), file->xpoints, file->fp);
+                double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
+                fread(data, sizeof(double), file->xpoints, file->fp);
             } else {
                 fseek(file->fp, sizeof(double)*file->xpoints, SEEK_CUR);
             }
         }
     }
     return 1;
+}
+
+int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2) {
+    assert(Z1 >= file->Z1_min);
+    assert(Z2 >= file->Z2_min);
+    assert(Z1 <= file->Z2_max);
+    assert(Z2 <= file->Z2_max);
+    int z1=(Z1 - file->Z1_min);
+    int z2=(Z2 - file->Z2_min);
+    int n_z1=(file->Z1_max-file->Z1_min+1);
+    int n_z2=(file->Z2_max-file->Z2_min+1);
+    int i=(n_z2*z1+z2);
+    assert(i < file->n_comb);
+    return i;
+}
+
+const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2) {
+    return file->data[jibal_gsto_file_get_data_index(file, Z1, Z2)];
+}
+
+double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2) {
+    double *data;
+    int i=jibal_gsto_file_get_data_index(file, Z1, Z2);
+#ifdef DEBUG
+    fprintf(stderr, "i=%i for Z1=%i and Z2=%i\n", i, Z1, Z2);
+#endif
+    if(file->data[i] == NULL) { /* Allocate only if null! */
+        file->data[i] = calloc(file->xpoints, sizeof(double));
+    }
+    return file->data[i];
 }
 
 int gsto_load_ascii_file(gsto_table_t *table, gsto_file_t *file) { 
@@ -202,7 +236,7 @@ int gsto_load_ascii_file(gsto_table_t *table, gsto_file_t *file) {
 #ifdef DEBUG
                 fprintf(stderr, "actually skipped %i lines\n", actually_skipped);
 #endif
-                table->ele[Z1][Z2] = malloc(sizeof(double)*file->xpoints);
+                double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
                 for(i=0; i<file->xpoints; i++) {
                     if(!fgets(line, GSTO_MAX_LINE_LEN, file->fp)) {
 #ifdef DEBUG
@@ -217,7 +251,7 @@ int gsto_load_ascii_file(gsto_table_t *table, gsto_file_t *file) {
 #ifdef DEBUG
                         fprintf(stderr, "Loaded stopping [%i][%i][%i] from line %i.\n", Z1, Z2, i, file->lineno);
 #endif
-                        table->ele[Z1][Z2][i] = strtod(line, NULL);
+                        data[i] = strtod(line, NULL);
                     }
                 }
                 previous_Z1=Z1;
@@ -344,7 +378,9 @@ int gsto_load(gsto_table_t *table) { /* For every file, load combinations from f
 #endif
                 }
             } 
-        }
+        } /* End of headers */
+        file->n_comb=(file->Z1_max-file->Z1_min+1)*(file->Z2_max-file->Z2_min+1);
+        file->data = calloc(file->n_comb, sizeof(double *));
         switch (file->data_format) {
             case GSTO_DF_DOUBLE:
                 gsto_load_binary_file(table, file);
@@ -478,20 +514,6 @@ gsto_table_t *gsto_init(int Z_max, char *stoppings_file_name) {
     return table;
 }
 
-double gsto_sto_raw(gsto_table_t *table, int Z1, int Z2, int point_number) {
-    gsto_file_t *file=jibal_gsto_get_file(table, Z1, Z2);
-    if(!file) {
-        fprintf(stderr, "No stopping file assigned to Z1=%i Z2=%i\n", Z1, Z2);
-        return 0;
-    }
-    if(point_number <= 0 || point_number >= file->xpoints) {
-        fprintf(stderr, "Stopping point = %i out of range!\n", point_number);
-        return 0;
-    }
-    /* Sanity checked, just return the value */
-    return table->ele[Z1][Z2][point_number];
-}
-
 double gsto_sto_nuclear_universal(double E, int Z1, double m1, int Z2, double m2) {
     double a_u=0.8854*C_BOHR_RADIUS/(pow(Z1, 0.23)+pow(Z2, 0.23));
     double gamma = 4.0*m1*m2/pow(m1+m2, 2.0);
@@ -594,7 +616,8 @@ double gsto_sto_v(gsto_table_t *table, int Z1, int Z2, double v) { /* Simplest w
     /* Scale x to indices of tabulated stopping and interpolate */
     double i_float=jibal_gsto_xscale_to_index(file, x);
     int i = (int) floor(i_float);
-    double sto = jibal_linear_interpolation(1.0*i, 1.0*(i+1), table->ele[Z1][Z2][i], table->ele[Z1][Z2][i+1], i_float);
+    const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
+    double sto = jibal_linear_interpolation(1.0*i, 1.0*(i+1), data[i], data[i+1], i_float);
     return jibal_gsto_scale_y_to_stopping(file, sto);
 }
 
