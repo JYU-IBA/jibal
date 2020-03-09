@@ -40,7 +40,10 @@ for table_row in table.findAll('tr'):
 #       abundance_low=p[0]
 #       abundance_high=p[1]
 #       print(f"got low {abundance_low:f} and high {abundance_high:f}")
-    p=parse("{:f}({:d})", abundance)
+    p=parse("{:g}", abundance)
+    if p:
+        abundance_single=p[0]
+    p=parse("{:f}({d})", abundance)
     if p:
         abundance_single=p[0]
     p=parse("[{:f},{:f}]", abundance)

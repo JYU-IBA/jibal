@@ -10,8 +10,8 @@ ameurl="https://www-nds.iaea.org/amdc/ame2016/$amefile"
 #ameurl="https://www-nds.iaea.org/amdc/ame2012/$amefile"
 
 CC="gcc"
-masses_outfile="$datadir/libiba_masses.dat"
-abundances_outfile="$datadir/libiba_abundances.dat"
+masses_outfile="$datadir/masses.dat"
+abundances_outfile="$datadir/abundances.dat"
 
 download_massfile() {
     if [ ! -f "$datadir/$amefile" ]; then
@@ -29,7 +29,7 @@ compile_decoder() {
 
 convert_massfile() {
     echo "Converting $amefile to $masses_outfile"
-    ./ame_decoder | sed -e s/Ed/Nh/ -e s/Ef/Mc/ -e s/Eh/Ts/ -e s/Ei/Og/ > "$masses_outfile"
+    ./ame_decoder|sed -e s/Ed/Nh/ -e s/Ef/Mc/ -e s/Eh/Ts/ -e s/Ei/Og/ > "$masses_outfile"
 }
 
 parse_abundances_from_html() {
