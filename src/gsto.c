@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <assert.h>
 #include <jibal_units.h>
 #include <jibal_phys.h>
 #include <jibal_gsto.h>
@@ -178,7 +179,7 @@ int gsto_load_ascii_file(gsto_table_t *table, gsto_file_t *file) {
     
     for (Z1=file->Z1_min; Z1<=file->Z1_max && Z1<=table->Z1_max; Z1++) {
         for (Z2=file->Z2_min; Z2<=file->Z2_max && Z2<=file->Z2_max; Z2++) {
-            if (table->assigned_files[Z1][Z2] == file) { /* This file is assigned to this Z1, Z2 combination, so we have to load the stopping in. */
+            if (file == jibal_gsto_get_file(table, Z1, Z2)) { /* This file is assigned to this Z1, Z2 combination, so we have to load the stopping in. */
                 skip=file->xpoints*((Z1-previous_Z1)*(file->Z2_max-file->Z2_min+1)+(Z2-previous_Z2-1)); /* Not sure if correct, but it works. */
 #ifdef DEBUG
                 fprintf(stderr, "Skipping %i*(%i*%i+%i)=%i lines.\n", file->xpoints, Z1-previous_Z1, file->Z1_max-file->Z2_min+1, Z2-previous_Z2-1, skip);
@@ -370,7 +371,7 @@ int gsto_print_files(gsto_table_t *table) {
         file=&table->files[i];
         for (Z1=1; Z1<=table->Z1_max; Z1++) {
             for (Z2=1; Z2<=table->Z2_max; Z2++) {
-                if(table->assigned_files[Z1][Z2]==file) {
+                if(jibal_gsto_get_file(table, Z1, Z2)==file) {
                     assignments++;
                 }
             }        
@@ -386,8 +387,9 @@ int gsto_print_assignments(gsto_table_t *table) {
     fprintf(stderr, "LIST OF ASSIGNED STOPPING FILES FOLLOWS\n=====\n");
     for (Z1=1; Z1<=table->Z1_max; Z1++) {
         for (Z2=1; Z2<=table->Z2_max; Z2++) {
-            if(table->assigned_files[Z1][Z2]) {
-                fprintf(stderr, "Stopping for Z1=%i in Z2=%i assigned to file %s.\n", Z1, Z2, table->assigned_files[Z1][Z2]->name);
+            gsto_file_t *file=jibal_gsto_get_file(table, Z1, Z2);
+            if(file) {
+                fprintf(stderr, "Stopping for Z1=%i in Z2=%i assigned to file %s.\n", Z1, Z2, file->name);
             } else {
 #ifdef DEBUG
                 fprintf(stderr, "Stopping for Z1=%i in Z2=%i not assigned.\n", Z1, Z2);
@@ -477,22 +479,13 @@ gsto_table_t *gsto_init(int Z_max, char *stoppings_file_name) {
 }
 
 double gsto_sto_raw(gsto_table_t *table, int Z1, int Z2, int point_number) {
-    if (Z1 <= 0 || Z1 > table->Z1_max) {
-        fprintf(stderr, "Z1=%i out of range!\n", Z1);
-        return 0;
-    }
-    if (Z2 <= 0 || Z2 > table->Z2_max) {
-        fprintf(stderr, "Z2=%i out of range!\n", Z2);
-        return 0;
-    }
-    /* Now Z1 and Z2 should be sane, let's check if point_number is */
-    if(point_number <= 0 || point_number >= table->assigned_files[Z1][Z2]->xpoints) {
-        fprintf(stderr, "Stopping point = %i out of range!\n", point_number);
-        return 0;
-    }
-    /* No stopping loaded */
-    if(table->assigned_files[Z1][Z2] == NULL) {
+    gsto_file_t *file=jibal_gsto_get_file(table, Z1, Z2);
+    if(!file) {
         fprintf(stderr, "No stopping file assigned to Z1=%i Z2=%i\n", Z1, Z2);
+        return 0;
+    }
+    if(point_number <= 0 || point_number >= file->xpoints) {
+        fprintf(stderr, "Stopping point = %i out of range!\n", point_number);
         return 0;
     }
     /* Sanity checked, just return the value */
@@ -519,81 +512,90 @@ double gsto_sto_nuclear_universal(double E, int Z1, double m1, int Z2, double m2
     return S;
 }
 
-double gsto_sto_v(gsto_table_t *table, int Z1, int Z2, double v) { /* Simplest way to access stopping data */
-    int i;
-    double i_float, x, gamma, sto_low, sto_high, sto;
-    gsto_file_t *file;
-    if (Z1 <= 0 || Z1 > table->Z1_max) {
-        fprintf(stderr, "Z1=%i out of range!\n", Z1);
-        return 0;
+gsto_file_t *jibal_gsto_get_file(gsto_table_t *table, int Z1, int Z2) {
+    return table->assigned_files[Z1][Z2];
+}
+
+void jibal_gsto_set_file(gsto_table_t *table, int Z1, int Z2, gsto_file_t *file) {
+    if(jibal_gsto_Z1_Z2_validate(table, Z1, Z2)) {
+        table->assigned_files[Z1][Z2]=file;
     }
-    if (Z2 <= 0 || Z2 > table->Z2_max) {
-        fprintf(stderr, "Z2=%i out of range!\n", Z2);
+}
+
+int jibal_gsto_Z1_Z2_validate(gsto_table_t  *table, int Z1, int Z2) {
+    assert(Z1 < 0);
+    assert(Z2 < 0);
+    if(Z1 > table->Z1_max)
         return 0;
-    }
-    /* Now Z1 and Z2 should be sane */
-    file = table->assigned_files[Z1][Z2];
-    /* No stopping loaded */
-    if(table->assigned_files[Z1][Z2] == NULL) {
-        fprintf(stderr, "No stopping file assigned to Z1=%i Z2=%i\n", Z1, Z2);
+    if(Z2 > table->Z2_max)
         return 0;
-    }
-    
-    
+    return 1;
+}
+
+double jibal_gsto_scale_velocity_to_x(const gsto_file_t *file, double v) {
+    double x, gamma;
     /* Scale v to "native" velocity, i.e. units of the file. */
     switch (file->xunit) {
         case GSTO_X_UNIT_KEV_U:
+#ifdef CLASSICAL
+            x=0.5*(C_U/C_KEV)*pow(v,2.0);
+#else
             gamma=1.0/(sqrt(1-pow(v,2.0)/C_C2));
             x=(gamma-1)*C_C2/(C_KEV/C_U);
-            /* x=0.5*1.0363554e-11*pow(v,2.0);*/ /* conversion from m/s to keV/amu (classical) */
+#endif
             break;
         case GSTO_X_UNIT_M_S:
         default:
             x=v;
             break;
     }
-    if(x <= file->xmin) {
-#ifdef WARN_OOR
-        fprintf(stderr, "GSTO %i -> %i: Velocity out of range (too low, requested %e, min %e)! Returning interpolation b/w (0,0) and (%e, %e)\n", Z1, Z2, x, file->xmin, file->xmin, table->ele[Z1][Z2][0]);
-#endif
-        if(x < 0.0) {
-            fprintf(stderr, "Velocity negative, consider changing your coordinate system! Returning 0.0.\n");
-            return 0.0;
-        }
-        return (table->ele[Z1][Z2][0]*(x/file->xmin)); /* TODO: interpolate properly (see below) (log scale complicates) */
-    }
-    if(x >= file->xmax) {
-#ifdef WARN_OOR
-        fprintf(stderr, "Velocity out of range (too high, requested %e, max %e)! Returning zero (0.0).\n", x, file->xmax);
-#endif
+    if(x < file->xmin || x > file->xmax)  {
         return 0.0;
-        return table->ele[Z1][Z2][file->xpoints-1];
     }
+    return x;
+}
 
-    /* Apply scaling of x to indices of tabulated stopping */
-
+double jibal_gsto_xscale_to_index(const gsto_file_t *file, double x) {
+    double index;
     switch (file->xscale) {
         case GSTO_XSCALE_LOG10:
-            i_float = (log10(x) - log10(file->xmin)) / (log10(file->xmax) - log10(file->xmin)) * (file->xpoints - 1);
+            index = (log10(x) - log10(file->xmin)) / (log10(file->xmax) - log10(file->xmin)) * (file->xpoints - 1);
             break;
         case GSTO_XSCALE_LINEAR:
         default:
-            i_float = (x - file->xmin) / (file->xmax - file->xmin) * (file->xpoints - 1);
+            index = (x - file->xmin) / (file->xmax - file->xmin) * (file->xpoints - 1);
             break;
     }
-    i = (int) floor(i_float);
-    sto_low = table->ele[Z1][Z2][i];
-    sto_high = table->ele[Z1][Z2][i+1];
-    sto = ((sto_high-sto_low)*(i_float-1.0*i))+sto_low;
+    return index;
+}
 
+double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y) {
     switch (file->stounit) {
         case GSTO_STO_UNIT_NONE:
-            return sto;
+            return y;
         case GSTO_STO_UNIT_EV15CM2:
-            return sto*C_EV_TFU;
+            return y*C_EV_TFU;
         default:
-            return sto;
+            return y;
     }
+}
+
+double gsto_sto_v(gsto_table_t *table, int Z1, int Z2, double v) { /* Simplest way to access stopping data */
+    gsto_file_t *file=jibal_gsto_get_file(table, Z1, Z2);
+    if(!file) {
+        fprintf(stderr, "No stopping file assigned to Z1=%i Z2=%i\n", Z1, Z2);
+        return 0;
+    }
+    double x=jibal_gsto_scale_velocity_to_x(file, v);
+    if(x == 0.0) { /* X out of range. Yes, this kind of comparison is safe. */
+        return 0.0;
+    }
+
+    /* Scale x to indices of tabulated stopping and interpolate */
+    double i_float=jibal_gsto_xscale_to_index(file, x);
+    int i = (int) floor(i_float);
+    double sto = jibal_linear_interpolation(1.0*i, 1.0*(i+1), table->ele[Z1][Z2][i], table->ele[Z1][Z2][i+1], i_float);
+    return jibal_gsto_scale_y_to_stopping(file, sto);
 }
 
 double *gsto_sto_v_table(gsto_table_t *table, int Z1, int Z2, double v_min, double v_max, int points) {
@@ -632,7 +634,7 @@ double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *targe
     double sum = 0.0;
     for (i = 0; i < target->n_elements; i++) {
         jibal_element *element = &target->elements[i];
-        for(j=0; j < element->n_isotopes; j++) {
+        for(j=0; j < element->n_isotopes; j++) { /* It would probably suffice to calculate the nuclear stopping with an average mass... */
             const jibal_isotope *isotope = element->isotopes[j];
             sum += target->concs[i]*element->concs[j]*gsto_sto_nuclear_universal(E, incident->Z, incident->mass, element->Z, isotope->mass);
         }

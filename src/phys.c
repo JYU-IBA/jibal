@@ -36,3 +36,7 @@ double jibal_velocity_relativistic(double E, double m) {
 double jibal_energy_relativistic(double v, double m) {
     return (m*C_C2*(pow(1-pow(v/C_C,2.0),-0.5)-1));
 }
+
+double jibal_linear_interpolation(double x_low, double x_high, double y_low, double y_high, double x) {
+    return y_low+((x-x_low)/(x_high-x_low))*(y_high-y_low);
+}

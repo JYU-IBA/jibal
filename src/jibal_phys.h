@@ -21,14 +21,19 @@
 
 /* Elementary physics */
 
-
+#ifdef CLASSICAL
+#define energy(a,b) jibal_energy_classical(a,b)
+#define velocity(a,b) jibal_velocity_classical(a,b)
+#else
 #define energy(a,b) jibal_energy_relativistic(a,b)
 #define velocity(a,b) jibal_velocity_relativistic(a,b)
-
+#endif
 
 double jibal_velocity_relativistic(double E, double mass);
 double jibal_energy_relativistic(double v, double mass);
 
 double jibal_velocity_classical(double E, double mass);
 double jibal_velocity_classical(double v, double mass);
+
+double jibal_linear_interpolation(double x_low, double x_high, double y_low, double y_high, double x);
 #endif /* _JIBAL_PHYS_H_ */

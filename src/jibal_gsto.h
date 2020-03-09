@@ -100,12 +100,20 @@ int gsto_load(gsto_table_t *table);
 int gsto_print_files(gsto_table_t *table);
 int gsto_print_assignments(gsto_table_t *table);
 gsto_table_t *gsto_init(int Z_max, char *stoppings_file_name);
+
+double jibal_gsto_scale_velocity_to_x(const gsto_file_t *file, double v); /* from SI units */
+double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y); /* to SI units */
 double gsto_sto_v(gsto_table_t *table, int Z1, int Z2, double v);
 double *gsto_sto_v_table(gsto_table_t *table, int Z1, int Z2, double v_min, double v_max, int points);
 double gsto_sto_raw(gsto_table_t *table, int Z1, int Z2, int point_number);
 int gsto_auto_assign_range(gsto_table_t *table, int Z1_min, int Z1_max, int Z2_min, int Z2_max);
 int gsto_auto_assign(gsto_table_t *table, int Z1, int Z2);
 double gsto_sto_nuclear_universal(double E, int Z1, double m1, int Z2, double m2);
+
+
+gsto_file_t *jibal_gsto_get_file(gsto_table_t *table, int Z1, int Z2);
+void jibal_gsto_set_file(gsto_table_t *table, int Z1, int Z2, gsto_file_t *file);
+int jibal_gsto_Z1_Z2_validate(gsto_table_t  *table, int Z1, int Z2);
 
 /* These are "NEW" wrapper functions for the "OLD" gsto stuff. The contents may be rewritten */
 double jibal_stop(gsto_table_t *table, const jibal_isotope *incident, const jibal_material *target, double E);
