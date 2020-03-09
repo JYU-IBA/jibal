@@ -587,7 +587,7 @@ double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y) {
 
 
 
-double gsto_sto_v(jibal_gsto *workspace, int Z1, int Z2, double v) { /* Simplest way to access stopping data */
+double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
     gsto_file_t *file=jibal_gsto_get_file(workspace, Z1, Z2);
     if(!file) {
 #ifdef DEBUG
@@ -606,21 +606,6 @@ double gsto_sto_v(jibal_gsto *workspace, int Z1, int Z2, double v) { /* Simplest
     const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
     double sto = jibal_linear_interpolation(1.0*i, 1.0*(i+1), data[i], data[i+1], i_float);
     return jibal_gsto_scale_y_to_stopping(file, sto);
-}
-
-double *gsto_sto_v_table(jibal_gsto *workspace, int Z1, int Z2, double v_min, double v_max, int points) {
-    double *stoppings_out = malloc(sizeof(double)*points);
-    double v_step=(v_max-v_min)/(points-1.0);
-    double v;
-    int i;
-    for(i=0; i<points; i++) {
-        v=v_step*i+v_min;
-        stoppings_out[i]=gsto_sto_v(workspace, Z1, Z2, v);
-#ifdef DEBUG
-        fprintf(stderr, "%i/%i Calculating stopping for Z1=%i Z2=%i v=%e. Got %e.\n", i, points, Z1, Z2, v, stoppings_out[i]);
-#endif
-    }
-    return stoppings_out;
 }
 
 double jibal_stop(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {
@@ -650,7 +635,7 @@ double jibal_stop_ele(jibal_gsto *workspace, const jibal_isotope *incident, cons
     double sum = 0.0;
     for (i = 0; i < target->n_elements; i++) {
         jibal_element *element = &target->elements[i];
-        sum += target->concs[i]*gsto_sto_v(workspace, incident->Z, element->Z, velocity(E, incident->mass));
+        sum += target->concs[i]*jibal_gsto_stop_v(workspace, incident->Z, element->Z, velocity(E, incident->mass));
     }
     return sum;
 }
