@@ -52,6 +52,7 @@ typedef struct {
     int n_isotopes;
     jibal_isotope const **isotopes; /* Array of length n_isotopes, contents are pointers to isotopes */
     double *concs; /* This is NULL in "elements" table, but when used by jibal_material the concentrations of isotopes goes in an array here. */
+    double avg_mass; /* Average mass */
 } jibal_element;
 
 double jibal_find_average_mass(jibal_isotope *isotopes, int Z);

@@ -22,8 +22,8 @@
 /* Elementary physics */
 
 #ifdef CLASSICAL
-#define energy(a,b) jibal_energy_classical(a,b)
-#define velocity(a,b) jibal_velocity_classical(a,b)
+#define energy(energy,mass) jibal_energy_classical(energy,mass)
+#define velocity(energy,mass) jibal_velocity_classical(energy,mass)
 #else
 #define energy(a,b) jibal_energy_relativistic(a,b)
 #define velocity(a,b) jibal_velocity_relativistic(a,b)

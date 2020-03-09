@@ -86,16 +86,19 @@ typedef struct {
     int Z1_max;
     int Z2_max;
     int n_files;
+    int n_comb;
     gsto_file_t *files; /* table of gsto_file_t */
-    gsto_file_t ***assigned_files; /* files[Z1][Z2] pointers */
+    gsto_file_t **assignments; /* TODO: what is this */
 } gsto_table_t;
 
 int gsto_add_file(gsto_table_t *table, char *name, char *filename, int Z1_min, int Z1_max, int Z2_min, int Z2_max, char *type);
 gsto_table_t *gsto_allocate(int Z1_max, int Z2_max);
-int gsto_assign(gsto_table_t *table, int Z1, int Z2, gsto_file_t *file);
+int jibal_gsto_assign(gsto_table_t *table, int Z1, int Z2, gsto_file_t *file);
 int gsto_load_binary_file(gsto_table_t *table, gsto_file_t *file);
 int gsto_load_ascii_file(gsto_table_t *table, gsto_file_t *file);
 int gsto_load(gsto_table_t *table);
+
+int jibal_gsto_table_get_index(gsto_table_t *table, int Z1, int Z2);
 int gsto_print_files(gsto_table_t *table);
 int gsto_print_assignments(gsto_table_t *table);
 gsto_table_t *gsto_init(int Z_max, char *stoppings_file_name);
@@ -114,8 +117,6 @@ const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2);
 double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2);
 
 gsto_file_t *jibal_gsto_get_file(gsto_table_t *table, int Z1, int Z2);
-void jibal_gsto_set_file(gsto_table_t *table, int Z1, int Z2, gsto_file_t *file);
-int jibal_gsto_Z1_Z2_validate(gsto_table_t  *table, int Z1, int Z2);
 
 /* These are "NEW" wrapper functions for the "OLD" gsto stuff. The contents may be rewritten */
 double jibal_stop(gsto_table_t *table, const jibal_isotope *incident, const jibal_material *target, double E);

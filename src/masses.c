@@ -288,8 +288,10 @@ void jibal_element_normalize(jibal_element *element) {
     if(sum == 0.0) {
         return;
     }
+    element->avg_mass=0.0;
     for(i=0; i < element->n_isotopes; i++) {
         element->concs[i] /= sum;
+        element->avg_mass += element->concs[i]*element->isotopes[i]->mass;
     }
 }
 

@@ -128,12 +128,12 @@ void jibal_material_print(FILE * restrict stream, jibal_material *material) {
     fprintf(stream, "Material %s has %i elements.\n", material->name, material->n_elements);
     for(i=0; i < material -> n_elements; i++) {
         jibal_element *element = &material->elements[i];
-        fprintf(stream, "    %2i. %s (Z=%i): %9.5f%%  with %i isotopes:\n", i+1, element->name, element->Z, material->concs[i]/C_PERCENT, element->n_isotopes);
+        fprintf(stream, "    %2i. %s (Z=%i): %9.5f%%  with %i isotopes (avg mass %g u):\n", i+1, element->name, element->Z, material->concs[i]/C_PERCENT, element->n_isotopes, element->avg_mass/C_U);
         int j;
         for(j=0; j < element->n_isotopes; j++) {
             const jibal_isotope *isotope = element->isotopes[j];
-            fprintf(stream, "      %2i. %5s: %9.5lf%%  (A=%i, abundance=%.5lf%%)\n", j+1, isotope->name, element->concs[j]/C_PERCENT,
-                    isotope->A, isotope->abundance / C_PERCENT);
+            fprintf(stream, "      %2i. %5s: %9.5lf%%  (A=%i, mass=%g u, abundance=%.5lf%%)\n", j+1, isotope->name, element->concs[j]/C_PERCENT,
+                    isotope->A, isotope->mass/C_U, isotope->abundance / C_PERCENT);
         }
     }
 }

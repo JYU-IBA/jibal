@@ -119,10 +119,8 @@ gsto_table_t *gsto_allocate(int Z1_max, int Z2_max) {
     table->Z2_max=Z2_max;
     table->n_files=0;
     table->files=NULL; /* These will be allocated by gsto_new_file */
-    table->assigned_files = (gsto_file_t ***)calloc(Z1_max+1, sizeof(gsto_file_t **));
-    for(Z1=0; Z1<=Z1_max; Z1++) {
-            table->assigned_files[Z1] = (gsto_file_t **)calloc(Z2_max+1, sizeof(gsto_file_t *));
-    }
+    table->n_comb=Z1_max*Z2_max; /* From 1..Z1_max inclusive and from 1..Z2_max inclusive */
+    table->assignments = calloc(table->n_comb, sizeof(gsto_file_t *));
     return table;
 }
 
@@ -150,8 +148,12 @@ void jibal_gsto_table_free(gsto_table_t *table) {
     }
 }
 
-int gsto_assign(gsto_table_t *table, int Z1, int Z2, gsto_file_t *file) { /* Used internally, can be used after init to override autoinit */
-    table->assigned_files[Z1][Z2] = file;
+int jibal_gsto_assign(gsto_table_t *table, int Z1, int Z2, gsto_file_t *file) { /* Used internally, can be used after init to override autoinit */
+    int i=jibal_gsto_table_get_index(table, Z1, Z2);
+    if(i < 0) {
+        return 0;
+    }
+    table->assignments[jibal_gsto_table_get_index(table, Z1, Z2)]=file;
     return 1;
 }
 
@@ -162,7 +164,7 @@ int gsto_load_binary_file(gsto_table_t *table, gsto_file_t *file) {
 #endif
     for (Z1=file->Z1_min; Z1<=file->Z1_max; Z1++) {
         for (Z2=file->Z2_min; Z2<=file->Z2_max; Z2++) {
-            if (table->assigned_files[Z1][Z2] == file) {
+            if (file == jibal_gsto_get_file(table, Z1, Z2)) {
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
                 fread(data, sizeof(double), file->xpoints, file->fp);
             } else {
@@ -171,6 +173,19 @@ int gsto_load_binary_file(gsto_table_t *table, gsto_file_t *file) {
         }
     }
     return 1;
+}
+
+int jibal_gsto_table_get_index(gsto_table_t *table, int Z1, int Z2) {
+    if(Z1 < 1 || Z1 > table->Z1_max || Z2 < 1 || Z2 > table->Z2_max) {
+        return -1;
+    }
+    int z1 = (Z1 - 1);
+    int z2 = (Z2 - 1);
+    int n_z1 = (table->Z1_max - 1 + 1);
+    int n_z2 = (table->Z2_max - 1 + 1);
+    int i = (n_z2 * z1 + z2);
+    assert(i >= 0 && i < table->n_comb);
+    return i;
 }
 
 int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2) {
@@ -462,7 +477,7 @@ int gsto_auto_assign(gsto_table_t *table, int Z1, int Z2) {
     for (i=0; i<table->n_files; i++) {
         file=&table->files[i];
         if (file->Z1_min<=Z1 && file->Z1_max >= Z1 && file->Z2_min <= Z2 && file->Z2_max >= Z2) { /*File includes this Z1, Z2 combination*/
-            gsto_assign(table, Z1, Z2, file);
+            jibal_gsto_assign(table, Z1, Z2, file);
             success=1;
             break; /* Stop when the first file to include this combination is found */
         }
@@ -535,23 +550,10 @@ double gsto_sto_nuclear_universal(double E, int Z1, double m1, int Z2, double m2
 }
 
 gsto_file_t *jibal_gsto_get_file(gsto_table_t *table, int Z1, int Z2) {
-    return table->assigned_files[Z1][Z2];
-}
-
-void jibal_gsto_set_file(gsto_table_t *table, int Z1, int Z2, gsto_file_t *file) {
-    if(jibal_gsto_Z1_Z2_validate(table, Z1, Z2)) {
-        table->assigned_files[Z1][Z2]=file;
-    }
-}
-
-int jibal_gsto_Z1_Z2_validate(gsto_table_t  *table, int Z1, int Z2) {
-    assert(Z1 < 0);
-    assert(Z2 < 0);
-    if(Z1 > table->Z1_max)
-        return 0;
-    if(Z2 > table->Z2_max)
-        return 0;
-    return 1;
+    int i = jibal_gsto_table_get_index(table, Z1, Z2);
+    if(i < 0)
+        return NULL;
+    return table->assignments[i];
 }
 
 double jibal_gsto_scale_velocity_to_x(const gsto_file_t *file, double v) {
@@ -602,11 +604,15 @@ double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y) {
     }
 }
 
+
+
 double gsto_sto_v(gsto_table_t *table, int Z1, int Z2, double v) { /* Simplest way to access stopping data */
     gsto_file_t *file=jibal_gsto_get_file(table, Z1, Z2);
     if(!file) {
+#ifdef DEBUG
         fprintf(stderr, "No stopping file assigned to Z1=%i Z2=%i\n", Z1, Z2);
-        return 0;
+#endif
+        return 0.0;
     }
     double x=jibal_gsto_scale_velocity_to_x(file, v);
     if(x == 0.0) { /* X out of range. Yes, this kind of comparison is safe. */
@@ -637,43 +643,33 @@ double *gsto_sto_v_table(gsto_table_t *table, int Z1, int Z2, double v_min, doub
 }
 
 double jibal_stop(gsto_table_t *table, const jibal_isotope *incident, const jibal_material *target, double E) {
-    /* Note: using this for fast calculations is not recommended since we have loops over elements and isotopes. */
-    int i, j;
-    double sum = 0.0;
-    for (i = 0; i < target->n_elements; i++) {
-        jibal_element *element = &target->elements[i];
-        for(j=0; j < element->n_isotopes; j++) {
-            const jibal_isotope *isotope = element->isotopes[j];
-            sum += target->concs[i]*element->concs[j]*(
-                    gsto_sto_nuclear_universal(E, incident->Z, incident->mass, element->Z, isotope->mass)
-                    +gsto_sto_v(table, incident->Z, element->Z, velocity(E, incident->mass)));
-        }
-    }
-    return sum;
+    return jibal_stop_nuc(incident, target, E) + jibal_stop_ele(table, incident, target, E);
 }
 
 double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *target, double E) {
-    int i, j;
+    int i;
     double sum = 0.0;
     for (i = 0; i < target->n_elements; i++) {
         jibal_element *element = &target->elements[i];
+#ifndef NUCLEAR_STOPPING_ISOTOPES
+        sum += target->concs[i]*gsto_sto_nuclear_universal(E, incident->Z, incident->mass, element->Z, element->avg_mass);
+#else
+        int j;
         for(j=0; j < element->n_isotopes; j++) { /* It would probably suffice to calculate the nuclear stopping with an average mass... */
             const jibal_isotope *isotope = element->isotopes[j];
             sum += target->concs[i]*element->concs[j]*gsto_sto_nuclear_universal(E, incident->Z, incident->mass, element->Z, isotope->mass);
         }
+#endif
     }
     return sum;
 }
 
 double jibal_stop_ele(gsto_table_t *table, const jibal_isotope *incident, const jibal_material *target, double E) {
-    int i, j;
+    int i;
     double sum = 0.0;
     for (i = 0; i < target->n_elements; i++) {
         jibal_element *element = &target->elements[i];
-        for(j=0; j < element->n_isotopes; j++) {
-            const jibal_isotope *isotope = element->isotopes[j];
-            sum += target->concs[i]*element->concs[j]*gsto_sto_v(table, incident->Z, element->Z, velocity(E, incident->mass));
-        }
+        sum += target->concs[i]*gsto_sto_v(table, incident->Z, element->Z, velocity(E, incident->mass));
     }
     return sum;
 }

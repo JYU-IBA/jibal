@@ -69,8 +69,9 @@ int main(int argc, char **argv) {
         fprintf(stderr, "E_low=%g keV, E_high=%g keV, E_step=%g keV\n", E_low/C_KEV, E_high/C_KEV, E_step/C_KEV);
     }
     for(E=E_low; E <= E_high; E += E_step) {
-        double S=jibal_stop(table, incident, target, E);
-        fprintf(stdout, "%e %e\n", E/C_KEV, S/C_EV_TFU);
+        double S_ele=jibal_stop_ele(table, incident, target, E);
+        double S_nuc=jibal_stop_nuc(incident, target, E);
+        fprintf(stdout, "%e %e %e\n", E/C_KEV, S_ele/C_EV_TFU, S_nuc/C_EV_TFU);
     }
     jibal_material_free(target);
     jibal_units_free(units);
