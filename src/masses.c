@@ -75,7 +75,6 @@ jibal_isotope *isotopes_load(const char *filename) {
                                 name);
         if(n>=JIBAL_MASSES_ISOTOPES) {
             fprintf(stderr, "Too many isotopes! I was expecting a maximum of %i.\n", JIBAL_MASSES_ISOTOPES);
-            free(line);
             return NULL;
         }
         n++;
