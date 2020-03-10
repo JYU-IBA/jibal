@@ -43,6 +43,7 @@ jibal_units *jibal_units_default() {
     units=jibal_units_add(units, C_E, UNIT_TYPE_ENERGY, "eV");
     units=jibal_units_add(units, C_U, UNIT_TYPE_MASS, "u");
     units=jibal_units_add(units, C_DEG, UNIT_TYPE_ANGLE, "deg");
+    units=jibal_units_add(units, C_TFU, UNIT_TYPE_LAYER_THICKNESS, "tfu");
     return units;
 }
 

@@ -477,6 +477,7 @@ jibal_gsto *gsto_init(int Z_max, char *stoppings_file_name) {
     FILE *settings_file=NULL;
     jibal_gsto *workspace;
     workspace = gsto_allocate(Z_max, Z_max);
+    workspace->stop_step = JIBAL_STEP_SIZE;
     if(!stoppings_file_name) { /* If filename given (not NULL), attempt to load settings file */
         stoppings_file_name=GSTO_DATA_DEFAULT_FILE;
     }
@@ -609,7 +610,9 @@ double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
 }
 
 double jibal_stop(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {
-    return jibal_stop_nuc(incident, target, E) + jibal_stop_ele(workspace, incident, target, E);
+    /* TODO: make a variable in the workspace that determines whether we are interested in total stopping or just
+     * electronic stopping. At the moment this is fixed to total. */
+    return jibal_stop_nuc(incident, target, E) + jibal_stop_ele(workspace, incident, target, E); /* This returns a POSITIVE value (-dE/dx) in SI units for stopping cross section, e.g. J/(1/m^2) = J m^2 */
 }
 
 double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *target, double E) {
@@ -628,6 +631,21 @@ double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *targe
 #endif
     }
     return sum;
+}
+
+double jibal_layer_energy_loss(jibal_gsto *workspace, jibal_isotope *incident, jibal_layer *layer, double E_0) {
+    double k1, k2, k3, k4;
+    double E = E_0;
+    double x;
+    double h = workspace->stop_step;
+    for (x = 0.0; x <= layer->thickness; x += h) {
+        k1 = jibal_stop(workspace, incident, layer->material, E);
+        k2 = jibal_stop(workspace, incident, layer->material, E + (h / 2) * k1);
+        k3 = jibal_stop(workspace, incident, layer->material, E + (h / 2) * k2);
+        k4 = jibal_stop(workspace, incident, layer->material, E + h * k3);
+        E -= (h / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
+    }
+    return E;
 }
 
 double jibal_stop_ele(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {

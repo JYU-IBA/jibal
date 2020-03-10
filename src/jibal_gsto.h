@@ -3,6 +3,7 @@
 
 #include <jibal_masses.h>
 #include <jibal_material.h>
+#include <jibal_layer.h>
 
 #define GSTO_MAX_LINE_LEN 1024
 #define GSTO_END_OF_HEADERS "==END-OF-HEADER=="
@@ -88,7 +89,8 @@ typedef struct {
     int n_files;
     int n_comb;
     gsto_file_t *files; /* table of gsto_file_t */
-    gsto_file_t **assignments; /* TODO: what is this */
+    gsto_file_t **assignments; /* array of n_comb gsto_files. For each Z1 and Z2 combination there can be a file assigned. Access with functions. */
+    double stop_step; /* as stopping cross section */
 } jibal_gsto;
 
 
@@ -106,6 +108,8 @@ int gsto_load(jibal_gsto *workspace);
 double jibal_stop(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E);
 double jibal_stop_ele(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E);
 double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *target, double E); /* TODO: energy range */
+
+double jibal_layer_energy_loss(jibal_gsto *workspace, jibal_isotope *incident, jibal_layer *layer, double E);
 
 /* The following are mostly internal */
 

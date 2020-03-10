@@ -16,18 +16,21 @@ make install
 ## Usage of bundled tools
 
 The get\_stop program can be used to extract stopping like this:
-
 ~~~~
 get_stop 4He SiO2 "1 MeV"
 ~~~~
 
-or for example
-
+or for example (stopping in 100 keV steps)
 ~~~~
 get_stop 4He "Si0.33 O0.33 N0.33" 1MeV 100keV 10MeV
 ~~~~
-
 This should (interpolation and other numerical issues aside) reproduce SRIM 2013 stopping values with the data included in the distribution.
+
+
+You can also do energy loss calculations in layers, e.g.
+~~~~
+get_stop 4He Au 2MeV 1000tfu
+~~~~
 
 ## Using the jibal library with your own programs
 

@@ -32,5 +32,6 @@ typedef struct {
 
 
 jibal_layer *jibal_layer_new(jibal_material *material, double thickness);
+void jibal_layer_free(jibal_layer *layer); /* Also frees the material! */
 
 #endif /* _JIBAL_LAYER_H_ */
