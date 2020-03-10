@@ -9,7 +9,7 @@ LT_INIT([dlopen])
 
 AC_PROG_CC
 
-AC_CHECK_HEADERS([float.h getopt.h limits.h stdint.h stdlib.h string.h math.h])
+AC_CHECK_HEADERS([float.h getopt.h limits.h stdint.h stdlib.h string.h math.h ctype.h inttypes.h])
 
 AC_TYPE_SIZE_T
 
