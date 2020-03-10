@@ -45,9 +45,9 @@ void print_stopping_range(experiment *exp, double E_low, double E_step, double E
 int main(int argc, char **argv) {
     experiment exp;
     generic_data data;
-    data.isotopes=isotopes_load(NULL);
-    abundances_load(data.isotopes, NULL);
-    data.elements=elements_populate(data.isotopes);
+    data.isotopes=jibal_isotopes_load(NULL);
+    jibal_abundances_load(data.isotopes, NULL);
+    data.elements=jibal_elements_populate(data.isotopes);
     data.units=jibal_units_default();
     if(argc<=2) {
         return -1;
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Couldn't load isotopes.\n");
         return -1;
     }
-    exp.incident=isotope_find(data.isotopes, argv[1], 0,0 );
+    exp.incident=jibal_isotope_find(data.isotopes, argv[1], 0,0 );
     fprintf(stderr, "Z1=%i\nm1=%g kg (%g u)\n", exp.incident->Z, exp.incident->mass, exp.incident->mass/C_U);
 
     char *target_string=argv[2];
@@ -68,12 +68,12 @@ int main(int argc, char **argv) {
         return -1;
     }
     jibal_material_print(stderr, exp.target->material);
-    exp.workspace=gsto_init(91, NULL);
+    exp.workspace=jibal_gsto_init(91, NULL);
     if(!exp.workspace)
         return -1;
     if(!jibal_stop_auto_assign(exp.workspace, exp.incident, exp.target->material)) /* TODO: loop over layers */
         return -1;
-    gsto_load(exp.workspace);
+    jibal_gsto_load(exp.workspace);
 
 
     int i;
@@ -101,8 +101,8 @@ int main(int argc, char **argv) {
     }
     jibal_material_free(exp.target->material);
     jibal_units_free(data.units);
-    elements_free(data.elements);
-    isotopes_free(data.isotopes);
+    jibal_elements_free(data.elements);
+    jibal_isotopes_free(data.isotopes);
     jibal_gsto_free(exp.workspace);
     return 0;
 }

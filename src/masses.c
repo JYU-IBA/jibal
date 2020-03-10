@@ -44,7 +44,7 @@ int isotope_set(jibal_isotope *isotope, int Z, int N, int A, double mass, isotop
 }
 
 
-jibal_isotope *isotopes_load(const char *filename) {
+jibal_isotope *jibal_isotopes_load(const char *filename) {
     char *line_split;
     char *columns[6];
     char **col;
@@ -87,7 +87,7 @@ jibal_isotope *isotopes_load(const char *filename) {
     return isotopes;
 }
 
-int abundances_load(jibal_isotope *isotopes, const char *filename) {
+int jibal_abundances_load(jibal_isotope *isotopes, const char *filename) {
     int n;
     if(!filename) {
         filename=JIBAL_ABUNDANCES_FILE;
@@ -104,7 +104,7 @@ int abundances_load(jibal_isotope *isotopes, const char *filename) {
         if(sscanf(line, "%i %i %lf", &Z, &A, &abundance) != 3) { /* Failure (problem with data). Let's keep the good data anyway. */
             return n;
         }
-        jibal_isotope *isotope=isotope_find(isotopes, NULL, Z, A);
+        jibal_isotope *isotope=jibal_isotope_find(isotopes, NULL, Z, A);
         if(!isotope) {
 #ifdef DEBUG
             fprintf(stderr, "Couldn't find isotope with Z=%i and A=%i\n", Z, A);
@@ -122,11 +122,11 @@ int abundances_load(jibal_isotope *isotopes, const char *filename) {
     return n;
 }
 
-void isotopes_free(jibal_isotope *isotopes) {
+void jibal_isotopes_free(jibal_isotope *isotopes) {
     free(isotopes);
 }
 
-jibal_element *elements_populate(const jibal_isotope *isotopes) {
+jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
     jibal_element *elements=calloc(JIBAL_ELEMENTS+1, sizeof(jibal_element));
     const jibal_isotope *isotope;
     for(isotope=isotopes; isotope->A != 0; isotope++) {
@@ -168,7 +168,7 @@ jibal_element *elements_populate(const jibal_isotope *isotopes) {
     return elements;
 }
 
-void elements_free(jibal_element *elements) {
+void jibal_elements_free(jibal_element *elements) {
     int Z;
     for(Z=0; Z <= JIBAL_ELEMENTS; Z++) {
         if(elements[Z].n_isotopes > 0 && elements[Z].isotopes) {
@@ -294,54 +294,7 @@ void jibal_element_normalize(jibal_element *element) {
     }
 }
 
-
-jibal_isotope *find_first_isotope(jibal_isotope *isotopes, int Z) {
-    int i;
-    jibal_isotope *isotope;
-    for(isotope=isotopes; isotope->A != 0; isotope++) {
-        if(isotope->Z == Z) { /* The right element */
-            return isotope;
-        }
-    }
-    return NULL; /* Nothing found */
-}
-
-
-double find_mass(jibal_isotope *isotopes, int Z, int A) { /* if A=0 calculate average mass, otherwise return isotope mass */
-    double mass=0.0;
-    jibal_isotope *isotope;
-    int i;
-    for(isotope=isotopes; isotope->A != 0; isotope++) {
-        if(isotope->Z == Z) {
-            if(isotope->A == A) {
-                return isotope->mass;
-            }
-            if(!A) {
-                mass += isotope->mass*isotope->abundance;
-            }
-        }
-    }
-    return mass;
-}
-
-int jibal_find_Z_by_name(jibal_isotope *isotopes, char *name) { /* Give just element name e.g. "Cu" */
-    jibal_isotope *isotope;
-    char *isotope_name;
-    int i;
-    for(isotope=isotopes; isotope->A != 0; isotope++) {
-        isotope_name=isotope->name;
-        while(isdigit(*isotope_name)) /* Skip numbers */
-            isotope_name++;
-        if(*isotope_name == '-') /* and dash */
-            isotope_name++;
-        if(strcmp(isotope_name, name) == 0) {
-            return isotope->Z;
-        }
-    }
-    return 0;
-}
-
-jibal_isotope *isotope_find(jibal_isotope *isotopes, const char *name, int Z, int A) {
+jibal_isotope *jibal_isotope_find(jibal_isotope *isotopes, const char *name, int Z, int A) {
     jibal_isotope *isotope;
     int i=0;
     if(name != NULL) {

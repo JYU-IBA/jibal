@@ -38,7 +38,7 @@ typedef char isotope_name[8]; /* These should be null terminated */
 typedef char element_name[4];
 
 typedef struct {
-    isotope_name name; /* "A-Xx eg. 239-Pu" */
+    isotope_name name; /* "AAAXx eg. 239Pu" */
     int N;
     int Z;
     int A; /* A=Z+N */
@@ -55,20 +55,16 @@ typedef struct {
     double avg_mass; /* Average mass */
 } jibal_element;
 
-double jibal_find_average_mass(jibal_isotope *isotopes, int Z);
-int jibal_find_Z_by_name(jibal_isotope *isotopes, char *name);
-double jibal_find_mass(jibal_isotope *isotope, int Z, int A); /* find isotope mass, but if A=0 calculate average mass of elem. */
-
-jibal_isotope *isotopes_load(const char *filename);
-int abundances_load(jibal_isotope *isotopes, const char *filename);
-void isotopes_free(jibal_isotope *isotopes);
-jibal_element *elements_populate(const jibal_isotope *isotopes);
-void elements_free(jibal_element *elements);
+jibal_isotope *jibal_isotopes_load(const char *filename);
+int jibal_abundances_load(jibal_isotope *isotopes, const char *filename);
+void jibal_isotopes_free(jibal_isotope *isotopes);
+jibal_element *jibal_elements_populate(const jibal_isotope *isotopes);
+void jibal_elements_free(jibal_element *elements);
 jibal_element *jibal_element_find(jibal_element *elements, element_name name);
 int jibal_element_number_of_isotopes(jibal_element *element, double abundance_threshold);
 jibal_element *jibal_element_copy(jibal_element *element, int A); /* Create a copy of a single element, either with all known isotopes (A=-1), naturally abundant isotopes (A=0) or a single isotope (A = mass number) */
 void jibal_element_normalize(jibal_element *element);
-jibal_isotope *isotope_find(jibal_isotope *isotopes, const char *name, int Z, int A); /* Give either name or Z and A. If name is NULL Z and A are used. */
+jibal_isotope *jibal_isotope_find(jibal_isotope *isotopes, const char *name, int Z, int A); /* Give either name or Z and A. If name is NULL Z and A are used. */
 
 
 double velocity(double E, double mass); /* Use SI units */

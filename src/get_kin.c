@@ -33,16 +33,16 @@ typedef struct {
 
 int main(int argc, char **argv) {
     generic_data data;
-    data.isotopes=isotopes_load(NULL);
-    abundances_load(data.isotopes, NULL);
-    data.elements=elements_populate(data.isotopes);
+    data.isotopes=jibal_isotopes_load(NULL);
+    jibal_abundances_load(data.isotopes, NULL);
+    data.elements=jibal_elements_populate(data.isotopes);
     data.units=jibal_units_default();
     if(argc<=4) {
         return -1;
 
     }
-    jibal_isotope *incident = isotope_find(data.isotopes, argv[1], 0, 0);
-    jibal_isotope *target = isotope_find(data.isotopes, argv[2], 0, 0);
+    jibal_isotope *incident = jibal_isotope_find(data.isotopes, argv[1], 0, 0);
+    jibal_isotope *target = jibal_isotope_find(data.isotopes, argv[2], 0, 0);
     double theta = jibal_get_val(data.units, UNIT_TYPE_ANGLE, argv[3]);
     double E = jibal_get_val(data.units, UNIT_TYPE_ENERGY, argv[4]);
     double E_erd = jibal_kin_erd(incident->mass, target->mass, theta) * E;

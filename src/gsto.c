@@ -158,7 +158,7 @@ int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file) 
     return 1;
 }
 
-int gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
+int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
     int Z1, Z2;
 #ifdef DEBUG
     fprintf(stderr, "Loading binary data.\n");
@@ -284,7 +284,7 @@ int gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
 
 
 
-int gsto_load(jibal_gsto *workspace) { /* For every file, load combinations from file */
+int jibal_gsto_load(jibal_gsto *workspace) { /* For every file, load combinations from file */
     int i;
     gsto_file_t *file;
     char *line=calloc(GSTO_MAX_LINE_LEN, sizeof(char));
@@ -399,11 +399,11 @@ int gsto_load(jibal_gsto *workspace) { /* For every file, load combinations from
         file->data = calloc(file->n_comb, sizeof(double *));
         switch (file->data_format) {
             case GSTO_DF_DOUBLE:
-                gsto_load_binary_file(workspace, file);
+                jibal_gsto_load_binary_file(workspace, file);
                 break;
             case GSTO_DF_ASCII:
             default:
-                gsto_load_ascii_file(workspace, file);
+                jibal_gsto_load_ascii_file(workspace, file);
                 break;
         }
         fclose(file->fp);
@@ -453,7 +453,7 @@ int jibal_gsto_print_assignments(jibal_gsto *workspace) {
     return 1;
 }
 
-int gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
+int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
     gsto_file_t *file;
     int success=0, i;
     for (i=0; i < workspace->n_files; i++) {
@@ -467,7 +467,7 @@ int gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
     return success;
 }
 
-jibal_gsto *gsto_init(int Z_max, char *stoppings_file_name) {
+jibal_gsto *jibal_gsto_init(int Z_max, char *stoppings_file_name) {
     int i=0, n_files=0, n_errors=0;
     char *env_path;
     char *line=calloc(GSTO_MAX_LINE_LEN, sizeof(char));
@@ -511,7 +511,7 @@ jibal_gsto *gsto_init(int Z_max, char *stoppings_file_name) {
     return workspace;
 }
 
-double gsto_sto_nuclear_universal(double E, int Z1, double m1, int Z2, double m2) {
+double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, double m2) {
     double a_u=0.8854*C_BOHR_RADIUS/(pow(Z1, 0.23)+pow(Z2, 0.23));
     double gamma = 4.0*m1*m2/pow(m1+m2, 2.0);
     double epsilon=(E/C_KEV)*32.53*m2/(Z1*Z2*(m1+m2)*(pow(Z1, 0.23)+pow(Z2, 0.23)));
@@ -621,7 +621,7 @@ double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *targe
     for (i = 0; i < target->n_elements; i++) {
         jibal_element *element = &target->elements[i];
 #ifndef NUCLEAR_STOPPING_ISOTOPES
-        sum += target->concs[i]*gsto_sto_nuclear_universal(E, incident->Z, incident->mass, element->Z, element->avg_mass);
+        sum += target->concs[i]*jibal_gsto_stop_nuclear_universal(E, incident->Z, incident->mass, element->Z, element->avg_mass);
 #else
         int j;
         for(j=0; j < element->n_isotopes; j++) { /* It would probably suffice to calculate the nuclear stopping with an average mass... */
@@ -662,7 +662,7 @@ int jibal_stop_auto_assign(jibal_gsto *workspace, const jibal_isotope *incident,
     int i;
     int success = 0;
     for (i = 0; i < target->n_elements; i++) {
-        success += gsto_auto_assign(workspace, incident->Z, target->elements[i].Z);
+        success += jibal_gsto_auto_assign(workspace, incident->Z, target->elements[i].Z);
     }
     return success;
 }
