@@ -37,12 +37,16 @@
 #define C_H (6.62607015e-34) /* Planck constant, exact. */
 #define C_HBAR (C_H/(2*C_PI))
 #define C_ALPHA (0.0072973525693) /* fine structure constant. Using CODATA 2018 recommended value. */
-#define C_MU0  (2*C_ALPHA*C_H/(C_E  /* vacuum permeability */
-#define C_EPSILON0 (1/(C_MU0*C_C2)) /* vacuum permittivity */
-#define C_ME (9.1093837015e-31) /* electron mass */
+#define C_MU0  (2*C_ALPHA*C_H/(C_E*C_E*C_C))  /* vacuum permeability */
+#define C_EPSILON0 (1.0/(C_MU0*C_C2)) /* vacuum permittivity */
+#define C_ME (9.1093837015e-31) /* electron mass, kg */
 #define C_BOHR_RADIUS (C_HBAR/(C_ALPHA*C_ME*C_C)) /* Bohr radius */
+
 #define C_TFU (1.0e19) /* Thin film units, i.e. 1e15 at./cm2 is actually 1e19/m^2 in SI-units */
 #define C_EV_TFU (C_EV/C_TFU) /* Units for stopping cross sections (eV/(1e15 at./cm2)) */
+
+#define C_BARN (1.0e-28)
+#define C_MB_SR (1.0e-3*C_BARN) /* millibarns/sr */
 
 #define UNIT_TYPE_ENERGY 'E'
 #define UNIT_TYPE_ANGLE 'A'

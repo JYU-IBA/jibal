@@ -8,7 +8,7 @@ set(CMAKE_C_STANDARD 99)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_INCLUDE_CURRENT_DIR_IN_INTERFACE ON)
-add_library(jibal SHARED get_stop.c gsto.c masses.c phys.c units.c material.c layer.c kin.c jibal_masses.h jibal_material.h jibal_gsto.h jibal_phys.h jibal_units.h jibal_layer.h jibal_kin.h)
+add_library(jibal SHARED gsto.c masses.c phys.c units.c material.c layer.c kin.c cross_section.c jibal_masses.h jibal_material.h jibal_gsto.h jibal_phys.h jibal_units.h jibal_layer.h jibal_kin.h jibal_cross_section.h)
 
 generate_export_header(jibal)
 set_property(TARGET jibal PROPERTY VERSION ${jibal_VERSION})
