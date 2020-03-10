@@ -77,7 +77,10 @@ int main(int argc, char **argv) {
 
 
     int i;
-    double E=jibal_get_val(data.units, UNIT_TYPE_ENERGY, argv[3]);
+    double E;
+    if(argc >= 4) {
+        jibal_get_val(data.units, UNIT_TYPE_ENERGY, argv[3]);
+    }
 
     if(argc == 4) {
         print_stopping_range(&exp, E, E, E);
