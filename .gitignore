@@ -18,3 +18,5 @@ stamp-*
 *-uninstalled.sh
 jibal-*.*.*.tar.gz
 jibal-*.*.*/
+.idea/
+cmake-build-debug/
