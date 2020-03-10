@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
-SUBDIRS = jibal data src .
+SUBDIRS = data src .
 
 pkgconfiglibdir = $(libdir)/pkgconfig
 pkgconfiglib_DATA = jibal.pc
