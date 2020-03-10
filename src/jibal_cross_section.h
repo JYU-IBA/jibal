@@ -24,4 +24,4 @@
 double jibal_erd_cross_section(jibal_isotope *incident, jibal_isotope *target, double theta, double E);
 double jibal_rbs_cross_section(jibal_isotope *incident, jibal_isotope *target, double theta, double E);
 
-#endif
+#endif /* _JIBAL_CROSS_SECTION_H_ */

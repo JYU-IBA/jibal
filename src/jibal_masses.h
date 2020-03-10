@@ -69,4 +69,4 @@ jibal_isotope *jibal_isotope_find(jibal_isotope *isotopes, const char *name, int
 
 double velocity(double E, double mass); /* Use SI units */
 double energy(double v, double mass);
-#endif
+#endif /* _JIBAL_MASSES_H_ */

@@ -17,4 +17,4 @@ void jibal_material_normalize(jibal_material *material);
 void jibal_material_print(FILE * restrict stream, jibal_material *material);
 void jibal_material_free(jibal_material *material);
 
-#endif
+#endif /* _JIBAL_MATERIAL_H_ */

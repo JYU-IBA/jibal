@@ -1,13 +1,8 @@
 #ifndef _JIBAL_GSTO_H_
 #define _JIBAL_GSTO_H_
 
-#include <jibal_masses.h>
-#include <jibal_material.h>
-#include <jibal_layer.h>
-
 #define GSTO_MAX_LINE_LEN 1024
 #define GSTO_END_OF_HEADERS "==END-OF-HEADER=="
-#define GSTO_DATA_PATH_ENV_VARIABLE "POTKU_DATA_PATH"
 #define GSTO_DATA_DEFAULT_FILE JIBAL_DATADIR "stoppings.txt"
 #define GSTO_N_STOPPING_TYPES 4
 typedef enum {
@@ -93,6 +88,11 @@ typedef struct {
     double stop_step; /* as stopping cross section */
 } jibal_gsto;
 
+#include <jibal_masses.h>
+#include <jibal_material.h>
+#include <jibal_layer.h>
+
+
 
 jibal_gsto *jibal_gsto_init(int Z_max, char *stoppings_file_name);
 int gsto_add_file(jibal_gsto *workspace, char *name, char *filename, int Z1_min, int Z1_max, int Z2_min, int Z2_max, char *type);
@@ -128,4 +128,4 @@ double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y); /* to 
 double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v);
 double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, double m2);
 
-#endif
+#endif /* _JIBAL_GSTO_H_ */
