@@ -9,3 +9,13 @@ double jibal_erd_cross_section(jibal_isotope *incident, jibal_isotope *target, d
     /* TODO: screening */
     return sigma_r;
 }
+
+double jibal_rbs_cross_section(jibal_isotope *incident, jibal_isotope *target, double theta, double E) {
+    double E_cm = target->mass*E/(incident->mass + target->mass);
+    double r = incident->mass/target->mass;
+    double t_cm = theta + asin(r*sin(theta));;
+    double sigma_cm = pow((incident->Z*C_E*target->Z*C_E)/(4.0*C_PI*C_EPSILON0), 2.0)*pow(1.0/(4.0*E_cm), 2.0)*pow(1.0/sin(t_cm/2.0),4.0);
+    double sigma_r = (sigma_cm*pow(sin(t_cm), 2.0))/(pow(sin(theta), 2.0)*cos(t_cm - theta));
+    /* TODO: screening */
+    return(sigma_r);
+}

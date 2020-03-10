@@ -42,13 +42,23 @@ int main(int argc, char **argv) {
 
     }
     jibal_isotope *incident = jibal_isotope_find(data.isotopes, argv[1], 0, 0);
+    if(!incident) {
+        fprintf(stderr, "There is no isotope %s in my database.\n", argv[1]);
+        return -1;
+    }
     jibal_isotope *target = jibal_isotope_find(data.isotopes, argv[2], 0, 0);
+    if(!target) {
+        fprintf(stderr, "There is no isotope %s in my database.\n", argv[2]);
+        return -1;
+    }
     double theta = jibal_get_val(data.units, UNIT_TYPE_ANGLE, argv[3]);
     double E = jibal_get_val(data.units, UNIT_TYPE_ENERGY, argv[4]);
     double E_erd = jibal_kin_erd(incident->mass, target->mass, theta) * E;
     double cs_erd =  jibal_erd_cross_section(incident, target, theta, E);
+    double cs_rbs = jibal_rbs_cross_section(incident, target, theta, E);
     fprintf(stderr, "E = %g keV\n", E/C_KEV);
     fprintf(stderr, "E_erd = %g keV\n", E_erd/C_KEV);
     fprintf(stderr, "ERD cross section = %g mb/sr\n", cs_erd/C_MB_SR);
+    fprintf(stderr, "RBS cross section = %g mb/sr\n", cs_rbs/C_MB_SR);
     return 0;
 }
