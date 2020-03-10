@@ -32,6 +32,12 @@ You can also do energy loss calculations in layers, e.g.
 get_stop 4He Au 2MeV 1000tfu
 ~~~~
 
+Elements are assumed to have natural isotopic composition, unless you tell otherwise, e.g.
+~~~~
+get_stop 4He "7Li0.60 6Li0.40" 2MeV 1000tfu
+~~~~
+Note that this results in two elements, but this is fine. 
+
 ## Using the jibal library with your own programs
 
 When compiling your programs against jibal you can get the compiler flags with pkg-config (assuming pkg-config finds jibal.pc file)
