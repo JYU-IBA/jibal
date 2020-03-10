@@ -219,7 +219,7 @@ double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2) {
     return file->data[i];
 }
 
-int gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
+int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
     int Z1, Z2, previous_Z1=file->Z1_min, previous_Z2=file->Z2_min-1, skip, i;
     char *line = calloc(GSTO_MAX_LINE_LEN, sizeof(char));
     int actually_skipped=0;
