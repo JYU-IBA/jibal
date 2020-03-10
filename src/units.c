@@ -40,8 +40,12 @@ jibal_units *jibal_units_add(jibal_units *units, double f, char type, char *name
 
 jibal_units *jibal_units_default() {
     jibal_units *units=NULL;
+    units=jibal_units_add(units, 1.0, UNIT_TYPE_DISTANCE, "m");
+    units=jibal_units_add(units, 1.0, UNIT_TYPE_ENERGY, "J");
     units=jibal_units_add(units, C_E, UNIT_TYPE_ENERGY, "eV");
+    units=jibal_units_add(units, 1.0e-3, UNIT_TYPE_ENERGY, "g"); /* SI is kg, but we handle prefixes separately */
     units=jibal_units_add(units, C_U, UNIT_TYPE_MASS, "u");
+    units=jibal_units_add(units, 1.0, UNIT_TYPE_ANGLE, "rad");
     units=jibal_units_add(units, C_DEG, UNIT_TYPE_ANGLE, "deg");
     units=jibal_units_add(units, C_TFU, UNIT_TYPE_LAYER_THICKNESS, "tfu");
     return units;
