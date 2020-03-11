@@ -54,7 +54,6 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
     } 
     FILE *in_file=fopen(filename, "r");
     if(!in_file) {
-        fprintf(stderr, "Could not load isotope table from file %s\n", filename);
         return NULL;
     }
     char line[JIBAL_LINE_LENGTH];
@@ -127,6 +126,8 @@ void jibal_isotopes_free(jibal_isotope *isotopes) {
 }
 
 jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
+    if(!isotopes)
+        return NULL;
     jibal_element *elements=calloc(JIBAL_ELEMENTS+1, sizeof(jibal_element));
     const jibal_isotope *isotope;
     for(isotope=isotopes; isotope->A != 0; isotope++) {

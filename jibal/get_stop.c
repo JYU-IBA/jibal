@@ -46,16 +46,16 @@ int main(int argc, char **argv) {
     experiment exp;
     generic_data data;
     data.isotopes=jibal_isotopes_load(NULL);
+    if(!data.isotopes) {
+        fprintf(stderr, "Could not load isotope table.\n");
+        return -1;
+    }
     jibal_abundances_load(data.isotopes, NULL);
     data.elements=jibal_elements_populate(data.isotopes);
     data.units=jibal_units_default();
     if(argc<=2) {
         return -1;
 
-    }
-    if(!data.isotopes) {
-        fprintf(stderr, "Couldn't load isotopes.\n");
-        return -1;
     }
     exp.incident=jibal_isotope_find(data.isotopes, argv[1], 0,0 );
     fprintf(stderr, "Z1=%i\nm1=%g kg (%g u)\n", exp.incident->Z, exp.incident->mass, exp.incident->mass/C_U);
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     int i;
     double E;
     if(argc >= 4) {
-        jibal_get_val(data.units, UNIT_TYPE_ENERGY, argv[3]);
+        E=jibal_get_val(data.units, UNIT_TYPE_ENERGY, argv[3]);
     }
 
     if(argc == 4) {

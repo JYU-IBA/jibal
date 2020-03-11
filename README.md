@@ -4,14 +4,18 @@ Library that provides stopping forces, straggling models, cross sections and var
 
 ## Installation from sources
 
-Install GNU Scientific library and GNU Autotools and a compiler. After this, on Linux and MacOS you should run:
+Install git, GNU Scientific library and CMake and a compiler. After this, on Linux and MacOS you should run:
 
 ~~~~
-./autogen.sh
-./configure
-make
-make install
+$ git clone git@gitlab.jyu.fi:iba/jibal.git
+$ mkdir build
+$ cd build
+$ cmake ../
+$ make
+$ make install 
 ~~~~
+
+This should make a shared library (dyfile, so, DLL) called "Jibal" (compile with -lJibal).
 
 ## Usage of bundled tools
 
@@ -40,13 +44,11 @@ Note that this results in two elements, but this is fine.
 
 ## Using the jibal library with your own programs
 
-When compiling your programs against jibal you can get the compiler flags with pkg-config (assuming pkg-config finds jibal.pc file)
+Using CMake is preferred, see directory "demo" for an example of a C++ program using Jibal.
+
+Alternatively when compiling your programs against jibal you can get the compiler flags with pkg-config (assuming pkg-config finds jibal.pc file)
 
 ~~~~
 pkg-config --cflags --libs jibal
 ~~~~
 
-Otherwise just use
-~~~~
-gcc -I/usr/local/include -I/usr/local/include/jibal -L/usr/local/lib -ljibal -lm -lgsl -lgslcblas -lm ...
-~~~~

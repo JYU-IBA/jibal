@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from bs4 import BeautifulSoup
 from parse import parse
-html = open("../data/isotopic-abundances.htm").read()
+html = open("isotopic-abundances.htm").read()
 soup = BeautifulSoup(html, features="html.parser", multi_valued_attributes=None)
 table = soup.find("table")
 

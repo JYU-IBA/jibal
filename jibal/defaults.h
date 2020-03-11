@@ -19,12 +19,13 @@
 #ifndef _JIBAL_DEFAULTS_H_
 #define _JIBAL_DEFAULTS_H_
 
+#include <jibal_config.h>
 #include <jibal_units.h>
 
 #define JIBAL_STEP_SIZE (10.0*C_TFU)
 
 #ifndef JIBAL_DATADIR
-#define JIBAL_DATADIR "../data/"
+#define JIBAL_DATADIR "../../data/"
 #endif
 
 #define JIBAL_MASSES_FILE JIBAL_DATADIR "masses.dat"

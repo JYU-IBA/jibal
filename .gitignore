@@ -1,22 +1,5 @@
-aclocal.m4
-autom4te.cache/
-build-aux/
-config.*
-Makefile.in
-missing
-ltmain.sh
-configure
-depcomp
-install-sh
-Makefile
-libtool
-*.la
-*.lo
-*.o
-stamp-*
-*.pc
-*-uninstalled.sh
-jibal-*.*.*.tar.gz
-jibal-*.*.*/
+#CLion specific clutter
 .idea/
-cmake-build-debug/
+
+#Generic names of build directories
+*build*/
