@@ -54,9 +54,11 @@ int main(int argc, char **argv) {
     double theta = jibal_get_val(data.units, UNIT_TYPE_ANGLE, argv[3]);
     double E = jibal_get_val(data.units, UNIT_TYPE_ENERGY, argv[4]);
     double E_erd = jibal_kin_erd(incident->mass, target->mass, theta) * E;
+    double E_rbs = jibal_kin_rbs(incident->mass, target->mass, theta, '+') * E;
     double cs_erd =  jibal_erd_cross_section(incident, target, theta, E);
     double cs_rbs = jibal_rbs_cross_section(incident, target, theta, E);
     fprintf(stderr, "E = %g keV\n", E/C_KEV);
+    fprintf(stderr, "E_rbs = %g keV\n", E_rbs/C_KEV);
     fprintf(stderr, "E_erd = %g keV\n", E_erd/C_KEV);
     fprintf(stderr, "ERD cross section = %g mb/sr\n", cs_erd/C_MB_SR);
     fprintf(stderr, "RBS cross section = %g mb/sr\n", cs_rbs/C_MB_SR);

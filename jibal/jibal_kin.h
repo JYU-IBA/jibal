@@ -22,7 +22,7 @@
 #include <jibal_units.h>
 #include <jibal_masses.h>
 
-double jibal_kin_rbs(double m1, double m2, double theta, int plus);
+double jibal_kin_rbs(double m1, double m2, double theta, char sign);
 double jibal_kin_erd(double m1, double m2, double theta);
 
 #endif /* _JIBAL_KIN_H_ */
