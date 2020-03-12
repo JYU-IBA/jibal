@@ -640,7 +640,7 @@ double jibal_layer_energy_loss(jibal_gsto *workspace, jibal_isotope *incident, j
     double h = workspace->stop_step;
     for (x = 0.0; x <= layer->thickness; x += h) {
         if(x+h > layer->thickness) { /* Last step may be partial */
-            h=layer->thickness-h;
+            h=layer->thickness-x;
             if(h < workspace->stop_step/1e6) {
                 break;
             }
