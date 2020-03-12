@@ -639,6 +639,12 @@ double jibal_layer_energy_loss(jibal_gsto *workspace, jibal_isotope *incident, j
     double x;
     double h = workspace->stop_step;
     for (x = 0.0; x <= layer->thickness; x += h) {
+        if(x+h > layer->thickness) { /* Last step may be partial */
+            h=layer->thickness-h;
+            if(h < workspace->stop_step/1e6) {
+                break;
+            }
+        }
         k1 = jibal_stop(workspace, incident, layer->material, E);
         k2 = jibal_stop(workspace, incident, layer->material, E + (h / 2) * k1);
         k3 = jibal_stop(workspace, incident, layer->material, E + (h / 2) * k2);
