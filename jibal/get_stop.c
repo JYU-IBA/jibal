@@ -33,6 +33,8 @@ void print_stopping_range(jibal *jibal, experiment *exp, double E_low, double E_
     }
 }
 int main(int argc, char **argv) {
+    if(argc < 2)
+        return -1;
     experiment exp;
     jibal jibal=jibal_init();
     exp.incident=jibal_isotope_find(jibal.isotopes, argv[1], 0,0 );
@@ -65,7 +67,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "E = %g keV\n", E/C_KEV);
         exp.target->thickness=jibal_get_val(jibal.units, UNIT_TYPE_LAYER_THICKNESS, argv[4]);
         fprintf(stderr, "Layer thickness = %g tfu (1e15 at./cm2)\n", exp.target->thickness/C_TFU);
-        double E_out= jibal_layer_energy_loss(jibal.gsto, exp.incident, exp.target, E, 1.0);
+        double E_out= jibal_layer_energy_loss(jibal.gsto, exp.incident, exp.target, E, -1.0);
         fprintf(stderr, "E_out = %g keV\n", E_out/C_KEV);
         fprintf(stderr, "delta E = %g keV\n", (E_out-E)/C_KEV);
     } else if(argc == 6) {

@@ -633,12 +633,15 @@ double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *targe
     return sum;
 }
 
-double jibal_layer_energy_loss(jibal_gsto *workspace, jibal_isotope *incident, jibal_layer *layer, double E_0, double
-factor) {
+double jibal_layer_energy_loss(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_layer *layer, double
+E_0, double factor) {
     double k1, k2, k3, k4;
     double E = E_0;
     double x;
     double h = workspace->stop_step;
+#ifdef DEBUG
+    fprintf(stderr, "Thickness %g, stop step %g\n", layer->thickness, h);
+#endif
     for (x = 0.0; x <= layer->thickness; x += h) {
         if(x+h > layer->thickness) { /* Last step may be partial */
             h=layer->thickness-x;
@@ -646,11 +649,11 @@ factor) {
                 break;
             }
         }
-        k1 = jibal_stop(workspace, incident, layer->material, E);
-        k2 = jibal_stop(workspace, incident, layer->material, E + (h / 2) * k1);
-        k3 = jibal_stop(workspace, incident, layer->material, E + (h / 2) * k2);
-        k4 = jibal_stop(workspace, incident, layer->material, E + h * k3);
-        E -= factor*(h / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
+        k1 = factor*jibal_stop(workspace, incident, layer->material, E);
+        k2 = factor*jibal_stop(workspace, incident, layer->material, E + (h / 2) * k1);
+        k3 = factor*jibal_stop(workspace, incident, layer->material, E + (h / 2) * k2);
+        k4 = factor*jibal_stop(workspace, incident, layer->material, E + h * k3);
+        E += (h / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
     }
     return E;
 }

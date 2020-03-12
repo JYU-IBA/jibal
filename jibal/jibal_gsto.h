@@ -1,6 +1,8 @@
 #ifndef _JIBAL_GSTO_H_
 #define _JIBAL_GSTO_H_
 
+#include <stdio.h>
+
 #define GSTO_MAX_LINE_LEN 1024
 #define GSTO_END_OF_HEADERS "==END-OF-HEADER=="
 #define GSTO_DATA_DEFAULT_FILE JIBAL_DATADIR "stoppings.txt"
@@ -109,7 +111,8 @@ double jibal_stop(jibal_gsto *workspace, const jibal_isotope *incident, const ji
 double jibal_stop_ele(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E);
 double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *target, double E); /* TODO: energy range */
 
-double jibal_layer_energy_loss(jibal_gsto *workspace, jibal_isotope *incident, jibal_layer *layer, double E, double
+double jibal_layer_energy_loss(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_layer *layer, double
+E, double
 factor);
 
 /* The following are mostly internal */

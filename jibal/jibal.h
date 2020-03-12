@@ -32,6 +32,6 @@ typedef struct {
 } jibal; /* All in one solution */
 
 jibal jibal_init();
-void jibal_free();
+void jibal_free(jibal *jibal);
 
 #endif //JIBAL_JIBAL_H
