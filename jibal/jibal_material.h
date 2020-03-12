@@ -14,7 +14,7 @@ typedef struct {
 
 jibal_material *jibal_material_create(jibal_element *elements, const char *formula);
 void jibal_material_normalize(jibal_material *material);
-void jibal_material_print(FILE * restrict stream, jibal_material *material);
+void jibal_material_print(FILE *stream, jibal_material *material);
 void jibal_material_free(jibal_material *material);
 
 #endif /* _JIBAL_MATERIAL_H_ */

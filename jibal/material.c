@@ -123,7 +123,7 @@ void jibal_material_normalize(jibal_material *material) {
     }
 }
 
-void jibal_material_print(FILE * restrict stream, jibal_material *material) {
+void jibal_material_print(FILE *stream, jibal_material *material) {
     int i;
     fprintf(stream, "Material %s has %i elements.\n", material->name, material->n_elements);
     for(i=0; i < material -> n_elements; i++) {
