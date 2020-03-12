@@ -8,11 +8,12 @@ Install git, GNU Scientific library and CMake and a compiler. After this, on Lin
 
 ~~~~
 $ git clone git@gitlab.jyu.fi:iba/jibal.git
+$ cd jibal
 $ mkdir build
 $ cd build
 $ cmake ../
 $ make
-$ make install 
+$ sudo make install 
 ~~~~
 
 This should make a shared library (dyfile, so, DLL) called "Jibal" (compile with -lJibal).
