@@ -17,92 +17,66 @@
 */
 
 #include <stdio.h>
-#include <jibal_masses.h>
-#include <jibal_units.h>
-#include <jibal_gsto.h>
-#include <jibal_material.h>
+#include <jibal.h>
 
 typedef struct {
-    jibal_isotope *isotopes;
-    jibal_element *elements;
-    jibal_units *units;
-} generic_data;
-
-typedef struct {
-    jibal_gsto  *workspace;
     jibal_isotope *incident;
     jibal_layer *target; /* TODO: array, now just fixed one pointer */
 } experiment;
 
-void print_stopping_range(experiment *exp, double E_low, double E_step, double E_high) {
+void print_stopping_range(jibal *jibal, experiment *exp, double E_low, double E_step, double E_high) {
     double E;
     for(E=E_low; E <= E_high; E += E_step) {
-        double S_ele=jibal_stop_ele(exp->workspace, exp->incident, exp->target->material, E);
+        double S_ele=jibal_stop_ele(jibal->gsto, exp->incident, exp->target->material, E);
         double S_nuc=jibal_stop_nuc(exp->incident, exp->target->material, E);
         fprintf(stdout, "%e %e %e\n", E/C_KEV, S_ele/C_EV_TFU, S_nuc/C_EV_TFU);
     }
 }
 int main(int argc, char **argv) {
     experiment exp;
-    generic_data data;
-    data.isotopes=jibal_isotopes_load(NULL);
-    if(!data.isotopes) {
-        fprintf(stderr, "Could not load isotope table.\n");
-        return -1;
-    }
-    jibal_abundances_load(data.isotopes, NULL);
-    data.elements=jibal_elements_populate(data.isotopes);
-    data.units=jibal_units_default();
-    if(argc<=2) {
-        return -1;
-
-    }
-    exp.incident=jibal_isotope_find(data.isotopes, argv[1], 0,0 );
+    jibal jibal=jibal_init();
+    exp.incident=jibal_isotope_find(jibal.isotopes, argv[1], 0,0 );
     fprintf(stderr, "Z1=%i\nm1=%g kg (%g u)\n", exp.incident->Z, exp.incident->mass, exp.incident->mass/C_U);
 
     char *target_string=argv[2];
 
-    exp.target=jibal_layer_new(jibal_material_create(data.elements, target_string), 0.0);
+    exp.target=jibal_layer_new(jibal_material_create(jibal.elements, target_string), 0.0);
     if(!exp.target) {
         fprintf(stderr, "Error in creating layer \"%s\"", target_string);
         return -1;
     }
     jibal_material_print(stderr, exp.target->material);
-    exp.workspace=jibal_gsto_init(91, NULL);
-    if(!exp.workspace)
+    if(!jibal.gsto)
         return -1;
-    if(!jibal_stop_auto_assign(exp.workspace, exp.incident, exp.target->material)) /* TODO: loop over layers */
+    if(!jibal_stop_auto_assign(jibal.gsto, exp.incident, exp.target->material)) /* TODO: loop over layers */
         return -1;
-    jibal_gsto_load(exp.workspace);
+    jibal_gsto_load(jibal.gsto);
 
 
     int i;
     double E;
     if(argc >= 4) {
-        E=jibal_get_val(data.units, UNIT_TYPE_ENERGY, argv[3]);
+        E=jibal_get_val(jibal.units, UNIT_TYPE_ENERGY, argv[3]);
     }
 
     if(argc == 4) {
-        print_stopping_range(&exp, E, E, E);
+        print_stopping_range(&jibal, &exp, E, E, E);
     } else if(argc == 5) {
         fprintf(stderr, "E = %g keV\n", E/C_KEV);
-        exp.target->thickness=jibal_get_val(data.units, UNIT_TYPE_LAYER_THICKNESS, argv[4]);
+        exp.target->thickness=jibal_get_val(jibal.units, UNIT_TYPE_LAYER_THICKNESS, argv[4]);
         fprintf(stderr, "Layer thickness = %g tfu (1e15 at./cm2)\n", exp.target->thickness/C_TFU);
-        double E_out= jibal_layer_energy_loss(exp.workspace, exp.incident, exp.target, E);
+        double E_out= jibal_layer_energy_loss(jibal.gsto, exp.incident, exp.target, E, 1.0);
         fprintf(stderr, "E_out = %g keV\n", E_out/C_KEV);
         fprintf(stderr, "delta E = %g keV\n", (E_out-E)/C_KEV);
     } else if(argc == 6) {
         double E_low, E_step, E_high;
         E_low=E;
-        E_step=jibal_get_val(data.units, UNIT_TYPE_ENERGY, argv[4]);
-        E_high=jibal_get_val(data.units, UNIT_TYPE_ENERGY, argv[5]);
+        E_step=jibal_get_val(jibal.units, UNIT_TYPE_ENERGY, argv[4]);
+        E_high=jibal_get_val(jibal.units, UNIT_TYPE_ENERGY, argv[5]);
         fprintf(stderr, "E_low=%g keV, E_high=%g keV, E_step=%g keV\n", E_low/C_KEV, E_high/C_KEV, E_step/C_KEV);
-        print_stopping_range(&exp, E_low, E_step, E_high);
+        print_stopping_range(&jibal, &exp, E_low, E_step, E_high);
     }
     jibal_material_free(exp.target->material);
-    jibal_units_free(data.units);
-    jibal_elements_free(data.elements);
-    jibal_isotopes_free(data.isotopes);
-    jibal_gsto_free(exp.workspace);
+    jibal_free(&jibal);
     return 0;
 }

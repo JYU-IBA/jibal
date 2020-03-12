@@ -1,5 +1,5 @@
 /*
-    JIBAL - Library for ion beam analysis
+    LibIBA - Library for ion beam analysis
     Copyright (C) 2020 Jaakko Julin <jaakko.julin@jyu.fi>
 
     This program is free software: you can redistribute it and/or modify
@@ -16,21 +16,22 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _JIBAL_DEFAULTS_H_
-#define _JIBAL_DEFAULTS_H_
+#ifndef JIBAL_JIBAL_H
+#define JIBAL_JIBAL_H
 
-#include <jibal_config.h>
 #include <jibal_units.h>
+#include <jibal_masses.h>
+#include <jibal_material.h>
+#include <jibal_gsto.h>
 
-#define JIBAL_STEP_SIZE (10.0*C_TFU)
+typedef struct {
+    jibal_units *units;
+    jibal_isotope *isotopes;
+    jibal_element *elements;
+    jibal_gsto *gsto;
+} jibal; /* All in one solution */
 
-#ifndef JIBAL_DATADIR
-#define JIBAL_DATADIR "../../data/"
-#endif
+jibal jibal_init();
+void jibal_free();
 
-#define JIBAL_MASSES_FILE JIBAL_DATADIR "masses.dat"
-#define JIBAL_ABUNDANCES_FILE JIBAL_DATADIR "abundances.dat"
-
-#define JIBAL_MAX_Z 91
-
-#endif /* _JIBAL_DEFAULTS_H_ */
+#endif //JIBAL_JIBAL_H

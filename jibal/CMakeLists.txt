@@ -29,6 +29,7 @@ configure_file(
 FILE(GLOB DATAFILES "${CMAKE_SOURCE_DIR}/data/*.*")
 #message(STATUS "${DATAFILES}")
 FILE(GLOB PUBLIC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/jibal_*.h")
+set(PUBLIC_HEADERS "${PUBLIC_HEADERS};jibal.h")
 
 add_library(Jibal SHARED
         gsto.c
@@ -38,7 +39,8 @@ add_library(Jibal SHARED
         material.c
         layer.c
         kin.c
-        cross_section.c )
+        cross_section.c
+        jibal.c)
 
 
 target_link_libraries(Jibal GSL::gsl) #GSL is found by FindGSL.

@@ -633,7 +633,8 @@ double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *targe
     return sum;
 }
 
-double jibal_layer_energy_loss(jibal_gsto *workspace, jibal_isotope *incident, jibal_layer *layer, double E_0) {
+double jibal_layer_energy_loss(jibal_gsto *workspace, jibal_isotope *incident, jibal_layer *layer, double E_0, double
+factor) {
     double k1, k2, k3, k4;
     double E = E_0;
     double x;
@@ -649,7 +650,7 @@ double jibal_layer_energy_loss(jibal_gsto *workspace, jibal_isotope *incident, j
         k2 = jibal_stop(workspace, incident, layer->material, E + (h / 2) * k1);
         k3 = jibal_stop(workspace, incident, layer->material, E + (h / 2) * k2);
         k4 = jibal_stop(workspace, incident, layer->material, E + h * k3);
-        E -= (h / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
+        E -= factor*(h / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
     }
     return E;
 }
