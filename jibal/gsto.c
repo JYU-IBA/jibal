@@ -94,6 +94,7 @@ int gsto_add_file(jibal_gsto *table, char *name, char *filename, int Z1_min, int
     new_file->stounit=0;
     new_file->xunit=0;
     new_file->data=NULL; /* this is allocated also when the file is loaded */
+    new_file->vel=NULL;
 
     if(Z1_min > Z1_max) {
         success=0;
@@ -135,6 +136,9 @@ void jibal_gsto_file_free(gsto_file_t *file) {
         }
         free(file->data);
     }
+    if(file->vel) {
+        free(file->vel);
+    }
     free(file->name);
     free(file->filename);
     free(file);
@@ -168,6 +172,10 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
             if (file == jibal_gsto_get_file(workspace, Z1, Z2)) {
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
                 fread(data, sizeof(double), file->xpoints, file->fp);
+                int i;
+                for(i=0; i<file->xpoints; i++) {
+                    data[i] = jibal_gsto_scale_y_to_stopping(file, data[i]);
+                }
             } else {
                 fseek(file->fp, sizeof(double)*file->xpoints, SEEK_CUR);
             }
@@ -267,7 +275,7 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
 #ifdef DEBUG
                         fprintf(stderr, "Loaded stopping [%i][%i][%i] from line %i.\n", Z1, Z2, i, file->lineno);
 #endif
-                        data[i] = strtod(line, NULL);
+                        data[i] = jibal_gsto_scale_y_to_stopping(file, strtod(line, NULL));
                     }
                 }
                 previous_Z1=Z1;
@@ -397,6 +405,7 @@ int jibal_gsto_load(jibal_gsto *workspace) { /* For every file, load combination
         } /* End of headers */
         file->n_comb=(file->Z1_max-file->Z1_min+1)*(file->Z2_max-file->Z2_min+1);
         file->data = calloc(file->n_comb, sizeof(double *));
+        file->vel = jibal_gsto_velocity_table(file);
         switch (file->data_format) {
             case GSTO_DF_DOUBLE:
                 jibal_gsto_load_binary_file(workspace, file);
@@ -538,6 +547,44 @@ gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, int Z1, int Z2) {
     return workspace->assignments[i];
 }
 
+double *jibal_gsto_velocity_table(const gsto_file_t *file) {
+    double *table = malloc(sizeof(double) * file->xpoints);
+    int i;
+    double x, v;
+    fprintf(stderr, "Making velocity table, %i points, xmin=%g, xmax=%g, xscale=%i, xunit=%i\n", file->xpoints,
+            file->xmin, file->xmax, file->xscale, file->xunit);
+    for (i = 0; i < file->xpoints; i++) {
+        switch (file->xscale) {
+            case GSTO_XSCALE_LOG10:
+                x = file->xmin * pow(file->xmax / file->xmin, 1.0 * i / (file->xpoints - 1));
+                break;
+            case GSTO_XSCALE_LINEAR:
+                x = file->xmin + (file->xmax - file->xmin) * (1.0 * i / (file->xpoints - 1));
+                break;
+            case GSTO_XSCALE_NONE:
+                x = 0.0;
+                break;
+        }
+        switch (file->xunit) {
+            case GSTO_X_UNIT_KEV_U:
+#ifdef CLASSICAL
+                v=sqrt((2*x*C_KEV/C_U));
+#else
+                v=sqrt(C_C2*(1-1/pow((x*(C_KEV/C_U)/C_C2+1),2.0))); /* gamma=x*(C_KEV/C_U)/C_C2+1 */
+#endif
+                break;
+            case GSTO_X_UNIT_M_S:
+                v=x;
+                break;
+            default:
+                v=0.0;
+                break;
+        }
+        table[i]=v;
+    }
+    return table;
+}
+
 double jibal_gsto_scale_velocity_to_x(const gsto_file_t *file, double v) {
     double x, gamma;
     /* Scale v to "native" velocity, i.e. units of the file. */
@@ -596,17 +643,28 @@ double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
 #endif
         return 0.0;
     }
-    double x=jibal_gsto_scale_velocity_to_x(file, v);
-    if(x == 0.0) { /* X out of range. Yes, this kind of comparison is safe. */
-        return 0.0;
+    /* Let's perform a binary search! Works with arbitrary velocity spacing. TODO: optimize for lin and log. */
+    int hi = file->xpoints-1;
+    int lo = 0;
+    int mi;
+
+    while (hi - lo > 1) {
+            mi = (hi + lo) / 2;
+        if (v >= file->vel[mi]) {
+            lo = mi;
+        } else {
+            hi = mi;
+        }
     }
 
-    /* Scale x to indices of tabulated stopping and interpolate */
-    double i_float=jibal_gsto_xscale_to_index(file, x);
-    int i = (int) floor(i_float);
+    if (v < file->vel[lo] || v >= file->vel[lo + 1]) { /* Sanity check and out-of-bounds check. */
+        return 0.0;
+    }
     const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
-    double sto = jibal_linear_interpolation(1.0*i, 1.0*(i+1), data[i], data[i+1], i_float);
-    return jibal_gsto_scale_y_to_stopping(file, sto);
+    //fprintf(stderr, "v=%g m/s (%g keV/u)\n", v, 0.5*pow(v, 2.0)*C_U/C_KEV);
+    double sto=jibal_linear_interpolation(file->vel[lo], file->vel[lo+1], data[lo], data[lo+1], v);
+#endif
+    return sto;
 }
 
 double jibal_stop(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {

@@ -69,6 +69,7 @@ typedef struct {
     int xpoints; /* How many points of stopping per Z1, Z2 combination */
     double xmin; /* The first point of stopping corresponds to x=xmin */
     double xmax; /* The last point of stopping corresponds to x=xmax */
+    double *vel; /* Array of velocities (size: xpoints) */
     stopping_xscale_t xscale; /* The scale specifies how stopping points are spread between min and max (linear, log...) */
     stopping_xunit_t xunit; /* Stopping as a function of what? */
     stopping_stounit_t stounit; /* Stopping unit */
@@ -129,6 +130,7 @@ double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2);
 gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, int Z1, int Z2);
 
 int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2);
+double *jibal_gsto_velocity_table(const gsto_file_t *file);
 double jibal_gsto_scale_velocity_to_x(const gsto_file_t *file, double v); /* from SI units */
 double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y); /* to SI units */
 double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v);
