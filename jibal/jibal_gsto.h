@@ -90,6 +90,8 @@ typedef struct {
     double stop_step; /* as stopping cross section */
 } jibal_gsto;
 
+
+
 #include <jibal_masses.h>
 #include <jibal_material.h>
 #include <jibal_layer.h>
@@ -99,7 +101,7 @@ typedef struct {
 jibal_gsto *jibal_gsto_init(int Z_max, char *stoppings_file_name);
 int gsto_add_file(jibal_gsto *workspace, char *name, char *filename, int Z1_min, int Z1_max, int Z2_min, int Z2_max, char *type);
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file);
-int jibal_stop_auto_assign(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target);
+int jibal_gsto_auto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target);
 int jibal_gsto_print_files(jibal_gsto *workspace);
 int jibal_gsto_print_assignments(jibal_gsto *workspace);
 void jibal_gsto_file_free(gsto_file_t *file);

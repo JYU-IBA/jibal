@@ -668,7 +668,7 @@ double jibal_stop_ele(jibal_gsto *workspace, const jibal_isotope *incident, cons
     return sum;
 }
 
-int jibal_stop_auto_assign(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target) {
+int jibal_gsto_auto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target) {
     int i;
     int success = 0;
     for (i = 0; i < target->n_elements; i++) {

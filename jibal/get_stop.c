@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     jibal_material_print(stderr, exp.target->material);
     if(!jibal.gsto)
         return -1;
-    if(!jibal_stop_auto_assign(jibal.gsto, exp.incident, exp.target->material)) /* TODO: loop over layers */
+    if(!jibal_gsto_auto_assign_material(jibal.gsto, exp.incident, exp.target->material)) /* TODO: loop over layers */
         return -1;
     jibal_gsto_load(jibal.gsto);
 
