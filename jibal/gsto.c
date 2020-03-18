@@ -663,7 +663,6 @@ double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
     const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
     //fprintf(stderr, "v=%g m/s (%g keV/u)\n", v, 0.5*pow(v, 2.0)*C_U/C_KEV);
     double sto=jibal_linear_interpolation(file->vel[lo], file->vel[lo+1], data[lo], data[lo+1], v);
-#endif
     return sto;
 }
 
