@@ -48,6 +48,7 @@ jibal_units *jibal_units_default() {
     units=jibal_units_add(units, 1.0, UNIT_TYPE_ANGLE, "rad");
     units=jibal_units_add(units, C_DEG, UNIT_TYPE_ANGLE, "deg");
     units=jibal_units_add(units, C_TFU, UNIT_TYPE_LAYER_THICKNESS, "tfu");
+    units=jibal_units_add(units, 1.0, UNIT_TYPE_TIME, "s");
     return units;
 }
 

@@ -53,6 +53,7 @@
 #define UNIT_TYPE_DISTANCE 'L'
 #define UNIT_TYPE_MASS 'M'
 #define UNIT_TYPE_LAYER_THICKNESS 'X'
+#define UNIT_TYPE_TIME 'T'
 
 typedef struct jibal_units {
     double f; /*!< Factor, i.e. this unit in Si units (e.g. 1.66e-27 for the atomic mass unit) */
