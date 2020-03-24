@@ -56,7 +56,7 @@ target_include_directories(Jibal
         $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
         )
 
-set_property(TARGET Jibal PROPERTY VERSION ${Jibal_VERSION})
+set_property(TARGET Jibal PROPERTY VERSION ${jibal_VERSION})
 set_property(TARGET Jibal PROPERTY SOVERSION 0)
 set_property(TARGET Jibal PROPERTY
         INTERFACE_Jibal_MAJOR_VERSION 0)
@@ -108,7 +108,7 @@ configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
 # generate the version file for config
 write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/JibalConfigVersion.cmake"
-        VERSION "${Jibal_VERSION_MAJOR}.${Jibal_VERSION_MINOR}"
+        VERSION "${jibal_VERSION_MAJOR}.${jibal_VERSION_MINOR}"
         COMPATIBILITY AnyNewerVersion
 )
 
@@ -126,6 +126,9 @@ export(EXPORT JibalTargets
 # cpack configuration
 include(InstallRequiredSystemLibraries)
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
-set(CPACK_PACKAGE_VERSION_MAJOR "${Jibal_VERSION_MAJOR}")
-set(CPACK_PACKAGE_VERSION_MINOR "${Jibal_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION "${jibal_VERSION_MAJOR}.${jibal_VERSION_MINOR}.${jibal_VERSION_PATCH}")
+set(CPACK_PACKAGE_VERSION_MAJOR "${jibal_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${jibal_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${jibal_VERSION_PATCH}")
+set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_SOURCE_DIR}/build/;${CMAKE_SOURCE_DIR}/cmake-build-debug/;${CMAKE_SOURCE_DIR}/.git/;${CMAKE_SOURCE_DIR}/.idea/")
 include(CPack)
