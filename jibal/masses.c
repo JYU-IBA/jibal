@@ -22,6 +22,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <jibal_masses.h>
+#include "win_compat.h"
 #include "defaults.h"
 
 //#include "win_compat.h"

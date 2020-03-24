@@ -7,6 +7,7 @@
 #include <jibal_phys.h>
 #include <jibal_gsto.h>
 #include <defaults.h>
+#include "win_compat.h"
 
 static char *gsto_stopping_types[] ={ /* The first three characters are tested with e.g. strncmp(stopping_types[i], "tot", 3*sizeof(char)). So make them unique. */ 
     "none",
@@ -235,8 +236,8 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
     fprintf(stderr, "Loading ascii data.\n");
 #endif
     
-    for (Z1=file->Z1_min; Z1<=file->Z1_max && Z1 <= workspace->Z1_max; Z1++) {
-        for (Z2=file->Z2_min; Z2<=file->Z2_max && Z2<=file->Z2_max; Z2++) {
+    for (Z1=file->Z1_min; Z1 <= file->Z1_max && Z1 <= workspace->Z1_max; Z1++) {
+        for (Z2=file->Z2_min; Z2 <= file->Z2_max && Z2 <= workspace->Z2_max; Z2++) {
             if (file == jibal_gsto_get_file(workspace, Z1, Z2)) { /* This file is assigned to this Z1, Z2 combination, so we have to load the stopping in. */
                 skip=file->xpoints*((Z1-previous_Z1)*(file->Z2_max-file->Z2_min+1)+(Z2-previous_Z2-1)); /* Not sure if correct, but it works. */
 #ifdef DEBUG

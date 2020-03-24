@@ -40,7 +40,9 @@ add_library(Jibal SHARED
         layer.c
         kin.c
         cross_section.c
-        jibal.c)
+        jibal.c
+        win_compat.c
+)
 
 
 target_link_libraries(Jibal GSL::gsl) #GSL is found by FindGSL.
