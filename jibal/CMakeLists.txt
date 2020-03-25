@@ -31,6 +31,8 @@ FILE(GLOB DATAFILES "${CMAKE_SOURCE_DIR}/data/*.*")
 FILE(GLOB PUBLIC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/jibal_*.h")
 set(PUBLIC_HEADERS "${PUBLIC_HEADERS};jibal.h")
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
+
 add_library(Jibal SHARED
         gsto.c
         masses.c

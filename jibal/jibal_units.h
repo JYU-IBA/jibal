@@ -22,7 +22,11 @@
 #ifndef _JIBAL_UNITS_H_
 #define _JIBAL_UNITS_H_
 
+#define _USE_MATH_DEFINES
 #include <math.h>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327950288
+#endif
 
 #define C_PI M_PI
 #define C_PERCENT 0.01
