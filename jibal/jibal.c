@@ -3,9 +3,9 @@
 
 jibal jibal_init() {
     jibal jibal;
-    jibal.isotopes=jibal_isotopes_load(NULL);
+    jibal.isotopes=jibal_isotopes_load(JIBAL_MASSES_FILE);
     if(!jibal.isotopes) {
-        fprintf(stderr, "Could not load isotope table.\n");
+        fprintf(stderr, "Could not load isotope table from file %s.\n", JIBAL_MASSES_FILE);
         return jibal;
     }
     jibal_abundances_load(jibal.isotopes, NULL);
