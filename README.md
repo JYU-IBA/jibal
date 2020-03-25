@@ -4,19 +4,7 @@ Library that provides stopping forces, straggling models, cross sections and var
 
 ## Installation from sources
 
-Install git, GNU Scientific library and CMake and a compiler. After this, on Linux and MacOS you should run:
-
-~~~~
-$ git clone git@gitlab.jyu.fi:iba/jibal.git
-$ cd jibal
-$ mkdir build
-$ cd build
-$ cmake ../
-$ make
-$ sudo make install 
-~~~~
-
-This should make a shared library (dyfile, so, DLL) called "Jibal" (compile with -lJibal).
+See [installation instructions](INSTALL.md)
 
 ## Usage of bundled tools
 
