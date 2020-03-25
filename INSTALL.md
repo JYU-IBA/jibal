@@ -27,7 +27,7 @@
 3. brew install jibal
 4. If you want to DEVELOP Jibal and not just use it, follow Linux instructions above, install gsl using Homebrew or MacPorts
 
-Installation instructions for Microsoft Windows 10:
+## Installation instructions for Microsoft Windows 10:
 
 1. Install Build tools for [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)
     - note that full MSVC is not necessary and also earlier versions (MSVC 2017 and MSVC 2015) can be installed using the same installer
