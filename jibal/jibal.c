@@ -13,7 +13,10 @@ jibal jibal_init() {
         fprintf(stderr, "Could not load isotope table from file %s.\n", jibal.config.masses_file);
         return jibal;
     }
-    jibal_abundances_load(jibal.isotopes, jibal.config.abundances_file);
+    int n=jibal_abundances_load(jibal.isotopes, jibal.config.abundances_file);
+#ifdef DEBUG
+    fprintf(stderr, "%i isotopes with abundance data.\n", n);
+#endif
     jibal.elements=jibal_elements_populate(jibal.isotopes);
     jibal.units=jibal_units_default();
     jibal.gsto=jibal_gsto_init(jibal.config.Z_max, jibal.config.stoppings_file);
