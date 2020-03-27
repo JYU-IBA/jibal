@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <jibal.h>
+#include <stdlib.h>
 
 typedef struct {
     jibal_isotope *incident;
@@ -38,6 +39,10 @@ int main(int argc, char **argv) {
     experiment exp;
     jibal jibal=jibal_init();
     exp.incident=jibal_isotope_find(jibal.isotopes, argv[1], 0,0 );
+    if(!exp.incident) {
+        fprintf(stderr, "No such isotope: %s\n", argv[1]);
+        return EXIT_FAILURE;
+    }
     fprintf(stderr, "Z1=%i\nm1=%g kg (%g u)\n", exp.incident->Z, exp.incident->mass, exp.incident->mass/C_U);
 
     char *target_string=argv[2];
@@ -80,5 +85,5 @@ int main(int argc, char **argv) {
     }
     jibal_material_free(exp.target->material);
     jibal_free(&jibal);
-    return 0;
+    return EXIT_SUCCESS;
 }
