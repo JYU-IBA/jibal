@@ -16,7 +16,7 @@ jibal jibal_init() {
     jibal_abundances_load(jibal.isotopes, jibal.config.abundances_file);
     jibal.elements=jibal_elements_populate(jibal.isotopes);
     jibal.units=jibal_units_default();
-    jibal.gsto=jibal_gsto_init(jibal.config.Z_max, NULL);
+    jibal.gsto=jibal_gsto_init(jibal.config.Z_max, jibal.config.stoppings_file);
     return jibal;
 }
 
@@ -213,7 +213,7 @@ jibal_config jibal_config_init(const char *filename) {
         config.datadir=strdup(c); /* Environmental variable overrides config. */
     }
     if(!config.datadir) {
-        config.datadir=JIBAL_DATADIR; /* Directory set by CMake is our last hope */
+        config.datadir=strdup(JIBAL_DATADIR); /* Directory set by CMake is our last hope */
     }
     if(!config.masses_file) {
         asprintf(&config.masses_file, "%s/%s", config.datadir, JIBAL_MASSES_FILE);
