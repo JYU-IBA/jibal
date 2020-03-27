@@ -639,7 +639,7 @@ double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y) {
 double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
     gsto_file_t *file=jibal_gsto_get_file(workspace, Z1, Z2);
     if(!file) {
-#ifdef DEBUG
+#if 1
         fprintf(stderr, "No stopping file assigned to Z1=%i Z2=%i\n", Z1, Z2);
 #endif
         return 0.0;
