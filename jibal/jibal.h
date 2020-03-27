@@ -20,7 +20,6 @@
 #define JIBAL_JIBAL_H
 
 #include <jibal_units.h>
-#include <jibal_config.h>
 #include <jibal_masses.h>
 #include <jibal_material.h>
 #include <jibal_gsto.h>
