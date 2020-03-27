@@ -1,7 +1,7 @@
 # BUILD AND INSTALL INSTRUCTIONS FOR JIBAL (incomplete)
 
 ## Minimum requirements:
-- Microsoft Windows 7 or newer, tested on Windows 10 OR
+- Microsoft Windows 8.1 or newer, tested on Windows 10 OR
 - Some sane Linux distribution (Arch-based, Debian-based, anything really) OR
 - BSD, maybe? OR
 - MacOS X, something relatively recent probably AND
@@ -10,8 +10,8 @@
 - CMake >= 3.13, older versions might work on some systems too
 
 ## Installation instructions for Linux / MacOS (also see MacOS specific instructions below):
-1. Install git and gsl using your distributions package manager
-    - On Ubuntu: apt install git gsl
+1. Install *git* and GNU Scientific Library (gsl) using your distributions package manager
+    - On Ubuntu: apt install git gsl TODO: check!
     - On Arch: pacman -S git gsl
 2. Run the following:
 
@@ -27,10 +27,11 @@
 3. brew install jibal
 4. If you want to DEVELOP Jibal and not just use it, follow Linux instructions above, install gsl using Homebrew or MacPorts
 
-Installation instructions for Microsoft Windows 10:
+## Installation instructions for Microsoft Windows 10:
 
 1. Install Build tools for [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)
-    - note that full MSVC is not necessary and also earlier versions (MSVC 2017 and MSVC 2015) can be installed using the same installer
+    - note that full MSVC is not necessary!
+    - also earlier versions (MSVC 2017 and MSVC 2015) can be installed using the same installer
 2. Install [CMake](https://cmake.org/download/)
     - Latest stable is always preferred (3.17.0 at the time of writing this)
     - Allow the installer to add CMake to PATH for convenience
@@ -39,7 +40,7 @@ Installation instructions for Microsoft Windows 10:
     - Allow the installer to add git to PATH for convenience
 4. Install [vcpkg](https://github.com/microsoft/vcpkg)
     - Clone using git, bootstrap as instructed, place e.g. in C:\vcpkg
-    - Set environment variable VCPKG_DEFAULT_TRIPLET=x64-windows using Windows Control Panel to build 64-bit packages by default
+    - Set environment variable *VCPKG_DEFAULT_TRIPLET=x64-windows* using Windows Control Panel to build 64-bit packages by default
     - Install these libraries: gsl
     
             vcpkg.exe install gsl
@@ -47,18 +48,22 @@ Installation instructions for Microsoft Windows 10:
     - Make sure 64-bit versions are created (x86-windows means 32-bits)
 5. Clone Jibal repository
 6. Build
-    - Set up your MSVC environment by running the vcvars64.bat (or opening the x64 Native Tools Command Prompt for VS2017)
+    - Set up your MSVC environment by running the vcvars64.bat (or opening the *x64 Native Tools Command Prompt for VS2019*)
     - Run the following (from wherever jibal is cloned to):
     
           mkdir build
           cd build
-          cmake -G "Visual Studio 15 2017" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE ../
+          cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE ../
           
-    - We use the -G option to select your MSVC compiler version, CMake should detect it
-    - We use the -DCMAKE_TOOLCHAIN_FILE as instructed by vcpkg to that the dependencies are included properly
+    - We use the *-G* option to select the MSVC compiler version. It's not strictly necessary.
+    - We use the *-DCMAKE_TOOLCHAIN_FILE*, as instructed by vcpkg, so that libraries installed with vcpkg are detected by CMake
     - We use the CMake feature to export all symbols in the library (default behaviour on Linux/MacOS/BSD)
     - Run the following to build the library
-      msbuild BUILD_ALL.vcxproj
+    
+          msbuild BUILD_ALL.vcxproj
+          
     - You can make an installer, it requires [NSIS](https://nsis.sourceforge.io/), run the following:
-      msbuild PACKAGE.vcxproj
-    - Currently there is an assumption of installation directory (determined by CMake) and installing the library somewhere else means it cannot find the necessary data files. The choice is most likely "C:\Program Files (x86)\jibal", which probably isn't the default of the installer! To do this properly we have to use the Windows registry, but it is not yet implemented.
+         
+          msbuild PACKAGE.vcxproj
+        
+    - Currently there is an assumption of installation directory (determined by CMake) and installing the library somewhere else means it cannot find the necessary data files. The choice is most likely "*C:\Program Files (x86)\jibal*", which probably isn't the default of the installer! To do this properly we have to use the Windows registry, but it is not yet implemented.
