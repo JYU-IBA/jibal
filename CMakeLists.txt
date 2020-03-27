@@ -4,6 +4,9 @@ project(jibal
         DESCRIPTION "JIBAL - Jyväskylä ion beam analysis library"
         LANGUAGES C
         )
-
+set(default_build_type "Release")
+if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+  set(default_build_type "Debug")
+endif()
 add_subdirectory(jibal)
 #add_subdirectory(demo)
