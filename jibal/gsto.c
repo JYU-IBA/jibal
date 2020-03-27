@@ -487,9 +487,9 @@ jibal_gsto *jibal_gsto_init(int Z_max, char *stoppings_file_name) {
     FILE *settings_file=NULL;
     jibal_gsto *workspace;
     workspace = gsto_allocate(Z_max, Z_max);
-    workspace->stop_step = JIBAL_STEP_SIZE;
+    workspace->stop_step = JIBAL_STEP_SIZE; /* TODO: set this from some configuration */
     if(!stoppings_file_name) { /* If filename given (not NULL), attempt to load settings file */
-        stoppings_file_name=GSTO_DATA_DEFAULT_FILE;
+        stoppings_file_name=JIBAL_STOPPINGS_FILE;
     }
     settings_file=fopen(stoppings_file_name, "r");
     if(!settings_file) {

@@ -5,7 +5,6 @@
 
 #define GSTO_MAX_LINE_LEN 1024
 #define GSTO_END_OF_HEADERS "==END-OF-HEADER=="
-#define GSTO_DATA_DEFAULT_FILE JIBAL_DATADIR "stoppings.txt"
 #define GSTO_N_STOPPING_TYPES 4
 typedef enum {
     STO_NONE=0,

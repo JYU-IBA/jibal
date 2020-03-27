@@ -24,13 +24,26 @@
 
 #define JIBAL_STEP_SIZE (10.0*C_TFU)
 
+#ifndef JIBAL_CONFIG_FILE
+#define JIBAL_CONFIG_FILE "jibal.conf"
+#endif
+
+#ifndef JIBAL_INSTALL_PREFIX
+#define JIBAL_INSTALL_PREFIX "../"
+#endif
+
 #ifndef JIBAL_DATADIR
 #define JIBAL_DATADIR "../../data/"
 #endif
 
-#define JIBAL_MASSES_FILE JIBAL_DATADIR "masses.dat"
-#define JIBAL_ABUNDANCES_FILE JIBAL_DATADIR "abundances.dat"
+#define JIBAL_MASSES_FILE  "masses.dat"
+#define JIBAL_ABUNDANCES_FILE  "abundances.dat"
+#define JIBAL_STOPPINGS_FILE "stoppings.txt"
+#define JIBAL_CONFIG_MAX_LINE_LEN 256
 
 #define JIBAL_MAX_Z 91
+
+#define WARNING_STRING "JIBAL WARNING: "
+#define ERROR_STRING "JIBAL ERROR: "
 
 #endif /* _JIBAL_DEFAULTS_H_ */

@@ -11,11 +11,18 @@ set(CMAKE_C_STANDARD 99)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+option(DEBUG_OUTPUT_ENABLE "Enable debug output" OFF)
+if(DEBUG_OUTPUT_ENABLE)
+add_compile_options(-DDEBUG)
+endif()
+
 option(DEVELOPER_MODE_ENABLE "Enable developer mode" OFF)
 if(DEVELOPER_MODE_ENABLE)
     set(JIBAL_DATADIR "${PROJECT_SOURCE_DIR}/data")
+    set(JIBAL_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}")
 else()
     set(JIBAL_DATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/")
+    set(JIBAL_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 endif()
 configure_file(jibal_config.h.in jibal_config.h @ONLY)
 
@@ -44,7 +51,7 @@ add_library(Jibal SHARED
         cross_section.c
         jibal.c
         win_compat.c
-)
+        )
 
 
 target_link_libraries(Jibal GSL::gsl) #GSL is found by FindGSL.
