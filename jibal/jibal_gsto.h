@@ -108,7 +108,8 @@ int jibal_gsto_print_assignments(jibal_gsto *workspace);
 void jibal_gsto_file_free(gsto_file_t *file);
 void jibal_gsto_free(jibal_gsto *workspace);
 
-int jibal_gsto_load(jibal_gsto *workspace);
+int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file);
+int jibal_gsto_load_all(jibal_gsto *workspace);
 
 double jibal_stop(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E);
 double jibal_stop_ele(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E);
@@ -123,11 +124,13 @@ factor);
 jibal_gsto *jibal_gsto_allocate(int Z1_max, int Z2_max);
 int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file);
 int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file);
+void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, int Z1_min, int Z1_max, int Z2_min, int Z2_max);
 
 int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2);
 const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2);
 double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2);
-gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, int Z1, int Z2);
+gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, int Z1, int Z2);
+gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name);
 
 int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2);
 double *jibal_gsto_velocity_table(const gsto_file_t *file);

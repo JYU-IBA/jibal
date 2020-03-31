@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     if(argc < 2)
         return -1;
     experiment exp;
-    jibal jibal=jibal_init();
+    jibal jibal=jibal_init(NULL);
     exp.incident=jibal_isotope_find(jibal.isotopes, argv[1], 0,0 );
     if(!exp.incident) {
         fprintf(stderr, "No such isotope: %s\n", argv[1]);
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
         return -1;
     if(!jibal_gsto_auto_assign_material(jibal.gsto, exp.incident, exp.target->material)) /* TODO: loop over layers */
         return -1;
-    jibal_gsto_load(jibal.gsto);
+    jibal_gsto_load_all(jibal.gsto);
 
 
     int i;

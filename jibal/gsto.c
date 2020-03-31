@@ -170,7 +170,7 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
 #endif
     for (Z1=file->Z1_min; Z1<=file->Z1_max; Z1++) {
         for (Z2=file->Z2_min; Z2<=file->Z2_max; Z2++) {
-            if (file == jibal_gsto_get_file(workspace, Z1, Z2)) {
+            if (file == jibal_gsto_get_assigned_file(workspace, Z1, Z2)) {
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
                 fread(data, sizeof(double), file->xpoints, file->fp);
                 int i;
@@ -183,6 +183,39 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
         }
     }
     return 1;
+}
+
+void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, int Z1_min, int Z1_max, int Z2_min, int Z2_max) {
+    int Z1, Z2;
+    Z1_min=Z1_min<file->Z1_min?file->Z1_min:Z1_min;
+    Z1_max=Z1_max>file->Z1_max?file->Z1_max:Z1_max;
+    Z2_min=Z2_min<file->Z2_min?file->Z2_min:Z2_min;
+    Z2_max=Z2_max>file->Z2_max?file->Z2_max:Z2_max;
+    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_FORMAT], formats[GSTO_DF_ASCII]);
+    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MIN], Z1_min);
+    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MAX], Z1_max);
+    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z2MIN], Z2_min);
+    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z2MAX], Z2_max);
+    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_STOUNIT], sto_units[file->stounit]);
+    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT], sto_units[file->xunit]);
+    fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMIN], file->xmin);
+    fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMAX], file->xmax);
+    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_XPOINTS], file->xpoints);
+    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XSCALE], xscales[file->xscale]);
+    fprintf(file_out, "%s\n", GSTO_END_OF_HEADERS);
+    for (Z1=Z1_min; Z1 <= Z1_max; Z1++) {
+        for (Z2 = Z2_min; Z2 <= Z2_max; Z2++) {
+            const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
+            if(!data) {
+                fprintf(stderr, "Error: no data for Z1=%i and Z2=%i\n", Z1, Z2);
+                return;
+            }
+            int i;
+            for(i=0; i < file->xpoints; i++) {
+                fprintf(file_out, "%e\n", data[i]/C_EV_TFU);
+            }
+        }
+    }
 }
 
 int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2) {
@@ -213,6 +246,8 @@ int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2) {
 }
 
 const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2) {
+    if(!file->data)
+        return NULL;
     return file->data[jibal_gsto_file_get_data_index(file, Z1, Z2)];
 }
 
@@ -238,7 +273,7 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
     
     for (Z1=file->Z1_min; Z1 <= file->Z1_max && Z1 <= workspace->Z1_max; Z1++) {
         for (Z2=file->Z2_min; Z2 <= file->Z2_max && Z2 <= workspace->Z2_max; Z2++) {
-            if (file == jibal_gsto_get_file(workspace, Z1, Z2)) { /* This file is assigned to this Z1, Z2 combination, so we have to load the stopping in. */
+            if (file == jibal_gsto_get_assigned_file(workspace, Z1, Z2)) { /* This file is assigned to this Z1, Z2 combination, so we have to load the stopping in. */
                 skip=file->xpoints*((Z1-previous_Z1)*(file->Z2_max-file->Z2_min+1)+(Z2-previous_Z2-1)); /* Not sure if correct, but it works. */
 #ifdef DEBUG
                 fprintf(stderr, "Skipping %i*(%i*%i+%i)=%i lines.\n", file->xpoints, Z1-previous_Z1, file->Z1_max-file->Z2_min+1, Z2-previous_Z2-1, skip);
@@ -291,135 +326,143 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
 
 
 
-
-
-int jibal_gsto_load(jibal_gsto *workspace) { /* For every file, load combinations from file */
+int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
     int i;
-    gsto_file_t *file;
-    char *line=calloc(GSTO_MAX_LINE_LEN, sizeof(char));
+    char *line;
     char *line_split;
     char *columns[3];
     char **col;
     int header=0, property;
-    for(i=0; i < workspace->n_files; i++) {
-        file=&workspace->files[i];
-        file->lineno=0;
-        file->fp=fopen(file->filename, "r");
-        if(!file->fp) {
-            fprintf(stderr, "Could not open file %s for reading.\n", file->filename);
-            return 0;
-        }
-        /* parse headers, stop when end of headers found */
-        while (fgets(line, GSTO_MAX_LINE_LEN, file->fp) != NULL) {
-            file->lineno++;
-            if(strncmp(line, GSTO_END_OF_HEADERS, strlen(GSTO_END_OF_HEADERS))==0) {
-#ifdef DEBUG
-                fprintf(stderr, "End of headers on line %i of settings file.\n", file->lineno);
-#endif
-                break;
-            }
-            line_split=line;
-            for (col = columns; (*col = strsep(&line_split, "=\n\r\t")) != NULL;)
-                if (**col != '\0')
-                    if (++col >= &columns[3])
-                        break;
-#ifdef DEBUG
-            fprintf(stderr, "Line %i, property %s is %s.\n", file->lineno, columns[0], columns[1]);
-#endif 
-            for(header=0; header < GSTO_N_HEADER_TYPES; header++) {
-#ifdef DEBUG
-                fprintf(stderr, "Does \"%s\" match \"%s\"? ", columns[0], gsto_headers[header]);
-#endif
-                if(strncmp(columns[0], gsto_headers[header], strlen(gsto_headers[header]))==0) {
-#ifdef DEBUG
-                    fprintf(stderr, "Yes.\n");
-#endif
-                    switch (header) {
-                        case GSTO_HEADER_FORMAT:
-                            for(property=0; property<GSTO_N_STO_UNITS; property++) {
-                                if(strncmp(formats[property], columns[1], strlen(formats[property]))==0) {
-                                    file->data_format=property;
-                                }
-                            }
-                            break;
-                        case GSTO_HEADER_STOUNIT:
-                            for(property=0; property<GSTO_N_STO_UNITS; property++) {
-                                if(strncmp(sto_units[property], columns[1], strlen(sto_units[property]))==0) {
-                                    file->stounit=property;
-                                }
-                            }
-                            break;
-                        case GSTO_HEADER_XSCALE:
-                            for(property=0; property<GSTO_N_X_SCALES; property++) {
-                                if(strncmp(xscales[property], columns[1], strlen(xscales[property]))==0) {
-                                    file->xscale=property;
-                                }
-                            }
-                            break;
-                        case GSTO_HEADER_XUNIT:
-                            for(property=0; property<GSTO_N_X_UNITS; property++) {
-                                if(strncmp(xunits[property], columns[1], strlen(xunits[property]))==0) {
-                                    file->xunit=property;
-                                }
-                            }
-                            break;
-                        case GSTO_HEADER_XPOINTS:
-                            file->xpoints=strtol(columns[1], NULL, 10);
-#ifdef DEBUG
-                            fprintf(stderr, "Set number of x points to %i\n", file->xpoints);
-#endif
-                            break;
-                        case GSTO_HEADER_XMIN:
-                            file->xmin=strtod(columns[1], NULL);
-#ifdef DEBUG
-                            fprintf(stderr, "Set minimum value of table to be %lf\n", file->xmin);
-#endif
-                            break;
-                        case GSTO_HEADER_XMAX:
-                            file->xmax=strtod(columns[1], NULL);
-#ifdef DEBUG
-                            fprintf(stderr, "Set maximum value of table to be %lf\n", file->xmax);
-#endif
-                            break;
-                        case GSTO_HEADER_Z1MIN:
-                            file->Z1_min=strtol(columns[1], NULL, 10);
-                            break;
-                        case GSTO_HEADER_Z1MAX:
-                            file->Z1_max=strtol(columns[1], NULL, 10);
-                            break;
-                        case GSTO_HEADER_Z2MIN:
-                            file->Z2_min=strtol(columns[1], NULL, 10);
-                            break;
-                        case GSTO_HEADER_Z2MAX:
-                            file->Z2_max=strtol(columns[1], NULL, 10);
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                } else {
-#ifdef DEBUG
-                    fprintf(stderr, "No.\n");
-#endif
-                }
-            } 
-        } /* End of headers */
-        file->n_comb=(file->Z1_max-file->Z1_min+1)*(file->Z2_max-file->Z2_min+1);
-        file->data = calloc(file->n_comb, sizeof(double *));
-        file->vel = jibal_gsto_velocity_table(file);
-        switch (file->data_format) {
-            case GSTO_DF_DOUBLE:
-                jibal_gsto_load_binary_file(workspace, file);
-                break;
-            case GSTO_DF_ASCII:
-            default:
-                jibal_gsto_load_ascii_file(workspace, file);
-                break;
-        }
-        fclose(file->fp);
+    if(!file) {
+        return 0;
     }
+    file->fp=fopen(file->filename, "r");
+    if(!file->fp) {
+        fprintf(stderr, "Could not open file %s for reading.\n", file->filename);
+        return 0;
+    }
+    file->lineno=0;
+    line=calloc(GSTO_MAX_LINE_LEN, sizeof(char));
+    /* parse headers, stop when end of headers found */
+    while (fgets(line, GSTO_MAX_LINE_LEN, file->fp) != NULL) {
+        file->lineno++;
+        if(strncmp(line, GSTO_END_OF_HEADERS, strlen(GSTO_END_OF_HEADERS))==0) {
+#ifdef DEBUG
+            fprintf(stderr, "End of headers on line %i of settings file.\n", file->lineno);
+#endif
+            break;
+        }
+        line_split=line;
+        for (col = columns; (*col = strsep(&line_split, "=\n\r\t")) != NULL;)
+            if (**col != '\0')
+                if (++col >= &columns[3])
+                    break;
+#ifdef DEBUG
+        fprintf(stderr, "Line %i, property %s is %s.\n", file->lineno, columns[0], columns[1]);
+#endif
+        for(header=0; header < GSTO_N_HEADER_TYPES; header++) {
+#ifdef DEBUG
+            fprintf(stderr, "Does \"%s\" match \"%s\"? ", columns[0], gsto_headers[header]);
+#endif
+            if(strncmp(columns[0], gsto_headers[header], strlen(gsto_headers[header]))==0) {
+#ifdef DEBUG
+                fprintf(stderr, "Yes.\n");
+#endif
+                switch (header) {
+                    case GSTO_HEADER_FORMAT:
+                        for(property=0; property<GSTO_N_STO_UNITS; property++) {
+                            if(strncmp(formats[property], columns[1], strlen(formats[property]))==0) {
+                                file->data_format=property;
+                            }
+                        }
+                        break;
+                    case GSTO_HEADER_STOUNIT:
+                        for(property=0; property<GSTO_N_STO_UNITS; property++) {
+                            if(strncmp(sto_units[property], columns[1], strlen(sto_units[property]))==0) {
+                                file->stounit=property;
+                            }
+                        }
+                        break;
+                    case GSTO_HEADER_XSCALE:
+                        for(property=0; property<GSTO_N_X_SCALES; property++) {
+                            if(strncmp(xscales[property], columns[1], strlen(xscales[property]))==0) {
+                                file->xscale=property;
+                            }
+                        }
+                        break;
+                    case GSTO_HEADER_XUNIT:
+                        for(property=0; property<GSTO_N_X_UNITS; property++) {
+                            if(strncmp(xunits[property], columns[1], strlen(xunits[property]))==0) {
+                                file->xunit=property;
+                            }
+                        }
+                        break;
+                    case GSTO_HEADER_XPOINTS:
+                        file->xpoints=strtol(columns[1], NULL, 10);
+#ifdef DEBUG
+                        fprintf(stderr, "Set number of x points to %i\n", file->xpoints);
+#endif
+                        break;
+                    case GSTO_HEADER_XMIN:
+                        file->xmin=strtod(columns[1], NULL);
+#ifdef DEBUG
+                        fprintf(stderr, "Set minimum value of table to be %lf\n", file->xmin);
+#endif
+                        break;
+                    case GSTO_HEADER_XMAX:
+                        file->xmax=strtod(columns[1], NULL);
+#ifdef DEBUG
+                        fprintf(stderr, "Set maximum value of table to be %lf\n", file->xmax);
+#endif
+                        break;
+                    case GSTO_HEADER_Z1MIN:
+                        file->Z1_min=strtol(columns[1], NULL, 10);
+                        break;
+                    case GSTO_HEADER_Z1MAX:
+                        file->Z1_max=strtol(columns[1], NULL, 10);
+                        break;
+                    case GSTO_HEADER_Z2MIN:
+                        file->Z2_min=strtol(columns[1], NULL, 10);
+                        break;
+                    case GSTO_HEADER_Z2MAX:
+                        file->Z2_max=strtol(columns[1], NULL, 10);
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            } else {
+#ifdef DEBUG
+                fprintf(stderr, "No.\n");
+#endif
+            }
+        }
+    } /* End of headers */
+    file->n_comb=(file->Z1_max-file->Z1_min+1)*(file->Z2_max-file->Z2_min+1);
+    file->data = calloc(file->n_comb, sizeof(double *));
+    file->vel = jibal_gsto_velocity_table(file);
+    switch (file->data_format) {
+        case GSTO_DF_DOUBLE:
+            jibal_gsto_load_binary_file(workspace, file);
+            break;
+        case GSTO_DF_ASCII:
+        default:
+            jibal_gsto_load_ascii_file(workspace, file);
+            break;
+    }
+    fclose(file->fp);
     free(line);
     return 1;
+}
+
+int jibal_gsto_load_all(jibal_gsto *workspace) { /* For every file, load combinations from file */
+    int i;
+    int n_success=0;
+    for(i=0; i < workspace->n_files; i++) {
+        gsto_file_t *file = &workspace->files[i];
+        n_success += jibal_gsto_load(workspace, file);
+    }
+    return n_success;
 }
 
 int jibal_gsto_print_files(jibal_gsto *workspace) {
@@ -433,7 +476,7 @@ int jibal_gsto_print_files(jibal_gsto *workspace) {
         file=&workspace->files[i];
         for (Z1=1; Z1 <= workspace->Z1_max; Z1++) {
             for (Z2=1; Z2 <= workspace->Z2_max; Z2++) {
-                if(jibal_gsto_get_file(workspace, Z1, Z2) == file) {
+                if(jibal_gsto_get_assigned_file(workspace, Z1, Z2) == file) {
                     assignments++;
                 }
             }        
@@ -449,7 +492,7 @@ int jibal_gsto_print_assignments(jibal_gsto *workspace) {
     fprintf(stderr, "LIST OF ASSIGNED STOPPING FILES FOLLOWS\n=====\n");
     for (Z1=1; Z1 <= workspace->Z1_max; Z1++) {
         for (Z2=1; Z2 <= workspace->Z2_max; Z2++) {
-            gsto_file_t *file=jibal_gsto_get_file(workspace, Z1, Z2);
+            gsto_file_t *file= jibal_gsto_get_assigned_file(workspace, Z1, Z2);
             if(file) {
                 fprintf(stderr, "Stopping for Z1=%i in Z2=%i assigned to file %s.\n", Z1, Z2, file->name);
             } else {
@@ -541,11 +584,23 @@ double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, do
     return S;
 }
 
-gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, int Z1, int Z2) {
+gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, int Z1, int Z2) {
     int i = jibal_gsto_table_get_index(workspace, Z1, Z2);
     if(i < 0)
         return NULL;
     return workspace->assignments[i];
+}
+
+gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name) {
+    int i;
+    gsto_file_t *file;
+    for(i=0; i < workspace->n_files; i++) {
+        file = &workspace->files[i];
+        if(strcmp(file->name, name) == 0) {
+            return file;
+        }
+    }
+    return NULL;
 }
 
 double *jibal_gsto_velocity_table(const gsto_file_t *file) {
@@ -639,7 +694,7 @@ double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y) {
 
 
 double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
-    gsto_file_t *file=jibal_gsto_get_file(workspace, Z1, Z2);
+    gsto_file_t *file= jibal_gsto_get_assigned_file(workspace, Z1, Z2);
     if(!file) {
 #if 1
         fprintf(stderr, "No stopping file assigned to Z1=%i Z2=%i\n", Z1, Z2);
@@ -721,9 +776,10 @@ E_0, double factor) {
 double jibal_stop_ele(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {
     int i;
     double sum = 0.0;
+    double v=velocity(E, incident->mass);
     for (i = 0; i < target->n_elements; i++) {
         jibal_element *element = &target->elements[i];
-        sum += target->concs[i]*jibal_gsto_stop_v(workspace, incident->Z, element->Z, velocity(E, incident->mass));
+        sum += target->concs[i]*jibal_gsto_stop_v(workspace, incident->Z, element->Z, v);
     }
     return sum;
 }

@@ -17,42 +17,28 @@
 */
 
 #include <stdio.h>
-#include <jibal_masses.h>
-#include <jibal_units.h>
-#include <jibal_gsto.h>
-#include <jibal_material.h>
+#include <jibal.h>
 #include <jibal_kin.h>
 #include <jibal_cross_section.h>
 
-typedef struct {
-    jibal_isotope *isotopes;
-    jibal_element *elements;
-    jibal_units *units;
-} generic_data;
-
-
 int main(int argc, char **argv) {
-    generic_data data;
-    data.isotopes=jibal_isotopes_load(NULL);
-    jibal_abundances_load(data.isotopes, NULL);
-    data.elements=jibal_elements_populate(data.isotopes);
-    data.units=jibal_units_default();
+    jibal jibal = jibal_init(NULL);
     if(argc<=4) {
         return -1;
 
     }
-    jibal_isotope *incident = jibal_isotope_find(data.isotopes, argv[1], 0, 0);
+    jibal_isotope *incident = jibal_isotope_find(jibal.isotopes, argv[1], 0, 0);
     if(!incident) {
         fprintf(stderr, "There is no isotope %s in my database.\n", argv[1]);
         return -1;
     }
-    jibal_isotope *target = jibal_isotope_find(data.isotopes, argv[2], 0, 0);
+    jibal_isotope *target = jibal_isotope_find(jibal.isotopes, argv[2], 0, 0);
     if(!target) {
         fprintf(stderr, "There is no isotope %s in my database.\n", argv[2]);
         return -1;
     }
-    double theta = jibal_get_val(data.units, UNIT_TYPE_ANGLE, argv[3]);
-    double E = jibal_get_val(data.units, UNIT_TYPE_ENERGY, argv[4]);
+    double theta = jibal_get_val(jibal.units, UNIT_TYPE_ANGLE, argv[3]);
+    double E = jibal_get_val(jibal.units, UNIT_TYPE_ENERGY, argv[4]);
     double E_erd = jibal_kin_erd(incident->mass, target->mass, theta) * E;
     double E_rbs = jibal_kin_rbs(incident->mass, target->mass, theta, '+') * E;
     double cs_erd =  jibal_erd_cross_section(incident, target, theta, E);

@@ -5,9 +5,9 @@
 #include <unistd.h>
 #include <ctype.h>
 
-jibal jibal_init() {
+jibal jibal_init(const char *config_filename) {
     jibal jibal;
-    jibal.config=jibal_config_init(NULL);
+    jibal.config=jibal_config_init(config_filename);
     jibal.isotopes=jibal_isotopes_load(jibal.config.masses_file);
     if(!jibal.isotopes) {
         fprintf(stderr, "Could not load isotope table from file %s.\n", jibal.config.masses_file);

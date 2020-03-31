@@ -55,7 +55,7 @@ typedef struct {
 } jibal_config_var;
 
 
-jibal jibal_init();
+jibal jibal_init(const char *config_filename);
 void jibal_free(jibal *jibal);
 jibal_config jibal_config_init(const char *filename);
 void jibal_config_free();
