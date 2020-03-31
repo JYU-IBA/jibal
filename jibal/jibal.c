@@ -19,7 +19,8 @@ jibal jibal_init(const char *config_filename) {
 #endif
     jibal.elements=jibal_elements_populate(jibal.isotopes);
     jibal.units=jibal_units_default();
-    jibal.gsto=jibal_gsto_init(jibal.config.Z_max, jibal.config.stoppings_file);
+    jibal.gsto=jibal_gsto_init(jibal.config.Z_max, jibal.config.stoppings_file); /* TODO: give the datadir from jibal
+ * .config to GSTO. Could be useful */
     return jibal;
 }
 

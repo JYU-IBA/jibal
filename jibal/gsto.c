@@ -60,16 +60,14 @@ header_properties_t gsto_get_headers_property(const char *property) {
     return 0;
 }
 
-int gsto_add_file(jibal_gsto *table, char *name, char *filename, int Z1_min, int Z1_max, int Z2_min, int Z2_max, char *type) {
-    assert(Z1_max >= Z1_min);
-    assert(Z2_max >= Z2_min);
+int gsto_add_file(jibal_gsto *table, char *filename, char *name) {
     int success=0;
-    int i;
 #ifdef DEBUG
-    fprintf(stderr, "Adding file %s (%s), %i<=Z1<=%i, %i<=Z2<=%i to database.\n", name, filename, Z1_min, Z1_max, Z2_min, Z2_max);
+    fprintf(stderr, "Adding file %s (%s).\n", name, filename);
 #endif
     table->files = realloc(table->files, sizeof(gsto_file_t)*(table->n_files+1));
     gsto_file_t *new_file=&table->files[table->n_files];
+    memset(new_file, 0, sizeof(gsto_file_t));
     new_file->name = strdup(name);
     if(*filename == '/') { /* Absolute path, just copy the file name */
         new_file->filename=strdup(filename);
@@ -79,26 +77,6 @@ int gsto_add_file(jibal_gsto *table, char *name, char *filename, int Z1_min, int
         strcat(new_file->filename, JIBAL_DATADIR);
         strcat(new_file->filename, filename);
     }
-    for(i=GSTO_N_STOPPING_TYPES-1; i >=0; i--) {
-        if(strncmp(gsto_stopping_types[i], type, 3*sizeof(char))==0) {
-            break;
-        }
-    }
-    if(i<=0) {
-        return 0; /* No stopping type specified or "none" specified. Perhaps it is not necessary to take this file into account... */
-    }
-    
-    new_file->Z1_min=Z1_min; /* These will be rewritten when the file is loaded. */
-    new_file->Z1_max=Z1_max;
-    new_file->Z2_min=Z2_min;
-    new_file->Z2_max=Z2_max;
-    new_file->xmin=0; /* This will be read from the file when loaded */
-    new_file->xmax=0; /* Same as this */
-    new_file->xscale=0; /* and this */
-    new_file->stounit=0;
-    new_file->xunit=0;
-    new_file->data=NULL; /* this is allocated also when the file is loaded */
-    new_file->vel=NULL;
     success=jibal_gsto_load(table, new_file);
 
     if(success) {
@@ -527,7 +505,7 @@ jibal_gsto *jibal_gsto_init(int Z_max, char *stoppings_file_name) {
     char *env_path;
     char *line=calloc(GSTO_MAX_LINE_LEN, sizeof(char));
     char *line_split;
-    char *columns[8];
+    char *columns[3];
     char **col;
     FILE *settings_file=NULL;
     jibal_gsto *workspace;
@@ -550,9 +528,9 @@ jibal_gsto *jibal_gsto_init(int Z_max, char *stoppings_file_name) {
         line_split=line; /* strsep will screw up line_split, reset for every new line */
         for (col = columns; (*col = strsep(&line_split, " \t\r\n")) != NULL;)
             if (**col != '\0')
-                if (++col >= &columns[8])
+                if (++col >= &columns[3])
                     break;
-        if(gsto_add_file(workspace, columns[7], columns[0], strtol(columns[2], NULL, 10), strtol(columns[3], NULL, 10), strtol(columns[4], NULL, 10), strtol(columns[5], NULL, 10), columns[1])) {
+        if(gsto_add_file(workspace, columns[0], columns[1])) { /* TODO: spaces in filenames? */
             n_files++;
         } else {
             n_errors++;

@@ -129,24 +129,28 @@ int print_stopfiles(jibaltool_global *global, int argc, char **argv) {
     return 0;
 }
 
+void print_commands(FILE *f, const struct command *commands) {
+    const struct command *c;
+    fprintf(f, "I recognize the following commands: \n");
+    for(c=commands; c->f != NULL; c++) {
+        fprintf(f, "%20s    %s\n", c->name, c->help_text);
+    }
+}
+
 int main(int argc, char **argv) {
     jibaltool_global global = {.Z=0, .outfilename=NULL, .stopfile=NULL};
     read_options(&global, &argc, &argv);
-    struct command {
-        const char *name;
-        int (*f)(jibaltool_global *, int, char **);
-        const char *help_text;
-    };
-    static struct command commands[] = {
+    static const struct command commands[] = {
             {"extract_stop", &extract_stop, "Extract single stopping (e.g. He in Si) in GSTO compatible ASCII format."},
             {"print_stopfiles", &print_stopfiles, "Print available stopping files."},
             {NULL, NULL, NULL}
     };
     if(argc < 1) {
         jibaltool_usage();
+        print_commands(stderr, commands);
     }
     global.jibal = jibal_init(global.config_filename);
-    struct command *c;
+    const struct command *c;
     int found=0;
     for(c=commands; c->f != NULL; c++) {
         if(strcmp(c->name, argv[0])==0) {
@@ -156,10 +160,8 @@ int main(int argc, char **argv) {
         }
     }
     if(!found) {
-        fprintf(stderr, "No such command: %s\n\nI recognize the following commands: \n", argv[0]);
-        for(c=commands; c->f != NULL; c++) {
-            fprintf(stderr, "%20s    %s\n", c->name, c->help_text);
-        }
+        fprintf(stderr, "No such command: %s\n\n", argv[0]);
+        print_commands(stderr, commands);
     }
     jibaltool_global_free(&global);
     return EXIT_SUCCESS;

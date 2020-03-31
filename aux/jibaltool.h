@@ -14,6 +14,12 @@ typedef  struct {
     char *stopfile;
 } jibaltool_global;
 
+struct command {
+    const char *name;
+    int (*f)(jibaltool_global *, int, char **);
+    const char *help_text;
+};
+
 void jibaltool_global_free(jibaltool_global *options);
 void jibaltool_usage();
 void read_options(jibaltool_global *global, int *argc, char ***argv);
