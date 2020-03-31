@@ -56,11 +56,6 @@ add_library(Jibal SHARED
 
 target_link_libraries(Jibal GSL::gsl) #GSL is found by FindGSL.
 
-add_executable(get_stop get_stop.c)
-add_executable(get_kin get_kin.c)
-target_link_libraries(get_stop Jibal)
-target_link_libraries(get_kin Jibal)
-
 target_include_directories(Jibal
         INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -80,8 +75,6 @@ install(TARGETS Jibal EXPORT JibalTargets
         RUNTIME DESTINATION bin
         INCLUDES DESTINATION include
         )
-
-install(TARGETS get_stop get_kin RUNTIME DESTINATION bin)
 
 # install headers, note there's a subdirectory
 install(
