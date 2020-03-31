@@ -18,6 +18,6 @@ void jibaltool_global_free(jibaltool_global *options);
 void jibaltool_usage();
 void read_options(jibaltool_global *global, int *argc, char ***argv);
 
-int extract(jibaltool_global *options, int argc, char **argv);
+int extract_stop(jibaltool_global *options, int argc, char **argv);
 
 #endif //JIBAL_JIBALTOOL_H

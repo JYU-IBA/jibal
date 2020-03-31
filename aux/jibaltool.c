@@ -73,7 +73,7 @@ void read_options(jibaltool_global *global, int *argc, char ***argv) {
     *argv += optind;
 }
 
-int extract(jibaltool_global *global, int argc, char **argv) {
+int extract_stop(jibaltool_global *global, int argc, char **argv) {
     int i;
     if (argc < 2) {
         fprintf(stderr, "Usage: jibaltool extract incident target\n");
@@ -81,18 +81,32 @@ int extract(jibaltool_global *global, int argc, char **argv) {
     }
     jibal *jibal = &global->jibal;
     jibal_element *incident = jibal_element_find(jibal->elements, argv[0]);
+    if(!incident) {
+        fprintf(stderr, "No such element: %s\n", argv[0]);
+        return -1;
+    }
     jibal_element *target = jibal_element_find(jibal->elements, argv[1]);
+    if(!target) {
+        fprintf(stderr, "No such element: %s\n", argv[1]);
+        return -1;
+    }
     int Z1 = incident->Z;
     int Z2 = target->Z;
     gsto_file_t *file;
     if(global->stopfile) {
         file = jibal_gsto_get_file(jibal->gsto, global->stopfile);
+        if(!file) {
+            fprintf(stderr, "No such stopping file: %s\n", global->stopfile);
+            return -1;
+        }
+        jibal_gsto_assign(jibal->gsto, Z1, Z2, file);
     } else {
         jibal_gsto_auto_assign(jibal->gsto, Z1, Z2);
         file = jibal_gsto_get_assigned_file(jibal->gsto, Z1, Z2);
-    }
-    if(!file) {
-        return -1;
+        if(!file) {
+            fprintf(stderr, "No stopping file assigned for Z1=%i, Z2=%i.\n", Z1, Z2);
+            return -1;
+        }
     }
     jibal_gsto_load(jibal->gsto, file);
 
@@ -110,16 +124,23 @@ int extract(jibaltool_global *global, int argc, char **argv) {
     return 0;
 }
 
+int print_stopfiles(jibaltool_global *global, int argc, char **argv) {
+    jibal_gsto_print_files(global->jibal.gsto);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     jibaltool_global global = {.Z=0, .outfilename=NULL, .stopfile=NULL};
     read_options(&global, &argc, &argv);
     struct command {
         const char *name;
         int (*f)(jibaltool_global *, int, char **);
+        const char *help_text;
     };
     static struct command commands[] = {
-            {"extract", &extract},
-            {NULL, NULL}
+            {"extract_stop", &extract_stop, "Extract single stopping (e.g. He in Si) in GSTO compatible ASCII format."},
+            {"print_stopfiles", &print_stopfiles, "Print available stopping files."},
+            {NULL, NULL, NULL}
     };
     if(argc < 1) {
         jibaltool_usage();
@@ -135,7 +156,10 @@ int main(int argc, char **argv) {
         }
     }
     if(!found) {
-        fprintf(stderr, "No such command: %s\n", argv[0]);
+        fprintf(stderr, "No such command: %s\n\nI recognize the following commands: \n", argv[0]);
+        for(c=commands; c->f != NULL; c++) {
+            fprintf(stderr, "%20s    %s\n", c->name, c->help_text);
+        }
     }
     jibaltool_global_free(&global);
     return EXIT_SUCCESS;
