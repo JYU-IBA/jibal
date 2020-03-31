@@ -61,7 +61,9 @@ header_properties_t gsto_get_headers_property(const char *property) {
 }
 
 int gsto_add_file(jibal_gsto *table, char *name, char *filename, int Z1_min, int Z1_max, int Z2_min, int Z2_max, char *type) {
-    int success=1;
+    assert(Z1_max >= Z1_min);
+    assert(Z2_max >= Z2_min);
+    int success=0;
     int i;
 #ifdef DEBUG
     fprintf(stderr, "Adding file %s (%s), %i<=Z1<=%i, %i<=Z2<=%i to database.\n", name, filename, Z1_min, Z1_max, Z2_min, Z2_max);
@@ -72,7 +74,8 @@ int gsto_add_file(jibal_gsto *table, char *name, char *filename, int Z1_min, int
     if(*filename == '/') { /* Absolute path, just copy the file name */
         new_file->filename=strdup(filename);
     } else { /* Relative path. Append to datadir path. */
-        new_file->filename=calloc(strlen(JIBAL_DATADIR)+strlen(filename)+1, sizeof(char));
+        new_file->filename=calloc(strlen(JIBAL_DATADIR)+strlen(filename)+1, sizeof(char)); /* TODO: Don't use
+ * DATADIR, but directory of the relevant configuration file here! */
         strcat(new_file->filename, JIBAL_DATADIR);
         strcat(new_file->filename, filename);
     }
@@ -96,13 +99,8 @@ int gsto_add_file(jibal_gsto *table, char *name, char *filename, int Z1_min, int
     new_file->xunit=0;
     new_file->data=NULL; /* this is allocated also when the file is loaded */
     new_file->vel=NULL;
+    success=jibal_gsto_load(table, new_file);
 
-    if(Z1_min > Z1_max) {
-        success=0;
-    }
-    if(Z2_min > Z2_max) {
-        success=0;
-    }
     if(success) {
         table->n_files++;
     } else {
@@ -156,9 +154,7 @@ void jibal_gsto_free(jibal_gsto *workspace) {
 
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file) { /* Used internally, can be used after init to override autoinit */
     int i=jibal_gsto_table_get_index(workspace, Z1, Z2);
-    if(i < 0) {
-        return 0;
-    }
+    assert(i >= 0 && i <= workspace->n_comb);
     workspace->assignments[jibal_gsto_table_get_index(workspace, Z1, Z2)]=file;
     return 1;
 }
@@ -207,7 +203,8 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, int Z1_min, int Z
         for (Z2 = Z2_min; Z2 <= Z2_max; Z2++) {
             const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
             if(!data) {
-                fprintf(stderr, "Error: no data for Z1=%i and Z2=%i\n", Z1, Z2);
+                fprintf(stderr, "Error: no data for Z1=%i and Z2=%i in %s.%s\n",
+                        Z1, Z2, file->name, file->data?"":"This file isn't loaded yet.");
                 return;
             }
             int i;
@@ -469,7 +466,7 @@ int jibal_gsto_print_files(jibal_gsto *workspace) {
     int i, Z1, Z2;
     int assignments;
     gsto_file_t *file;
-    fprintf(stderr, "LIST OF AVAILABLE STOPPING FILES FOLLOWS\n=====\n");
+    fprintf(stderr, "List of available stopping files:\n");
     
     for(i=0; i < workspace->n_files; i++) {
         assignments=0;
@@ -481,9 +478,14 @@ int jibal_gsto_print_files(jibal_gsto *workspace) {
                 }
             }        
         }
-        fprintf(stderr, "%i: %s (%s), %i assignments, %i<=Z1<=%i, %i<=Z2<=%i. x-points=%i, x-scale=%s, x-unit=%s, stopping unit=%s, format=%s\n", i, file->name, file->filename, assignments, file->Z1_min, file->Z1_max, file->Z2_min, file->Z2_max, file->xpoints, xscales[file->xscale], xunits[file->xunit], sto_units[file->stounit], formats[file->data_format]);  
+        fprintf(stderr, "%i: %s (%s),\n", i+1, file->name, file->filename);
+        fprintf(stderr, "\t%i assignments,\n", assignments);
+        fprintf(stderr, "\t%i <= Z1 <= %i,\n", file->Z1_min, file->Z1_max);
+        fprintf(stderr, "\t%i <= Z2 <= %i,\n", file->Z2_min, file->Z2_max);
+        fprintf(stderr, "\tx-points=%i, x-scale=%s, x-unit=%s,\n", file->xpoints, xscales[file->xscale],
+                xunits[file->xunit]);
+        fprintf(stderr, "\tstopping unit=%s, format=%s\n", sto_units[file->stounit], formats[file->data_format]);
     }
-    fprintf(stderr, "=====\n");
     return 1;
 }
 
