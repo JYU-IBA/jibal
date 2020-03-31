@@ -552,8 +552,10 @@ double *jibal_gsto_velocity_table(const gsto_file_t *file) {
     double *table = malloc(sizeof(double) * file->xpoints);
     int i;
     double x, v;
+#ifdef DEBUG
     fprintf(stderr, "Making velocity table, %i points, xmin=%g, xmax=%g, xscale=%i, xunit=%i\n", file->xpoints,
             file->xmin, file->xmax, file->xscale, file->xunit);
+#endif
     for (i = 0; i < file->xpoints; i++) {
         switch (file->xscale) {
             case GSTO_XSCALE_LOG10:
