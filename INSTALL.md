@@ -15,16 +15,19 @@
     - On Arch: pacman -S git gsl
 2. Run the following:
 
-        $ git clone ????
+        $ git clone git@gitlab.jyu.fi:iba/homebrew.git # (TODO: this is not currently public)
         $ mkdir build && cd build
         $ cmake ../
         $ make
-        $ make install
+        $ sudo make install
 
 ## Installation instructions for MacOS:
 1. Install [Homebrew](https://brew.sh/)
-2. brew tap ???????? (TODO: this is not currently public)
-3. brew install jibal
+2. Run the following:
+    
+        $ brew tap iba/homebrew git@gitlab.jyu.fi:iba/homebrew.git # (TODO: this is not currently public)
+        $ brew install jibal
+
 4. If you want to DEVELOP Jibal and not just use it, follow Linux instructions above, install gsl using Homebrew or MacPorts
 
 ## Installation instructions for Microsoft Windows 10:
