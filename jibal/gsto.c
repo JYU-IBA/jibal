@@ -60,7 +60,7 @@ header_properties_t gsto_get_headers_property(const char *property) {
     return 0;
 }
 
-int gsto_add_file(jibal_gsto *table, char *filename, char *name) {
+int gsto_add_file(jibal_gsto *table, const char *name, const char *filename) {
     int success=0;
 #ifdef DEBUG
     fprintf(stderr, "Adding file %s (%s).\n", name, filename);
@@ -69,20 +69,13 @@ int gsto_add_file(jibal_gsto *table, char *filename, char *name) {
     gsto_file_t *new_file=&table->files[table->n_files];
     memset(new_file, 0, sizeof(gsto_file_t));
     new_file->name = strdup(name);
-    if(*filename == '/') { /* Absolute path, just copy the file name */
-        new_file->filename=strdup(filename);
-    } else { /* Relative path. Append to datadir path. */
-        new_file->filename=calloc(strlen(JIBAL_DATADIR)+strlen(filename)+1, sizeof(char)); /* TODO: Don't use
- * DATADIR, but directory of the relevant configuration file here! */
-        strcat(new_file->filename, JIBAL_DATADIR);
-        strcat(new_file->filename, filename);
-    }
+    new_file->filename = strdup(filename);
     success=jibal_gsto_load(table, new_file);
 
     if(success) {
         table->n_files++;
     } else {
-        fprintf(stderr, "Error in adding stopping file %s (%s) to database\n", name, filename);
+        fprintf(stderr, "Error in adding stopping file %s (%s).\n", name, filename);
         free(new_file->name);
         free(new_file->filename);
     }
@@ -313,7 +306,7 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
     }
     file->fp=fopen(file->filename, "r");
     if(!file->fp) {
-        fprintf(stderr, "Could not open file %s for reading.\n", file->filename);
+        fprintf(stderr, "Could not open file \"%s\".\n", file->filename);
         return 0;
     }
     file->lineno=0;
@@ -500,17 +493,19 @@ int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
     return success;
 }
 
-jibal_gsto *jibal_gsto_init(int Z_max, char *stoppings_file_name) {
+jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *stoppings_file_name) {
     int i=0, n_files=0, n_errors=0;
     char *env_path;
     char *line=calloc(GSTO_MAX_LINE_LEN, sizeof(char));
     char *line_split;
-    char *columns[3];
+    char *columns[2];
     char **col;
+    int lineno=0;
     FILE *settings_file=NULL;
     jibal_gsto *workspace;
     workspace = gsto_allocate(Z_max, Z_max);
-    workspace->stop_step = JIBAL_STEP_SIZE; /* TODO: set this from some configuration */
+    workspace->stop_step = JIBAL_STEP_SIZE; /* TODO: set this from some configuration. Used only for layer energy
+ * loss calculations */
     if(!stoppings_file_name) { /* If filename given (not NULL), attempt to load settings file */
         stoppings_file_name=JIBAL_STOPPINGS_FILE;
     }
@@ -522,20 +517,42 @@ jibal_gsto *jibal_gsto_init(int Z_max, char *stoppings_file_name) {
     fprintf(stderr, "Settings from %s\n", stoppings_file_name);
 #endif
     while (fgets(line, GSTO_MAX_LINE_LEN, settings_file) != NULL) {
+        lineno++;
         i++;
-        if(line[0] == '#') /* Strip comments */
+        if (line[0] == '#') /* Strip comments */
             continue;
-        line_split=line; /* strsep will screw up line_split, reset for every new line */
-        for (col = columns; (*col = strsep(&line_split, " \t\r\n")) != NULL;)
+        line_split = line; /* strsep will screw up line_split, reset for every new line */
+        columns[0] = NULL;
+        columns[1] = NULL;
+        /* We read in two columns (hard coded), first is the name and the second is the filename. */
+        for (col = columns; (*col = strsep(&line_split, ",\t\r\n")) != NULL;) {
             if (**col != '\0')
-                if (++col >= &columns[3])
+                if (++col >= &columns[2])
                     break;
-        if(gsto_add_file(workspace, columns[0], columns[1])) { /* TODO: spaces in filenames? */
-            n_files++;
+        }
+        char *name=columns[0];
+        char *filename=columns[1];
+        if(name && filename ) {
+            if (filename[0] != '/') {
+                filename = calloc(strlen(datadir) + strlen(filename) + 1, sizeof(char));
+                strcat(filename, datadir);
+                strcat(filename, columns[1]); /* Note, filename now starts with '/' so we don't need to add it */
+            }
+
+
+            if (gsto_add_file(workspace, name, filename)) {
+                n_files++;
+            } else {
+                fprintf(stderr, "WARNING: adding file %s failed.\n", filename);
+                n_errors++;
+            }
         } else {
+            fprintf(stderr, "WARNING: adding stopping file failed, since line %i in %s is malformed.\n", lineno, stoppings_file_name);
             n_errors++;
         }
-
+        if(filename != columns[1] && filename) { /* Free filename if it was allocated */
+            free(filename);
+        }
     }
 #ifdef DEBUG
     fprintf(stderr, "GSTO: Read %i lines from settings file, added %i files, attempt to add %i files failed.\n", i, n_files, n_errors);

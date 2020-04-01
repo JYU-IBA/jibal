@@ -98,8 +98,8 @@ typedef struct {
 
 
 
-jibal_gsto *jibal_gsto_init(int Z_max, char *stoppings_file_name);
-int gsto_add_file(jibal_gsto *workspace, char *filename,  char *name);
+jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *stoppings_file_name);
+int gsto_add_file(jibal_gsto *workspace, const char *name, const char *filename);
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file);
 int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2);
 int jibal_gsto_auto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target);

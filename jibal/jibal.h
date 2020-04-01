@@ -46,6 +46,7 @@ typedef enum {
     JIBAL_CONFIG_VAR_STRING = 1,
     JIBAL_CONFIG_VAR_DOUBLE = 2,
     JIBAL_CONFIG_VAR_INT = 3, /* 32-bit signed int (aka int) */
+    JIBAL_CONFIG_VAR_UNIT = 4 /* Number with a unit. Store number after SI conversion. */
 } jibal_config_var_type;
 
 typedef struct {
@@ -57,7 +58,7 @@ typedef struct {
 
 jibal jibal_init(const char *config_filename);
 void jibal_free(jibal *jibal);
-jibal_config jibal_config_init(const char *filename);
+jibal_config jibal_config_init(const jibal_units *units, const char *filename);
 void jibal_config_free();
 
 

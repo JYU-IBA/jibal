@@ -1,4 +1,4 @@
-#List of stopping files. The filenames may be relative to data directory or absolute.
+#List of stopping files. The filenames may be relative to data directory (share/jibal/) or absolute (start with /).
 #Short name is what we call it.
-#Filename       Short name
-srim2013.ele    srim2013
+#Short name:filename
+srim2013	srim2013.ele

@@ -7,7 +7,8 @@
 
 jibal jibal_init(const char *config_filename) {
     jibal jibal;
-    jibal.config=jibal_config_init(config_filename);
+    jibal.units=jibal_units_default();
+    jibal.config=jibal_config_init(jibal.units, config_filename);
     jibal.isotopes=jibal_isotopes_load(jibal.config.masses_file);
     if(!jibal.isotopes) {
         fprintf(stderr, "Could not load isotope table from file %s.\n", jibal.config.masses_file);
@@ -18,9 +19,7 @@ jibal jibal_init(const char *config_filename) {
     fprintf(stderr, "%i isotopes with abundance data.\n", n);
 #endif
     jibal.elements=jibal_elements_populate(jibal.isotopes);
-    jibal.units=jibal_units_default();
-    jibal.gsto=jibal_gsto_init(jibal.config.Z_max, jibal.config.stoppings_file); /* TODO: give the datadir from jibal
- * .config to GSTO. Could be useful */
+    jibal.gsto=jibal_gsto_init(jibal.config.Z_max, jibal.config.datadir, jibal.config.stoppings_file);
     return jibal;
 }
 
@@ -77,7 +76,9 @@ char *make_path_and_check_if_exists(const char *directory, const char *subdirect
     return filename;
 }
 
-int read_config_file(jibal_config *config, const char *filename) { /* Memory leaks in config shouldn't happen (strings
+int read_config_file(const jibal_units *units, jibal_config *config, const char *filename) { /* Memory leaks in config
+ * shouldn't happen
+ * (strings
  * are freed and allocated as is necessary, so it is possible to read multiple configuration files. */
     if(!filename) {
         return -2;
@@ -87,10 +88,12 @@ int read_config_file(jibal_config *config, const char *filename) { /* Memory lea
         fprintf(stderr, WARNING_STRING "Could not read configuration file \"%s\"\n", filename);
         return -1;
     }
-    const jibal_config_var vars[]={{JIBAL_CONFIG_VAR_STRING, "masses_file", &config->masses_file},
-                             {JIBAL_CONFIG_VAR_STRING, "abundances_file", &config->abundances_file},
-                             {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
-                             0}; /* null terminated, we use .type == 0 to stop a loop */
+    const jibal_config_var vars[]={
+            {JIBAL_CONFIG_VAR_STRING, "datadir", &config->datadir},
+            {JIBAL_CONFIG_VAR_STRING, "masses_file", &config->masses_file},
+            {JIBAL_CONFIG_VAR_STRING, "abundances_file", &config->abundances_file},
+            {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
+            0}; /* null terminated, we use .type == 0 to stop a loop */
     const jibal_config_var *var;
     unsigned int lineno=0;
     char *line_orig=malloc(sizeof(char)*JIBAL_CONFIG_MAX_LINE_LEN);
@@ -140,6 +143,9 @@ int read_config_file(jibal_config *config, const char *filename) { /* Memory lea
                 case JIBAL_CONFIG_VAR_INT:
                     *((int *)var->variable)=(int)strtol(line, NULL, 0); /* Unsafe for large integers */
                     break;
+                case JIBAL_CONFIG_VAR_UNIT:
+                    *((double *)var->variable)=jibal_get_val(units, 0, line_val);
+                break;
             }
             break;
         }
@@ -154,7 +160,7 @@ int read_config_file(jibal_config *config, const char *filename) { /* Memory lea
     return 0;
 }
 
-jibal_config jibal_config_init(const char *filename) {
+jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
     jibal_config config = {};
     const char *c;
     const char *config_dir;
@@ -172,7 +178,7 @@ jibal_config jibal_config_init(const char *filename) {
      *
      * */
     if(filename) {
-        error=read_config_file(&config, filename);
+        error=read_config_file(units, &config, filename);
     } else {
         char *filename_attempt=NULL;
         while (!filename_attempt && attempt) { /* Loop until somebody sets attempt = 0 (no success) or filename candidate is
@@ -206,7 +212,7 @@ jibal_config jibal_config_init(const char *filename) {
             attempt++;
         }
         if(filename_attempt) {
-            error = read_config_file(&config, filename_attempt);
+            error = read_config_file(units, &config, filename_attempt);
             free(filename_attempt);
         }
     }
