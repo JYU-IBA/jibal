@@ -50,6 +50,7 @@ add_library(Jibal SHARED
         kin.c
         cross_section.c
         jibal.c
+        stragg.c
         win_compat.c
         )
 
