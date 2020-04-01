@@ -87,11 +87,11 @@ int read_config_file(jibal_config *config, const char *filename) { /* Memory lea
         fprintf(stderr, WARNING_STRING "Could not read configuration file \"%s\"\n", filename);
         return -1;
     }
-    jibal_config_var vars[]={{JIBAL_CONFIG_VAR_STRING, "masses_file", &config->masses_file},
+    const jibal_config_var vars[]={{JIBAL_CONFIG_VAR_STRING, "masses_file", &config->masses_file},
                              {JIBAL_CONFIG_VAR_STRING, "abundances_file", &config->abundances_file},
                              {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
                              0}; /* null terminated, we use .type == 0 to stop a loop */
-    jibal_config_var *var;
+    const jibal_config_var *var;
     unsigned int lineno=0;
     char *line_orig=malloc(sizeof(char)*JIBAL_CONFIG_MAX_LINE_LEN);
     while(fgets(line_orig, JIBAL_CONFIG_MAX_LINE_LEN, f)) {
