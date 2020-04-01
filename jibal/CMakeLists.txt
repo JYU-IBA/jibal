@@ -130,10 +130,19 @@ export(EXPORT JibalTargets
 
 # cpack configuration
 include(InstallRequiredSystemLibraries)
+set(CPACK_SOURCE_GENERATOR "TGZ")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
 set(CPACK_PACKAGE_VERSION "${jibal_VERSION_MAJOR}.${jibal_VERSION_MINOR}.${jibal_VERSION_PATCH}")
 set(CPACK_PACKAGE_VERSION_MAJOR "${jibal_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${jibal_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH "${jibal_VERSION_PATCH}")
-set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_SOURCE_DIR}/build/;${CMAKE_SOURCE_DIR}/cmake-build-debug/;${CMAKE_SOURCE_DIR}/.git/;${CMAKE_SOURCE_DIR}/.idea/")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "jibal-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+set(CPACK_SOURCE_IGNORE_FILES
+        "^${CMAKE_SOURCE_DIR}/.git/"
+        "^${CMAKE_SOURCE_DIR}/\.idea/"
+        ".gitignore$"
+        ".DS_Store$"
+        "^${CMAKE_SOURCE_DIR}/build/"
+        "^${CMAKE_SOURCE_DIR}/cmake-build-.*/"
+        )
 include(CPack)
