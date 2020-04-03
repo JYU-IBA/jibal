@@ -143,9 +143,17 @@ int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
 int extract_stop(jibaltool_global *global, int argc, char **argv) {
     int i;
     if (argc < 2 || !global->stopfile) {
+        if(argc < 2) {
+            fprintf(stderr, "ERROR: Too few arguments!\n");
+        }
+        if(!global->stopfile) {
+            fprintf(stderr, "ERROR: No stopfile given!\n");
+        }
+
         fprintf(stderr, "Usage: jibaltool --stopfile=<stopfile> [--format=<format>] extract_stop incident target "
                         "[incident high] [target high]\n\n\tIncident and targets are elements (e.g. He or Si).\n\tYou "
-                        "can give a range of incident elements too.\n");
+                        "can give a range of incident elements too.\n\n\tExample: jibaltool --stopfile=srim2013 "
+                        "extract_stop He H He U\n");
         return -1;
     }
     jibal *jibal = &global->jibal;
@@ -233,6 +241,15 @@ int print_elements(jibaltool_global *global, int argc, char **argv) {
     return 0;
 }
 
+int print_config(jibaltool_global *global, int argc, char **argv) {
+    int Z;
+    FILE *out=jibaltool_open_output(global);
+    jibal_config_file_write(&global->jibal.config, out);
+    jibaltool_close_output(out);
+    return 0;
+}
+
+
 void print_commands(FILE *f, const struct command *commands) {
     const struct command *c;
     fprintf(f, "I recognize the following commands: \n");
@@ -245,12 +262,14 @@ int main(int argc, char **argv) {
     jibaltool_global global = {.Z=0, .outfilename=NULL, .stopfile=NULL, .format=NULL};
     read_options(&global, &argc, &argv);
     static const struct command commands[] = {
-            {"extract_stop", &extract_stop, "Extract single stopping (e.g. He in Si) in GSTO compatible ASCII format."},
+            {"extract_stop", &extract_stop, "Extract stopping (e.g. He in Si or a range) in GSTO compatible ASCII "
+                                            "format."},
             {"extract_stop_material", &extract_stop_material, "Extract stopping from a single stopping file for a "
                                                               "given ion and material. (e.g. 4He in SiO2)"},
             {"print_stopfiles", &print_stopfiles, "Print available stopping files."},
             {"print_isotopes", &print_isotopes, "Print a list of isotopes."},
             {"print_elements", &print_elements, "Print a list of elements."},
+            {"print_config", &print_config, "Print current configuration (config file)."},
             {NULL, NULL, NULL}
     };
     if(argc < 1) {

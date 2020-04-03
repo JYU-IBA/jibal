@@ -59,6 +59,8 @@ typedef struct {
 jibal jibal_init(const char *config_filename);
 void jibal_free(jibal *jibal);
 jibal_config jibal_config_init(const jibal_units *units, const char *filename);
+int jibal_config_file_read(const jibal_units *units, jibal_config *config, const char *filename);
+int jibal_config_file_write(jibal_config *config, FILE *file);
 void jibal_config_free();
 
 

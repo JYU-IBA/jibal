@@ -27,10 +27,17 @@ typedef struct {
 
 void print_stopping_range(jibal *jibal, experiment *exp, double E_low, double E_step, double E_high) {
     double E;
-    for(E=E_low; E <= E_high; E += E_step) {
+    int i;
+    int i_max=floor((E_high-E_low)/E_step);
+    if(i_max > 1000000) {
+        i_max=1000000;
+    }
+    for(i=0; i < i_max; i++) {
+        E=E_low + i*E_step;
         double S_ele=jibal_stop_ele(jibal->gsto, exp->incident, exp->target->material, E);
         double S_nuc=jibal_stop_nuc(exp->incident, exp->target->material, E);
         fprintf(stdout, "%e %e %e\n", E/C_KEV, S_ele/C_EV_TFU, S_nuc/C_EV_TFU);
+
     }
 }
 int main(int argc, char **argv) {

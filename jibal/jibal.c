@@ -76,23 +76,52 @@ char *make_path_and_check_if_exists(const char *directory, const char *subdirect
     return filename;
 }
 
-jibal_config_var *make_config_vars(jibal_config *config) {
-    jibal_config_var vars[]={
+jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure that defines config options. Used
+ * when config files are read and written. Default values should be handled elsewhere. */
+    const jibal_config_var vars[]={
             {JIBAL_CONFIG_VAR_STRING, "datadir", &config->datadir},
             {JIBAL_CONFIG_VAR_STRING, "masses_file", &config->masses_file},
             {JIBAL_CONFIG_VAR_STRING, "abundances_file", &config->abundances_file},
+            {JIBAL_CONFIG_VAR_STRING, "stoppings_file", &config->stoppings_file},
             {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
             0}; /* null terminated, we use .type == 0 to stop a loop */
             int n_vars;
             for(n_vars=0; vars[n_vars].type != 0; n_vars++);
-            jibal_config_var *vars_out=malloc(sizeof(jibal_config_var)*n_vars);
+            size_t s=sizeof(jibal_config_var)*n_vars;
+            jibal_config_var *vars_out=malloc(s);
+            memcpy(vars_out, vars, s);
             return vars_out;
 }
 
-int read_config_file(const jibal_units *units, jibal_config *config, const char *filename) { /* Memory leaks in config
- * shouldn't happen
- * (strings
- * are freed and allocated as is necessary, so it is possible to read multiple configuration files. */
+int jibal_config_file_write(jibal_config *config, FILE *f) {
+    jibal_config_var *vars=make_config_vars(config);
+    const jibal_config_var *var;
+    for(var=vars; var->type != 0; var++) {
+        switch(var->type) {
+            case JIBAL_CONFIG_VAR_NONE:
+                break;
+            case JIBAL_CONFIG_VAR_STRING:
+                fprintf(f, "%s = %s\n", var->name, *((char**)var->variable));
+                break;
+            case JIBAL_CONFIG_VAR_DOUBLE:
+                fprintf(f, "%s = %g\n", var->name, *((double *)var->variable));
+                break;
+            case JIBAL_CONFIG_VAR_INT:
+                fprintf(f, "%s = %i\n", var->name, *((int *)var->variable));
+                break;
+            case JIBAL_CONFIG_VAR_UNIT:
+                fprintf(f, "%s = %g\n", var->name, *((double *)var->variable));
+                break;
+        }
+    }
+    free(vars);
+    fclose(f);
+    return 0;
+}
+
+int jibal_config_file_read(const jibal_units *units, jibal_config *config, const char *filename) { /* Memory leaks in
+ * config shouldn't happen (strings are freed and allocated as is necessary, so it is possible to read multiple
+ * configuration files. */
     if(!filename) {
         return -2;
     }
@@ -101,12 +130,7 @@ int read_config_file(const jibal_units *units, jibal_config *config, const char 
         fprintf(stderr, WARNING_STRING "Could not read configuration file \"%s\"\n", filename);
         return -1;
     }
-    const jibal_config_var vars[]={
-            {JIBAL_CONFIG_VAR_STRING, "datadir", &config->datadir},
-            {JIBAL_CONFIG_VAR_STRING, "masses_file", &config->masses_file},
-            {JIBAL_CONFIG_VAR_STRING, "abundances_file", &config->abundances_file},
-            {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
-            0}; /* null terminated, we use .type == 0 to stop a loop */
+    jibal_config_var *vars=make_config_vars(config);
     const jibal_config_var *var;
     unsigned int lineno=0;
     char *line_orig=malloc(sizeof(char)*JIBAL_CONFIG_MAX_LINE_LEN);
@@ -170,6 +194,7 @@ int read_config_file(const jibal_units *units, jibal_config *config, const char 
     }
     free(line_orig);
     fclose(f);
+    free(vars);
     return 0;
 }
 
@@ -181,17 +206,17 @@ jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
     unsigned int attempt=1;
     int error=0;
     /* Lets look for a configuration file!
-     * 1. It is given to us
-     * 2. Environmental variable
+     * 1. It is given to us explicitly, or we look for JIBAL_CONFIG_FILE (= jibal.conf) in the following places:
+     * 2. Environmental variable (JIBAL_CONFIG_DIR)
      * 2. Under home (~/.jibal/)
      * 3. Prefix (set at compile time, e.g. /usr/local/etc/jibal/)
      * 4. Platform specific place (UNIX: /etc, WINDOWS: TODO)
      *
-     * After this the configuration file (only one!) is read and uninitialized values are set to defaults
-     *
+     * After this the configuration file (only one!) is read and uninitialized values are set to defaults.
+     * It is possible to read another file using jibal_config_file_read()
      * */
     if(filename) {
-        error=read_config_file(units, &config, filename);
+        error=jibal_config_file_read(units, &config, filename);
     } else {
         char *filename_attempt=NULL;
         while (!filename_attempt && attempt) { /* Loop until somebody sets attempt = 0 (no success) or filename candidate is
@@ -225,7 +250,7 @@ jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
             attempt++;
         }
         if(filename_attempt) {
-            error = read_config_file(units, &config, filename_attempt);
+            error = jibal_config_file_read(units, &config, filename_attempt);
             free(filename_attempt);
         }
     }
