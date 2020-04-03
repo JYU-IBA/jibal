@@ -38,6 +38,7 @@ typedef enum {
 typedef enum {
     GSTO_STO_UNIT_NONE=0,
     GSTO_STO_UNIT_EV15CM2=1, /* eV/(1e15 at/cm^2)*/
+    GSTO_STO_UNIT_JM2=2, /* J m^2, the SI unit for stopping cross sections... */
 } stopping_stounit_t;
 
 #define GSTO_N_HEADER_TYPES 13
@@ -101,6 +102,7 @@ typedef struct {
 jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *stoppings_file_name);
 int gsto_add_file(jibal_gsto *workspace, const char *name, const char *filename);
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file);
+int jibal_gsto_assign_range(jibal_gsto *workspace, int Z1_min, int Z1_max, int Z2_min, int Z2_max, gsto_file_t *file);
 int jibal_gsto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target,
         gsto_file_t *file);
 int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2);
@@ -126,7 +128,8 @@ factor);
 jibal_gsto *jibal_gsto_allocate(int Z1_max, int Z2_max);
 int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file);
 int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file);
-void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, int Z1_min, int Z1_max, int Z2_min, int Z2_max);
+void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, stopping_data_format_t format, int Z1_min, int Z1_max,
+        int Z2_min, int Z2_max);
 
 int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2);
 const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2);

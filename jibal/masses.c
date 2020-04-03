@@ -202,6 +202,13 @@ jibal_element *jibal_element_new(const element_name name, int Z, int n_isotopes)
 
 jibal_element *jibal_element_find(jibal_element *elements, element_name name) {
     int Z;
+    char *n=name;
+    if(*name == '\0')
+        return NULL;
+    for(Z=0; isdigit(*n);  Z = Z*10+*(n++)-'0');
+    if(Z >= 0 && Z <= JIBAL_ELEMENTS && !*n) {
+        return &elements[Z];
+    }
     for(Z=0; Z <= JIBAL_ELEMENTS; Z++) {
         if(strncmp(elements[Z].name, name, sizeof(element_name))==0) {
             return &elements[Z];

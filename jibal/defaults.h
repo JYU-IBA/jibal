@@ -41,7 +41,7 @@
 #define JIBAL_STOPPINGS_FILE "stoppings.txt"
 #define JIBAL_CONFIG_MAX_LINE_LEN 256
 
-#define JIBAL_MAX_Z 91
+#define JIBAL_MAX_Z 92
 
 #define WARNING_STRING "JIBAL WARNING: "
 #define ERROR_STRING "JIBAL ERROR: "

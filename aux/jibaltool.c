@@ -142,8 +142,10 @@ int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
 
 int extract_stop(jibaltool_global *global, int argc, char **argv) {
     int i;
-    if (argc < 2) {
-        fprintf(stderr, "Usage: jibaltool [--stopfile=<stopfile>] extract_stop incident target\n");
+    if (argc < 2 || !global->stopfile) {
+        fprintf(stderr, "Usage: jibaltool --stopfile=<stopfile> [--format=<format>] extract_stop incident target "
+                        "[incident high] [target high]\n\n\tIncident and targets are elements (e.g. He or Si).\n\tYou "
+                        "can give a range of incident elements too.\n");
         return -1;
     }
     jibal *jibal = &global->jibal;
@@ -152,33 +154,53 @@ int extract_stop(jibaltool_global *global, int argc, char **argv) {
             fprintf(stderr, "%s is not a valid element\n", argv[0]);
             return -1;
     }
-    int Z1=incident->Z;
+    int Z1_low=incident->Z;
+    int Z1_high=Z1_low;
     jibal_element *target = jibal_element_find(jibal->elements, argv[1]);
     if(!target) {
         fprintf(stderr, "No such element: %s\n", argv[1]);
         return -1;
     }
-    int Z2 = target->Z;
-    gsto_file_t *file;
-
-    if(global->stopfile) {
-        file = jibal_gsto_get_file(jibal->gsto, global->stopfile);
-        if(!file) {
-            fprintf(stderr, "No such stopping file: %s\n", global->stopfile);
-            return -1;
+    int Z2_low = target->Z;
+    int Z2_high=Z2_low;
+    if(argc >= 3) {
+        incident=jibal_element_find(jibal->elements, argv[2]);
+        if(incident) {
+            Z1_high = incident->Z;
         }
-        jibal_gsto_assign(jibal->gsto, Z1, Z2, file);
-    } else {
-        jibal_gsto_auto_assign(jibal->gsto, Z1, Z2);
-        file = jibal_gsto_get_assigned_file(jibal->gsto, Z1, Z2);
-        if(!file) {
-            fprintf(stderr, "No stopping file assigned for Z1=%i, Z2=%i.\n", Z1, Z2);
+        if(Z1_high < Z1_low) {
+            fprintf(stderr, "Z1 higher bound is lower than lower (%i < %i)\n", Z1_high, Z1_low);
             return -1;
         }
     }
+    if(argc >= 4) {
+        target=jibal_element_find(jibal->elements, argv[3]);
+        if(target) {
+            Z2_high = target->Z;
+        }
+        if(Z2_high < Z2_low) {
+            fprintf(stderr, "Z2 higher bound is lower than lower (%i < %i)\n", Z2_high, Z2_low);
+            return -1;
+        }
+    }
+
+
+    gsto_file_t *file = jibal_gsto_get_file(jibal->gsto, global->stopfile);
+    if(!file) {
+        fprintf(stderr, "No such stopping file: %s\n", global->stopfile);
+        return -1;
+    }
+    if(!jibal_gsto_assign_range(jibal->gsto, Z1_low, Z1_high, Z2_low, Z2_high, file)) {
+        fprintf(stderr, "Could not assign this range to this file.\n");
+        return -1;
+    }
     jibal_gsto_load(jibal->gsto, file);
     FILE *out=jibaltool_open_output(global);
-    jibal_gsto_fprint_file(out, file, Z1, Z1, Z2, Z2);
+    stopping_data_format_t format=GSTO_DF_ASCII;
+    if(global->format && strcmp(global->format, "bin")==0) {
+        format=GSTO_DF_DOUBLE;
+    }
+    jibal_gsto_fprint_file(out, file, format, Z1_low, Z1_high, Z2_low, Z2_high);
     jibaltool_close_output(out);
     return 0;
 }

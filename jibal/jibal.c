@@ -76,6 +76,19 @@ char *make_path_and_check_if_exists(const char *directory, const char *subdirect
     return filename;
 }
 
+jibal_config_var *make_config_vars(jibal_config *config) {
+    jibal_config_var vars[]={
+            {JIBAL_CONFIG_VAR_STRING, "datadir", &config->datadir},
+            {JIBAL_CONFIG_VAR_STRING, "masses_file", &config->masses_file},
+            {JIBAL_CONFIG_VAR_STRING, "abundances_file", &config->abundances_file},
+            {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
+            0}; /* null terminated, we use .type == 0 to stop a loop */
+            int n_vars;
+            for(n_vars=0; vars[n_vars].type != 0; n_vars++);
+            jibal_config_var *vars_out=malloc(sizeof(jibal_config_var)*n_vars);
+            return vars_out;
+}
+
 int read_config_file(const jibal_units *units, jibal_config *config, const char *filename) { /* Memory leaks in config
  * shouldn't happen
  * (strings

@@ -18,7 +18,8 @@ static char *gsto_stopping_types[] ={ /* The first three characters are tested w
 
 static char *sto_units[] = {
     "none",
-    "eV/(1e15 atoms/cm2)"
+    "eV/(1e15 atoms/cm2)",
+    "Jm2"
 };
 
 static char *formats[] = {
@@ -124,12 +125,29 @@ void jibal_gsto_free(jibal_gsto *workspace) {
 }
 
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file) { /* Used internally, can be used after init to override autoinit */
-    if(Z1 < file->Z1_min || Z1 > file->Z1_max || Z2 < file->Z2_min || Z2 > file->Z2_max)
+    if (Z1 < file->Z1_min || Z1 > file->Z1_max || Z2 < file->Z2_min || Z2 > file->Z2_max) {
         return 0; /* Fail */
+    }
+    if(Z1 > workspace->Z1_max || Z2 > workspace->Z2_max) {
+        return 0;
+    }
     int i=jibal_gsto_table_get_index(workspace, Z1, Z2);
     assert(i >= 0 && i <= workspace->n_comb);
     workspace->assignments[jibal_gsto_table_get_index(workspace, Z1, Z2)]=file;
     return 1; /* Success */
+}
+
+int jibal_gsto_assign_range(jibal_gsto *workspace, int Z1_min, int Z1_max, int Z2_min, int Z2_max, gsto_file_t
+*file) {
+    int Z1, Z2;
+    for (Z1=Z1_min; Z1 <= Z1_max; Z1++) {
+        for (Z2 = Z2_min; Z2 <= Z2_max; Z2++) {
+            if(!jibal_gsto_assign(workspace, Z1, Z2, file)) {
+                return 0;
+            }
+        }
+    }
+    return 1;
 }
 
 int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
@@ -154,19 +172,22 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
     return 1;
 }
 
-void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, int Z1_min, int Z1_max, int Z2_min, int Z2_max) {
+void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, stopping_data_format_t format, int Z1_min, int
+        Z1_max, int Z2_min, int Z2_max) {
     int Z1, Z2;
     Z1_min=Z1_min<file->Z1_min?file->Z1_min:Z1_min;
     Z1_max=Z1_max>file->Z1_max?file->Z1_max:Z1_max;
     Z2_min=Z2_min<file->Z2_min?file->Z2_min:Z2_min;
     Z2_max=Z2_max>file->Z2_max?file->Z2_max:Z2_max;
-    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_FORMAT], formats[GSTO_DF_ASCII]);
+    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_FORMAT], formats[format]);
     fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MIN], Z1_min);
     fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MAX], Z1_max);
     fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z2MIN], Z2_min);
     fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z2MAX], Z2_max);
-    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_STOUNIT], sto_units[file->stounit]);
-    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT], sto_units[file->xunit]);
+    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_STOUNIT],
+            format==GSTO_DF_ASCII?sto_units[GSTO_STO_UNIT_EV15CM2]:sto_units[GSTO_STO_UNIT_JM2]); /* We convert
+ * numbers if we are outputting ASCII, but binary stays as internal binary (SI units) */
+    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT], xunits[file->xunit]);
     fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMIN], file->xmin);
     fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMAX], file->xmax);
     fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_XPOINTS], file->xpoints);
@@ -180,9 +201,13 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, int Z1_min, int Z
                         Z1, Z2, file->name, file->data?"":"This file isn't loaded yet.");
                 return;
             }
-            int i;
-            for(i=0; i < file->xpoints; i++) {
-                fprintf(file_out, "%e\n", data[i]/C_EV_TFU);
+            if(format == GSTO_DF_ASCII) {
+                int i;
+                for (i = 0; i < file->xpoints; i++) {
+                    fprintf(file_out, "%e\n", data[i] / C_EV_TFU);
+                }
+            } else if(format == GSTO_DF_DOUBLE) {
+                fwrite(data, sizeof(double), file->xpoints, file_out);
             }
         }
     }
@@ -685,12 +710,12 @@ double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y) {
             return y;
         case GSTO_STO_UNIT_EV15CM2:
             return y*C_EV_TFU;
+        case GSTO_STO_UNIT_JM2:
+            return y; /* The SI unit, used internally */
         default:
             return y;
     }
 }
-
-
 
 double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
     gsto_file_t *file= jibal_gsto_get_assigned_file(workspace, Z1, Z2);
