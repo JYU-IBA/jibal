@@ -156,7 +156,7 @@ jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
 #endif
     }
     for(isotope=isotopes; isotope->A != 0; isotope++) {
-        if(isotope->Z < 0 || isotope->Z >= JIBAL_ELEMENTS) {
+        if(isotope->Z < 0 || isotope->Z > JIBAL_ELEMENTS) {
             continue;
         }
         jibal_element *e=&elements[isotope->Z];
@@ -166,6 +166,16 @@ jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
 #ifdef DEBUG
         fprintf(stderr, "Element %i isotope %i is A=%i\n", isotope->Z, i, isotope->A);
 #endif
+    }
+    for(Z=0; Z <= JIBAL_ELEMENTS; Z++) {
+        jibal_element *element = &elements[Z];
+        int i;
+        /* Note that we don't have a concentration table for "bare" elements. We can still calculate the average
+         * mass. */
+        element->avg_mass=0.0;
+        for(i=0; i < element->n_isotopes; i++) {
+            element->avg_mass += element->isotopes[i]->abundance*element->isotopes[i]->mass;
+        }
     }
     return elements;
 }
@@ -283,10 +293,13 @@ jibal_element *jibal_element_copy(jibal_element *element, int A) {
 void jibal_element_normalize(jibal_element *element) {
     double sum=0.0;
     int i;
+    if(!element->concs) { /* This array doesn't exist unless the element was created with jibal_element_new() */
+        return;
+    }
     for(i=0; i < element->n_isotopes; i++) {
         sum += element->concs[i];
     }
-    if(sum == 0.0) {
+    if(sum == 0.0) { /* TODO: threshold? Shouldn't be necessary, but you never know. */
         return;
     }
     element->avg_mass=0.0;
