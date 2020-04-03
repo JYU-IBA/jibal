@@ -24,7 +24,8 @@ typedef enum {
 typedef enum {
     GSTO_XSCALE_NONE=0,
     GSTO_XSCALE_LINEAR=1,
-    GSTO_XSCALE_LOG10=2
+    GSTO_XSCALE_LOG10=2,
+    GSTO_XSCALE_ARBITRARY=3
 } stopping_xscale_t;
 
 #define GSTO_N_X_UNITS 3
@@ -70,10 +71,13 @@ typedef struct {
     double xmin; /* The first point of stopping corresponds to x=xmin */
     double xmax; /* The last point of stopping corresponds to x=xmax */
     double *vel; /* Array of velocities (size: xpoints) */
+    double vel0; /* same as vel[0] in linear scale, or log10(vel[0]) if xscale is log10. Used to speed up lookups. */
+    double veldiv; /* also a xscale dependant speedup variable. */
     stopping_xscale_t xscale; /* The scale specifies how stopping points are spread between min and max (linear, log...) */
     stopping_xunit_t xunit; /* Stopping as a function of what? */
     stopping_stounit_t stounit; /* Stopping unit */
-    stopping_type_t type; /* does this file contain nuclear, electronic or total stopping? */
+    stopping_type_t type; /* does this file contain nuclear, electronic or total stopping? TODO: only electronic
+ * makes sense, remove others */
     stopping_data_format_t data_format; /* What does the data look like (after headers) */
     FILE *fp;
     char *name; /* Descriptive name of the file, from the settings file */

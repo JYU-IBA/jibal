@@ -31,7 +31,8 @@ static char *formats[] = {
 static char *xscales[] = {
     "none",
     "linear",
-    "log10"
+    "log10",
+    "arb"
 };
 
 static char *xunits[] = {
@@ -294,9 +295,8 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
                 for(i=0; i<file->xpoints; i++) {
                     if(!fgets(line, GSTO_MAX_LINE_LEN, file->fp)) {
-#ifdef DEBUG
-                        fprintf(stderr, "File %s ended prematurely when reading Z1=%i Z2=%i stopping point=%i/%i.\n", file->filename, Z1, Z2, i+1, file->xpoints);
-#endif
+                        fprintf(stderr, "ERROR: File %s ended prematurely when reading Z1=%i Z2=%i stopping point=%i/%i"
+                                        ".\n", file->filename, Z1, Z2, i+1, file->xpoints);
                         break;
                     }
                     file->lineno++;
@@ -327,27 +327,27 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
     char *line_split;
     char *columns[3];
     char **col;
-    int header=0, property;
-    if(!file) {
+    int header = 0, property;
+    if (!file) {
         return 0;
     }
-    file->fp=fopen(file->filename, "r");
-    if(!file->fp) {
+    file->fp = fopen(file->filename, "r");
+    if (!file->fp) {
         fprintf(stderr, "Could not open file \"%s\".\n", file->filename);
         return 0;
     }
-    file->lineno=0;
-    line=calloc(GSTO_MAX_LINE_LEN, sizeof(char));
+    file->lineno = 0;
+    line = calloc(GSTO_MAX_LINE_LEN, sizeof(char));
     /* parse headers, stop when end of headers found */
     while (fgets(line, GSTO_MAX_LINE_LEN, file->fp) != NULL) {
         file->lineno++;
-        if(strncmp(line, GSTO_END_OF_HEADERS, strlen(GSTO_END_OF_HEADERS))==0) {
+        if (strncmp(line, GSTO_END_OF_HEADERS, strlen(GSTO_END_OF_HEADERS)) == 0) {
 #ifdef DEBUG
             fprintf(stderr, "End of headers on line %i of settings file.\n", file->lineno);
 #endif
             break;
         }
-        line_split=line;
+        line_split = line;
         for (col = columns; (*col = strsep(&line_split, "=\n\r\t")) != NULL;)
             if (**col != '\0')
                 if (++col >= &columns[3])
@@ -355,72 +355,72 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
 #ifdef DEBUG
         fprintf(stderr, "Line %i, property %s is %s.\n", file->lineno, columns[0], columns[1]);
 #endif
-        for(header=0; header < GSTO_N_HEADER_TYPES; header++) {
+        for (header = 0; header < GSTO_N_HEADER_TYPES; header++) {
 #ifdef DEBUG
             fprintf(stderr, "Does \"%s\" match \"%s\"? ", columns[0], gsto_headers[header]);
 #endif
-            if(strncmp(columns[0], gsto_headers[header], strlen(gsto_headers[header]))==0) {
+            if (strncmp(columns[0], gsto_headers[header], strlen(gsto_headers[header])) == 0) {
 #ifdef DEBUG
                 fprintf(stderr, "Yes.\n");
 #endif
                 switch (header) {
                     case GSTO_HEADER_FORMAT:
-                        for(property=0; property<GSTO_N_STO_UNITS; property++) {
-                            if(strncmp(formats[property], columns[1], strlen(formats[property]))==0) {
-                                file->data_format=property;
+                        for (property = 0; property < GSTO_N_STO_UNITS; property++) {
+                            if (strncmp(formats[property], columns[1], strlen(formats[property])) == 0) {
+                                file->data_format = property;
                             }
                         }
                         break;
                     case GSTO_HEADER_STOUNIT:
-                        for(property=0; property<GSTO_N_STO_UNITS; property++) {
-                            if(strncmp(sto_units[property], columns[1], strlen(sto_units[property]))==0) {
-                                file->stounit=property;
+                        for (property = 0; property < GSTO_N_STO_UNITS; property++) {
+                            if (strncmp(sto_units[property], columns[1], strlen(sto_units[property])) == 0) {
+                                file->stounit = property;
                             }
                         }
                         break;
                     case GSTO_HEADER_XSCALE:
-                        for(property=0; property<GSTO_N_X_SCALES; property++) {
-                            if(strncmp(xscales[property], columns[1], strlen(xscales[property]))==0) {
-                                file->xscale=property;
+                        for (property = 0; property < GSTO_N_X_SCALES; property++) {
+                            if (strncmp(xscales[property], columns[1], strlen(xscales[property])) == 0) {
+                                file->xscale = property;
                             }
                         }
                         break;
                     case GSTO_HEADER_XUNIT:
-                        for(property=0; property<GSTO_N_X_UNITS; property++) {
-                            if(strncmp(xunits[property], columns[1], strlen(xunits[property]))==0) {
-                                file->xunit=property;
+                        for (property = 0; property < GSTO_N_X_UNITS; property++) {
+                            if (strncmp(xunits[property], columns[1], strlen(xunits[property])) == 0) {
+                                file->xunit = property;
                             }
                         }
                         break;
                     case GSTO_HEADER_XPOINTS:
-                        file->xpoints=strtol(columns[1], NULL, 10);
+                        file->xpoints = strtol(columns[1], NULL, 10);
 #ifdef DEBUG
                         fprintf(stderr, "Set number of x points to %i\n", file->xpoints);
 #endif
                         break;
                     case GSTO_HEADER_XMIN:
-                        file->xmin=strtod(columns[1], NULL);
+                        file->xmin = strtod(columns[1], NULL);
 #ifdef DEBUG
                         fprintf(stderr, "Set minimum value of table to be %lf\n", file->xmin);
 #endif
                         break;
                     case GSTO_HEADER_XMAX:
-                        file->xmax=strtod(columns[1], NULL);
+                        file->xmax = strtod(columns[1], NULL);
 #ifdef DEBUG
                         fprintf(stderr, "Set maximum value of table to be %lf\n", file->xmax);
 #endif
                         break;
                     case GSTO_HEADER_Z1MIN:
-                        file->Z1_min=strtol(columns[1], NULL, 10);
+                        file->Z1_min = strtol(columns[1], NULL, 10);
                         break;
                     case GSTO_HEADER_Z1MAX:
-                        file->Z1_max=strtol(columns[1], NULL, 10);
+                        file->Z1_max = strtol(columns[1], NULL, 10);
                         break;
                     case GSTO_HEADER_Z2MIN:
-                        file->Z2_min=strtol(columns[1], NULL, 10);
+                        file->Z2_min = strtol(columns[1], NULL, 10);
                         break;
                     case GSTO_HEADER_Z2MAX:
-                        file->Z2_max=strtol(columns[1], NULL, 10);
+                        file->Z2_max = strtol(columns[1], NULL, 10);
                         break;
                     default:
                         break;
@@ -433,9 +433,28 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
             }
         }
     } /* End of headers */
-    file->n_comb=(file->Z1_max-file->Z1_min+1)*(file->Z2_max-file->Z2_min+1);
+    file->n_comb = (file->Z1_max - file->Z1_min + 1) * (file->Z2_max - file->Z2_min + 1);
     file->data = calloc(file->n_comb, sizeof(double *));
     file->vel = jibal_gsto_velocity_table(file);
+    file->vel0 = 0.0;
+    file->veldiv = 0.0;
+    if(file->xunit == GSTO_X_UNIT_M_S) {
+        switch (file->xscale) {
+            case GSTO_XSCALE_LINEAR:
+                file->vel0 = file->vel[0];
+                file->veldiv = (file->xpoints - 1) / (file->vel[file->xpoints - 1] - file->vel0);
+                /* TODO: this speedup works only if X is in true VELOCITY (m/s) */
+                break;
+            case GSTO_XSCALE_LOG10:
+                file->vel0 = log10(file->vel[0]);
+                file->veldiv = (file->xpoints - 1) / (log10(file->vel[file->xpoints - 1]) - file->vel0);
+                break;
+            case GSTO_XSCALE_ARBITRARY:
+            default:
+
+                break;
+        }
+    }
     switch (file->data_format) {
         case GSTO_DF_DOUBLE:
             jibal_gsto_load_binary_file(workspace, file);
@@ -627,7 +646,7 @@ gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name) {
     return NULL;
 }
 
-double *jibal_gsto_velocity_table(const gsto_file_t *file) {
+double *jibal_gsto_velocity_table(const gsto_file_t *file) { /* Note: for internal use only, may read the file->fp */
     double *table = malloc(sizeof(double) * file->xpoints);
     int i;
     double x, v;
@@ -645,6 +664,9 @@ double *jibal_gsto_velocity_table(const gsto_file_t *file) {
                 break;
             case GSTO_XSCALE_NONE:
                 x = 0.0;
+                break;
+            case GSTO_XSCALE_ARBITRARY:
+                fscanf(file->fp, "%lf\n", &x);
                 break;
         }
         switch (file->xunit) {
@@ -669,7 +691,7 @@ double *jibal_gsto_velocity_table(const gsto_file_t *file) {
 
 double jibal_gsto_scale_velocity_to_x(const gsto_file_t *file, double v) {
     double x, gamma;
-    /* Scale v to "native" velocity, i.e. units of the file. */
+    /* Scale v to units of the file. */
     switch (file->xunit) {
         case GSTO_X_UNIT_KEV_U:
 #ifdef CLASSICAL
@@ -725,20 +747,35 @@ double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
 #endif
         return 0.0;
     }
-    /* Let's perform a binary search! Works with arbitrary velocity spacing. TODO: optimize for lin and log. */
-    int hi = file->xpoints-1;
-    int lo = 0;
-    int mi;
-
-    while (hi - lo > 1) {
+    int lo, mi, hi;
+#
+    if(file->xscale == GSTO_XSCALE_LOG10 && file->xunit == GSTO_X_UNIT_M_S) {
+        lo=floor((log10(v) - file->vel0) * file->veldiv);
+    } else if (file->xscale == GSTO_XSCALE_LINEAR && file->xunit == GSTO_X_UNIT_M_S) {
+        lo=floor((v - file->vel0) * file->veldiv);
+    } else {
+        /* Let's perform a binary search! Works with arbitrary velocity spacing. TODO: optimize for lin and log. */
+        hi = file->xpoints - 1;
+        lo = 0;
+#ifdef DEBUG
+        int niter=0;
+#endif
+        while (hi - lo > 1) {
+#ifdef DEBUG
+            niter++;
+#endif
             mi = (hi + lo) / 2;
-        if (v >= file->vel[mi]) {
-            lo = mi;
-        } else {
-            hi = mi;
+            if (v >= file->vel[mi]) {
+                lo = mi;
+            } else {
+                hi = mi;
+            }
         }
     }
-
+    #ifdef DEBUG
+    fprintf(stderr, "lo=%i (%i iters), residual=%e m/s (%.2lf%% of bin)\n", lo, niter, v-file->vel[lo],
+            100.0*(v-file->vel[lo])/(file->vel[lo+1]-file->vel[lo]));
+#endif
     if (v < file->vel[lo] || v > file->vel[lo + 1]) { /* Sanity check and out-of-bounds check. */
         return nan(NULL);
     }
