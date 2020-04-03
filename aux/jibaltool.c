@@ -99,36 +99,68 @@ void read_options(jibaltool_global *global, int *argc, char ***argv) {
     *argv += optind;
 }
 
-int extract_stop(jibaltool_global *global, int argc, char **argv) {
-    int i;
-
-    if (argc < 2) {
-        fprintf(stderr, "Usage: jibaltool extract incident target\n");
+int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
+    if (argc < 2 || !global->stopfile) {
+        fprintf(stderr, "Usage: jibaltool [--stopfile=<stopfile>] extract_stop_material incident target\n");
         return -1;
     }
     jibal *jibal = &global->jibal;
-    int Z1;
-    jibal_element *incident_elem=NULL; /* e.g. He */
-    jibal_isotope *incident=NULL;
-    incident = jibal_isotope_find(jibal->isotopes, argv[0], 0, 0); /* e.g. 4He */
-    if(!incident) { /* Ok, no isotope found, maybe we were given just the element? */
-        incident_elem=jibal_element_find(jibal->elements, argv[0]);
-        if(!incident_elem) {
-            fprintf(stderr, "%s is not a valid isotope or an element\n", argv[0]);
-            return -1;
-        }
-        Z1=incident_elem->Z;
-    } else {
-        Z1=incident->Z;
+    jibal_isotope *incident = jibal_isotope_find(jibal->isotopes, argv[0], 0, 0); /* e.g. 4He */
+    if(!incident) {
+        fprintf(stderr, "%s is not a valid isotope.\n", argv[0]);
+        return -1;
     }
+    jibal_material *target = jibal_material_create(global->jibal.elements, argv[1]);
+    if(!target) {
+        fprintf(stderr, "%s is not a valid material formula.\n", argv[1]);
+        return -1;
+    }
+    gsto_file_t *file=jibal_gsto_get_file(jibal->gsto, global->stopfile);
+    if(!file) {
+        fprintf(stderr, "No such stopping file: %s\n", global->stopfile);
+        return -1;
+    }
+    if(!jibal_gsto_assign_material(jibal->gsto, incident, target, file)) {
+        fprintf(stderr, "Couldn't assign stopping to file %s. Maybe some Z1,Z2 combination is not in the file?\n",
+                file->name);
+        return  -1;
+    }
+    jibal_gsto_load(jibal->gsto, file);
+    FILE *out=jibaltool_open_output(global);
+    int i;
+    fprintf(out, "Stopping Units =  eV/(1E15 atoms/cm2)\n"
+                 "Energy(keV)  S(Elec)    S(Nuc)\n");
+    for(i=0; i < file->xpoints; i++) {
+        double E=energy(file->vel[i], incident->mass);
+        double S_ele=jibal_stop_ele(jibal->gsto, incident, target, E);
+        double S_nuc=jibal_stop_nuc(incident, target, E);
+        fprintf(out, "%.3e   %.3e   %e\n", E/C_KEV, S_ele/C_EV_TFU, S_nuc/C_EV_TFU);
+    }
+    jibaltool_close_output(out);
+    return 0;
+}
+
+int extract_stop(jibaltool_global *global, int argc, char **argv) {
+    int i;
+    if (argc < 2) {
+        fprintf(stderr, "Usage: jibaltool [--stopfile=<stopfile>] extract_stop incident target\n");
+        return -1;
+    }
+    jibal *jibal = &global->jibal;
+    jibal_element *incident=jibal_element_find(jibal->elements, argv[0]);; /* e.g. He */
+    if(!incident)  {
+            fprintf(stderr, "%s is not a valid element\n", argv[0]);
+            return -1;
+    }
+    int Z1=incident->Z;
     jibal_element *target = jibal_element_find(jibal->elements, argv[1]);
     if(!target) {
         fprintf(stderr, "No such element: %s\n", argv[1]);
         return -1;
     }
-    target = jibal_element_copy(target, 0); /* TODO: free */
     int Z2 = target->Z;
     gsto_file_t *file;
+
     if(global->stopfile) {
         file = jibal_gsto_get_file(jibal->gsto, global->stopfile);
         if(!file) {
@@ -145,24 +177,8 @@ int extract_stop(jibaltool_global *global, int argc, char **argv) {
         }
     }
     jibal_gsto_load(jibal->gsto, file);
-
     FILE *out=jibaltool_open_output(global);
-    if(global->format && strcmp(global->format, "srim")==0) {
-        if(!incident) {
-            fprintf(stderr, "For SRIM style output, please give an isotope\n");
-            return -1;
-        }
-        fprintf(out, "Stopping Units =  eV/(1E15 atoms/cm2)\n"
-                        "Energy(keV)  S(Elec)    S(Nuc)\n");
-        const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
-        for(i=0; i < file->xpoints; i++) {
-            double E=energy(file->vel[i], incident->mass);
-            fprintf(out, "%e %e %e\n", E/C_KEV, data[i]/C_EV_TFU,
-                    jibal_gsto_stop_nuclear_universal(E, Z1, incident->mass, Z2, target->avg_mass)/C_EV_TFU);
-        }
-    } else {
-        jibal_gsto_fprint_file(out, file, Z1, Z1, Z2, Z2);
-    }
+    jibal_gsto_fprint_file(out, file, Z1, Z1, Z2, Z2);
     jibaltool_close_output(out);
     return 0;
 }
@@ -199,7 +215,7 @@ void print_commands(FILE *f, const struct command *commands) {
     const struct command *c;
     fprintf(f, "I recognize the following commands: \n");
     for(c=commands; c->f != NULL; c++) {
-        fprintf(f, "%20s    %s\n", c->name, c->help_text);
+        fprintf(f, "%22s    %s\n", c->name, c->help_text);
     }
 }
 
@@ -208,6 +224,8 @@ int main(int argc, char **argv) {
     read_options(&global, &argc, &argv);
     static const struct command commands[] = {
             {"extract_stop", &extract_stop, "Extract single stopping (e.g. He in Si) in GSTO compatible ASCII format."},
+            {"extract_stop_material", &extract_stop_material, "Extract stopping from a single stopping file for a "
+                                                              "given ion and material. (e.g. 4He in SiO2)"},
             {"print_stopfiles", &print_stopfiles, "Print available stopping files."},
             {"print_isotopes", &print_isotopes, "Print a list of isotopes."},
             {"print_elements", &print_elements, "Print a list of elements."},

@@ -29,8 +29,7 @@ double jibal_energy_classical(double v, double m) {
 }
 
 double jibal_velocity_relativistic(double E, double m) {
-    double gamma=1.0+E/(m*C_C2);
-    return sqrt((1-pow(gamma,-2.0))*C_C2);
+    return sqrt((1-pow((1.0+E/(m*C_C2)),-2.0))*C_C2);
 }
 
 double jibal_energy_relativistic(double v, double m) {

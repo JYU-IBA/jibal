@@ -124,10 +124,12 @@ void jibal_gsto_free(jibal_gsto *workspace) {
 }
 
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file) { /* Used internally, can be used after init to override autoinit */
+    if(Z1 < file->Z1_min || Z1 > file->Z1_max || Z2 < file->Z2_min || Z2 > file->Z2_max)
+        return 0; /* Fail */
     int i=jibal_gsto_table_get_index(workspace, Z1, Z2);
     assert(i >= 0 && i <= workspace->n_comb);
     workspace->assignments[jibal_gsto_table_get_index(workspace, Z1, Z2)]=file;
-    return 1;
+    return 1; /* Success */
 }
 
 int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
@@ -712,11 +714,12 @@ double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
         }
     }
 
-    if (v < file->vel[lo] || v >= file->vel[lo + 1]) { /* Sanity check and out-of-bounds check. */
-        return 0.0;
+    if (v < file->vel[lo] || v > file->vel[lo + 1]) { /* Sanity check and out-of-bounds check. */
+        return nan(NULL);
     }
     const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
     //fprintf(stderr, "v=%g m/s (%g keV/u)\n", v, 0.5*pow(v, 2.0)*C_U/C_KEV);
+    assert(data);
     double sto=jibal_linear_interpolation(file->vel[lo], file->vel[lo+1], data[lo], data[lo+1], v);
     return sto;
 }
@@ -781,11 +784,23 @@ double jibal_stop_ele(jibal_gsto *workspace, const jibal_isotope *incident, cons
     return sum;
 }
 
+int jibal_gsto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target, gsto_file_t *file) {
+    int i;
+    for (i = 0; i < target->n_elements; i++) {
+        if(!jibal_gsto_assign(workspace, incident->Z, target->elements[i].Z, file)) {
+            return 0;
+        }
+    }
+    return 1; /* Success */
+}
+
 int jibal_gsto_auto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target) {
     int i;
-    int success = 0;
+
     for (i = 0; i < target->n_elements; i++) {
-        success += jibal_gsto_auto_assign(workspace, incident->Z, target->elements[i].Z);
+        if(!jibal_gsto_auto_assign(workspace, incident->Z, target->elements[i].Z)) {
+            return 0; /* Fail */
+        }
     }
-    return success;
+    return 1; /* Success */
 }
