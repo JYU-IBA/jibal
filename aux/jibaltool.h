@@ -12,6 +12,7 @@ typedef  struct {
     char *config_filename;
     char *outfilename;
     char *stopfile;
+    char *format;
 } jibaltool_global;
 
 struct command {
