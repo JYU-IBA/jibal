@@ -67,7 +67,7 @@ char *make_path_and_check_if_exists(const char *directory, const char *subdirect
     }
 #endif
     if(access(filename, R_OK) != 0)  { /* File doesn't exist */
-#ifndef DEBUG
+#ifdef DEBUG
         fprintf(stderr, "File \"%s\" doesn't exist.\n", filename);
 #endif
         free(filename);
