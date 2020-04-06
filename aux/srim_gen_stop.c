@@ -186,7 +186,7 @@ int main (int argc, char **argv) {
     fgets(input, 1000, stdin);
     xmax=strtod(input, NULL);
     xmax=velocity(xmax*C_KEV, C_U);
-    fprintf(stderr, "xmax=%g m/s\n", xmin);
+    fprintf(stderr, "xmax=%g m/s\n", xmax);
     fprintf(stderr, "Input number of stopping steps to calculate between xmin and xmax in log scale (e.g. 101): ");
     fgets(input, 1000, stdin);
     xsteps=strtol(input, NULL, 10);
