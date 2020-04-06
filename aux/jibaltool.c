@@ -128,8 +128,8 @@ int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
     jibal_gsto_load(jibal->gsto, file);
     FILE *out=jibaltool_open_output(global);
     int i;
-    fprintf(out, "Stopping Units =  eV/(1E15 atoms/cm2)\n"
-                 "Energy(keV)  S(Elec)    S(Nuc)\n");
+    fprintf(out, "#Stopping Units =  eV/(1E15 atoms/cm2)\n"
+                 "#Energy(keV)  S(Elec)    S(Nuc)\n");
     for(i=0; i < file->xpoints; i++) {
         double E=energy(file->vel[i], incident->mass);
         double S_ele=jibal_stop_ele(jibal->gsto, incident, target, E);
@@ -262,10 +262,10 @@ int main(int argc, char **argv) {
     jibaltool_global global = {.Z=0, .outfilename=NULL, .stopfile=NULL, .format=NULL};
     read_options(&global, &argc, &argv);
     static const struct command commands[] = {
-            {"extract_stop", &extract_stop, "Extract stopping (e.g. He in Si or a range) in GSTO compatible ASCII "
-                                            "format."},
-            {"extract_stop_material", &extract_stop_material, "Extract stopping from a single stopping file for a "
-                                                              "given ion and material. (e.g. 4He in SiO2)"},
+            {"extract_stop", &extract_stop, "Extract stopping (e.g. He in Si or a range) in GSTO"
+                                            " compatible format."},
+            {"extract_stop_material", &extract_stop_material, "Extract stopping from a single stopping"
+                                                              " file for a given ion and material. (e.g. 4He in SiO2)"},
             {"stopfiles", &print_stopfiles, "Print available stopping files."},
             {"isotopes", &print_isotopes, "Print a list of isotopes."},
             {"elements", &print_elements, "Print a list of elements."},
