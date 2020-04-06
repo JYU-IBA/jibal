@@ -276,9 +276,13 @@ int main(int argc, char **argv) {
         jibaltool_usage();
         fprintf(stderr, "\n");
         print_commands(stderr, commands);
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
     global.jibal = jibal_init(global.config_filename);
+    if(!global.jibal.gsto || !global.jibal.isotopes) {
+        fprintf(stderr, "Initializing JIBAL failed\n");
+        return EXIT_FAILURE;
+    }
     const struct command *c;
     int found=0;
     for(c=commands; c->f != NULL; c++) {

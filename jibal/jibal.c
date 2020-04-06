@@ -20,6 +20,9 @@ jibal jibal_init(const char *config_filename) {
 #endif
     jibal.elements=jibal_elements_populate(jibal.isotopes);
     jibal.gsto=jibal_gsto_init(jibal.config.Z_max, jibal.config.datadir, jibal.config.stoppings_file);
+    if(!jibal.gsto) {
+        fprintf(stderr, "Could not initialize GSTO.\n");
+    }
     return jibal;
 }
 
