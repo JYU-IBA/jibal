@@ -266,10 +266,10 @@ int main(int argc, char **argv) {
                                             "format."},
             {"extract_stop_material", &extract_stop_material, "Extract stopping from a single stopping file for a "
                                                               "given ion and material. (e.g. 4He in SiO2)"},
-            {"print_stopfiles", &print_stopfiles, "Print available stopping files."},
-            {"print_isotopes", &print_isotopes, "Print a list of isotopes."},
-            {"print_elements", &print_elements, "Print a list of elements."},
-            {"print_config", &print_config, "Print current configuration (config file)."},
+            {"stopfiles", &print_stopfiles, "Print available stopping files."},
+            {"isotopes", &print_isotopes, "Print a list of isotopes."},
+            {"elements", &print_elements, "Print a list of elements."},
+            {"config", &print_config, "Print current configuration (config file)."},
             {NULL, NULL, NULL}
     };
     if(argc < 1) {

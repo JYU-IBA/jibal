@@ -707,7 +707,8 @@ double *jibal_gsto_velocity_table(const gsto_file_t *file) { /* Note: for intern
 int jibal_gsto_velocity_to_index(const gsto_file_t *file, double v) { /* Returns the low bin, i.e. i of vel[i], where
  * vel[i] <= v < vel[i+1], or -1 if vel is beyond limits of the file. Includes speedups for lin and log scale, but
  * there is a conversion cost if the file xunits are not m/s. For arbitrarily spaced X values binary search is
- * employed. */
+ * employed. Due to floating point issues the log speedup might return i+1 if v is very close to vel[i+1]. This
+ * shouldn't make much of a difference after (linear) interpolation. */
     double x, index;
     switch (file->xunit) {
         case GSTO_X_UNIT_KEV_U:
@@ -749,42 +750,17 @@ int jibal_gsto_velocity_to_index(const gsto_file_t *file, double v) { /* Returns
 fprintf(stderr, "lo=%i, residual=%e m/s (%.2lf%% of bin)\n", lo, v-file->vel[lo],
             100.0*(v-file->vel[lo])/(file->vel[lo+1]-file->vel[lo]));
 #endif
+#ifdef GSTO_VELOCITY_BIN_CHECK_STRICT /* Note: due to floating point issues this is too strict */
     if (v < file->vel[lo] || v > file->vel[lo + 1]) { /* Sanity check and out-of-bounds check. */
         return -1;
     }
+#else
+    if (v < file->vel[0] || v > file->vel[file->xpoints - 1]) {
+        return -1;
+    }
+#endif
+
     return lo;
-}
-
-double jibal_gsto_scale_velocity_to_x(const gsto_file_t *file, double v) {
-    double x, gamma;
-    /* Scale v to units of the file. */
-    switch (file->xunit) {
-        case GSTO_X_UNIT_KEV_U:
-            x=energy(v, C_U)/C_KEV;
-            break;
-        case GSTO_X_UNIT_M_S:
-        default:
-            x=v;
-            break;
-    }
-    if(x < file->xmin || x > file->xmax)  {
-        return 0.0;
-    }
-    return x;
-}
-
-double jibal_gsto_xscale_to_index(const gsto_file_t *file, double x) {
-    double index;
-    switch (file->xscale) {
-        case GSTO_XSCALE_LOG10:
-            index = (log10(x) - log10(file->xmin)) / (log10(file->xmax) - log10(file->xmin)) * (file->xpoints - 1);
-            break;
-        case GSTO_XSCALE_LINEAR:
-        default:
-            index = (x - file->xmin) / (file->xmax - file->xmin) * (file->xpoints - 1);
-            break;
-    }
-    return index;
 }
 
 double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y) {

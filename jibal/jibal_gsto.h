@@ -144,7 +144,7 @@ gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name);
 
 int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2);
 double *jibal_gsto_velocity_table(const gsto_file_t *file);
-double jibal_gsto_scale_velocity_to_x(const gsto_file_t *file, double v); /* from SI units */
+int jibal_gsto_velocity_to_index(const gsto_file_t *file, double v);
 double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y); /* to SI units */
 double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v);
 double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, double m2);
