@@ -8,6 +8,8 @@ See [installation instructions](INSTALL.md)
 
 ## Usage of bundled tools
 
+### Get_stop
+
 The get\_stop program can be used to extract stopping like this:
 ~~~~
 get_stop 4He SiO2 "1 MeV"
@@ -30,6 +32,14 @@ Elements are assumed to have natural isotopic composition, unless you tell other
 get_stop 4He "7Li0.60 6Li0.40" 2MeV 1000tfu
 ~~~~
 Note that this results in two elements, but this is fine. 
+
+### Jibaltool
+
+Run
+    
+    $ jibaltool
+    
+to get a short help. You can extract entire files of stopping data and see the current JIBAL configuration.
 
 ## Using the jibal library with your own programs
 
