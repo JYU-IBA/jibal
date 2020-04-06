@@ -118,9 +118,11 @@ void jibal_gsto_file_free(gsto_file_t *file) {
 
 void jibal_gsto_free(jibal_gsto *workspace) {
     int i;
-    for(i=0; i < workspace->n_files; i++) {
-        gsto_file_t *file=&workspace->files[i];
-        jibal_gsto_file_free(file);
+    if(workspace->files) {
+        for (i = 0; i < workspace->n_files; i++) {
+            gsto_file_t *file = &workspace->files[i];
+            jibal_gsto_file_free(file);
+        }
     }
     free(workspace->assignments);
 }
@@ -448,6 +450,9 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
         }
     } /* End of headers */
     file->n_comb = (file->Z1_max - file->Z1_min + 1) * (file->Z2_max - file->Z2_min + 1);
+    if(file->data) {
+        free(file->data);
+    }
     file->data = calloc(file->n_comb, sizeof(double *));
     file->vel = jibal_gsto_velocity_table(file);
     file->xmin_speedup = 0.0;
