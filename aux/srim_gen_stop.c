@@ -11,6 +11,8 @@
 #include <math.h>
 #include <unistd.h>
 #include <errno.h>
+#include <jibal_units.h>
+#include <jibal_phys.h>
 
 #ifdef WIN32
 #include "win_compat.h"
@@ -29,9 +31,6 @@
 #endif
 #define SR_FILE_PATH "SR.IN"
 #define SR_OUTPUT_FILE "stopping.dat"
-
-#define XSTR(x) STR(x)
-#define STR(x) #x
 
 #define XSTEPS 101
 #define Z_MAX 92
@@ -64,8 +63,9 @@ int generate_sr_in(char *out_filename, int Z1, int Z2, int xsteps, double xmin, 
     fprintf(sr_file, "---Ion Energy : E-Min(keV), E-Max(keV)\r\n");
     fprintf(sr_file, "0  0\r\n");
     for(i=0; i<xsteps; i++) {
-        x=xmin*pow(xmax/xmin,1.0*i/(xsteps-1)); /* keV/amu in log scale */
-        fprintf(sr_file, "%lf\r\n", x);
+        x=xmin*pow(xmax/xmin,1.0*i/(xsteps-1)); /* log scale */
+        double E = energy(x, C_U);
+        fprintf(sr_file, "%lf\r\n", E);
     }
     fclose(sr_file);
     return 1;
@@ -117,7 +117,7 @@ int parse_output(char *filename, FILE *stopping_output_file, int xsteps) {
             fprintf(stderr, "Problems.\n");
             return 0;
         }
-#ifdef INCLUDE_NUCLEAR /* We use m1=1u and m2=1u so this doesn't make much sense */
+#if INCLUDE_NUCLEAR /* We use m1=1u and m2=1u so this doesn't make much sense */
         S_nuc=strtod(fix_exponential_notation(columns[2]), NULL);
         fprintf(stopping_output_file, "%e\n", S_elec+S_nuc);
 #else
@@ -199,8 +199,12 @@ int main (int argc, char **argv) {
     fgets(input, 1000, stdin);
     z2_max=strtol(input, NULL, 10);
     n_combinations = (z1_max-z1_min+1)*(z2_max-z2_min+1);
-
-    fprintf(stopping_output_file, "source=srim\nz1-min=%i\nz1-max=%i\nz2-min=%i\nz2-max=%i\nsto-unit=eV/(1e15 atoms/cm2)\nx-unit=keV/u\nformat=ascii\nx-min=%e\nx-max=%e\nx-points=%i\nx-scale=log10\n==END-OF-HEADER==\n", z1_min, z1_max, z2_min, z2_max, xmin, xmax, xsteps);
+    xmin=velocity(xmin*C_KEV, C_U);
+    xmax=velocity(xmax*C_KEV, C_U);
+    fprintf(stopping_output_file, "source=srim\nz1-min=%i\nz1-max=%i\nz2-min=%i\nz2-max=%i\n"
+                                  "sto-unit=eV/(1e15 atoms/cm2)\nx-unit=m/s\nformat=ascii\n"
+                                  "x-min=%e\nx-max=%e\nx-points=%i\nx-scale=log10\n"
+                                  "==END-OF-HEADER==\n", z1_min, z1_max, z2_min, z2_max, xmin, xmax, xsteps);
     i=0;
     fprintf(stderr, "\n");
     for(Z1=z1_min; Z1<=z1_max; Z1++) {
