@@ -121,7 +121,7 @@ int parse_output(char *filename, FILE *stopping_output_file, int xsteps) {
         S_nuc=strtod(fix_exponential_notation(columns[2]), NULL);
         fprintf(stopping_output_file, "%e\n", S_elec+S_nuc);
 #else
-        fprintf(stopping_output_file, "%e\n", S_elec);
+        fprintf(stopping_output_file, "%.3e\n", S_elec); /* Three is the magic number of decimals */
 #endif
         i++;
     }
