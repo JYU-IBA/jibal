@@ -90,8 +90,9 @@ typedef struct {
     int Z2_max;
     int n_files;
     int n_comb;
-    gsto_file_t *files; /* table of gsto_file_t */
-    gsto_file_t **assignments; /* array of n_comb gsto_files. For each Z1 and Z2 combination there can be a file assigned. Access with functions. */
+    gsto_file_t *files; /* table of gsto_file_t. Note: not a table of pointers. */
+    gsto_file_t **assignments; /* array of n_comb gsto_file_t pointers. For each Z1 and Z2 combination there can be a
+ * file assigned. Access with functions. */
     double stop_step; /* as stopping cross section */
 } jibal_gsto;
 

@@ -102,7 +102,7 @@ void jibal_gsto_file_free(gsto_file_t *file) {
     int i;
     if(file->data) {
         for(i=0; i < file->n_comb; i++) {
-            if(file->data[i] != NULL) {
+            if(file->data[i]) {
                 free(file->data[i]);
             }
         }
@@ -113,7 +113,6 @@ void jibal_gsto_file_free(gsto_file_t *file) {
     }
     free(file->name);
     free(file->filename);
-    free(file);
 }
 
 void jibal_gsto_free(jibal_gsto *workspace) {
@@ -123,6 +122,7 @@ void jibal_gsto_free(jibal_gsto *workspace) {
             gsto_file_t *file = &workspace->files[i];
             jibal_gsto_file_free(file);
         }
+        free(workspace->files);
     }
     free(workspace->assignments);
 }
@@ -266,12 +266,11 @@ const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2) {
 double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2) {
     double *data;
     int i=jibal_gsto_file_get_data_index(file, Z1, Z2);
-#ifdef DEBUG
-    fprintf(stderr, "i=%i for Z1=%i and Z2=%i\n", i, Z1, Z2);
-#endif
-    if(file->data[i] == NULL) { /* Allocate only if null! */
-        file->data[i] = calloc(file->xpoints, sizeof(double));
+    assert(i >= 0 && i < file->n_comb);
+    if(file->data[i]) {
+        free(file->data[i]);
     }
+    file->data[i] = calloc(file->xpoints, sizeof(double));
     return file->data[i];
 }
 
@@ -454,6 +453,9 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
         free(file->data);
     }
     file->data = calloc(file->n_comb, sizeof(double *));
+    if(file->vel) {
+        free(file->vel);
+    }
     file->vel = jibal_gsto_velocity_table(file);
     file->xmin_speedup = 0.0;
     file->xdiv = 0.0;
