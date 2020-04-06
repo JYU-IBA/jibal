@@ -568,6 +568,7 @@ jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *stopping
     }
     settings_file=fopen(stoppings_file_name, "r");
     if(!settings_file) {
+        fprintf(stderr, "Can not open file %s\n", stoppings_file_name);
         return NULL;
     }
 #ifdef DEBUG
