@@ -175,11 +175,12 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
 
 void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, stopping_data_format_t format, int Z1_min, int
         Z1_max, int Z2_min, int Z2_max) {
-    int Z1, Z2;
+    int i, Z1, Z2;
     Z1_min=Z1_min<file->Z1_min?file->Z1_min:Z1_min;
     Z1_max=Z1_max>file->Z1_max?file->Z1_max:Z1_max;
     Z2_min=Z2_min<file->Z2_min?file->Z2_min:Z2_min;
     Z2_max=Z2_max>file->Z2_max?file->Z2_max:Z2_max;
+
     fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_FORMAT], formats[format]);
     fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MIN], Z1_min);
     fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MAX], Z1_max);
@@ -188,12 +189,25 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, stopping_data_for
     fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_STOUNIT],
             format==GSTO_DF_ASCII?sto_units[GSTO_STO_UNIT_EV15CM2]:sto_units[GSTO_STO_UNIT_JM2]); /* We convert
  * numbers if we are outputting ASCII, but binary stays as internal binary (SI units) */
-    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT], xunits[file->xunit]);
-    fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMIN], file->xmin);
-    fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMAX], file->xmax);
-    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_XPOINTS], file->xpoints);
-    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XSCALE], xscales[file->xscale]);
+    if(file->xscale == GSTO_XSCALE_ARBITRARY) { /* Arbitrary scales are converted */
+        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT], xunits[GSTO_X_UNIT_M_S]);
+        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMIN], file->vel[0]);
+        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMAX], file->vel[file->xpoints - 1]);
+        fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_XPOINTS], file->xpoints);
+        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XSCALE], xscales[GSTO_XSCALE_ARBITRARY]);
+    } else {
+        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT], xunits[file->xunit]);
+        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMIN], file->xmin);
+        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMAX], file->xmax);
+        fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_XPOINTS], file->xpoints);
+        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XSCALE], xscales[file->xscale]);
+    }
     fprintf(file_out, "%s\n", GSTO_END_OF_HEADERS);
+    if(file->xscale == GSTO_XSCALE_ARBITRARY) {
+        for(i=0; i < file->xpoints; i++) {
+            fprintf(file_out, "%e\n", file->vel[i]);
+        }
+    }
     for (Z1=Z1_min; Z1 <= Z1_max; Z1++) {
         for (Z2 = Z2_min; Z2 <= Z2_max; Z2++) {
             const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
@@ -436,24 +450,21 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
     file->n_comb = (file->Z1_max - file->Z1_min + 1) * (file->Z2_max - file->Z2_min + 1);
     file->data = calloc(file->n_comb, sizeof(double *));
     file->vel = jibal_gsto_velocity_table(file);
-    file->vel0 = 0.0;
-    file->veldiv = 0.0;
-    if(file->xunit == GSTO_X_UNIT_M_S) {
-        switch (file->xscale) {
-            case GSTO_XSCALE_LINEAR:
-                file->vel0 = file->vel[0];
-                file->veldiv = (file->xpoints - 1) / (file->vel[file->xpoints - 1] - file->vel0);
-                /* TODO: this speedup works only if X is in true VELOCITY (m/s) */
-                break;
-            case GSTO_XSCALE_LOG10:
-                file->vel0 = log10(file->vel[0]);
-                file->veldiv = (file->xpoints - 1) / (log10(file->vel[file->xpoints - 1]) - file->vel0);
-                break;
-            case GSTO_XSCALE_ARBITRARY:
-            default:
+    file->xmin_speedup = 0.0;
+    file->xdiv = 0.0;
+    switch (file->xscale) {
+        case GSTO_XSCALE_LINEAR:
+            file->xmin_speedup = file->xmin;
+            file->xdiv = (file->xpoints - 1) / (file->xmax - file->xmin);
+            break;
+        case GSTO_XSCALE_LOG10:
+            file->xmin_speedup = log10(file->xmin);
+            file->xdiv = (file->xpoints - 1) / (log10(file->xmax) - log10(file->xmin));
+            break;
+        case GSTO_XSCALE_ARBITRARY:
+        default:
 
-                break;
-        }
+            break;
     }
     switch (file->data_format) {
         case GSTO_DF_DOUBLE:
@@ -671,11 +682,7 @@ double *jibal_gsto_velocity_table(const gsto_file_t *file) { /* Note: for intern
         }
         switch (file->xunit) {
             case GSTO_X_UNIT_KEV_U:
-#ifdef CLASSICAL
-                v=sqrt((2*x*C_KEV/C_U));
-#else
-                v=sqrt(C_C2*(1-1/pow((x*(C_KEV/C_U)/C_C2+1),2.0))); /* gamma=x*(C_KEV/C_U)/C_C2+1 */
-#endif
+                v=velocity(x*C_KEV, C_U);
                 break;
             case GSTO_X_UNIT_M_S:
                 v=x;
@@ -689,17 +696,63 @@ double *jibal_gsto_velocity_table(const gsto_file_t *file) { /* Note: for intern
     return table;
 }
 
+int jibal_gsto_velocity_to_index(const gsto_file_t *file, double v) { /* Returns the low bin, i.e. i of vel[i], where
+ * vel[i] <= v < vel[i+1], or -1 if vel is beyond limits of the file. Includes speedups for lin and log scale, but
+ * there is a conversion cost if the file xunits are not m/s. For arbitrarily spaced X values binary search is
+ * employed. */
+    double x, index;
+    switch (file->xunit) {
+        case GSTO_X_UNIT_KEV_U:
+            x=energy(v, C_U)/C_KEV;
+            break;
+        case GSTO_X_UNIT_M_S:
+        default:
+            x=v;
+            break;
+    }
+    int lo, mi, hi;
+    switch (file->xscale) {
+        case GSTO_XSCALE_LOG10:
+            lo = floor((log10(x) - file->xmin_speedup) * file->xdiv);
+            if(lo < 0 || lo >= file->xpoints) {
+                return -1;
+            }
+            break;
+        case GSTO_XSCALE_LINEAR:
+            lo = floor((x - file->xmin) * file->xdiv);
+            if(lo < 0 || lo >= file->xpoints) {
+                return -1;
+            }
+            break;
+        case GSTO_XSCALE_ARBITRARY:
+        default:
+            hi = file->xpoints - 1;
+            lo = 0;
+            while (hi - lo > 1) {
+                mi = (hi + lo) / 2;
+                if (v >= file->vel[mi]) {
+                    lo = mi;
+                } else {
+                    hi = mi;
+                }
+            }
+    }
+#ifdef DEBUG
+fprintf(stderr, "lo=%i, residual=%e m/s (%.2lf%% of bin)\n", lo, v-file->vel[lo],
+            100.0*(v-file->vel[lo])/(file->vel[lo+1]-file->vel[lo]));
+#endif
+    if (v < file->vel[lo] || v > file->vel[lo + 1]) { /* Sanity check and out-of-bounds check. */
+        return -1;
+    }
+    return lo;
+}
+
 double jibal_gsto_scale_velocity_to_x(const gsto_file_t *file, double v) {
     double x, gamma;
     /* Scale v to units of the file. */
     switch (file->xunit) {
         case GSTO_X_UNIT_KEV_U:
-#ifdef CLASSICAL
-            x=0.5*(C_U/C_KEV)*pow(v,2.0);
-#else
-            gamma=1.0/(sqrt(1-pow(v,2.0)/C_C2));
-            x=(gamma-1)*C_C2/(C_KEV/C_U);
-#endif
+            x=energy(v, C_U)/C_KEV;
             break;
         case GSTO_X_UNIT_M_S:
         default:
@@ -747,36 +800,8 @@ double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
 #endif
         return 0.0;
     }
-    int lo, mi, hi;
-#
-    if(file->xscale == GSTO_XSCALE_LOG10 && file->xunit == GSTO_X_UNIT_M_S) {
-        lo=floor((log10(v) - file->vel0) * file->veldiv);
-    } else if (file->xscale == GSTO_XSCALE_LINEAR && file->xunit == GSTO_X_UNIT_M_S) {
-        lo=floor((v - file->vel0) * file->veldiv);
-    } else {
-        /* Let's perform a binary search! Works with arbitrary velocity spacing. TODO: optimize for lin and log. */
-        hi = file->xpoints - 1;
-        lo = 0;
-#ifdef DEBUG
-        int niter=0;
-#endif
-        while (hi - lo > 1) {
-#ifdef DEBUG
-            niter++;
-#endif
-            mi = (hi + lo) / 2;
-            if (v >= file->vel[mi]) {
-                lo = mi;
-            } else {
-                hi = mi;
-            }
-        }
-    }
-    #ifdef DEBUG
-    fprintf(stderr, "lo=%i (%i iters), residual=%e m/s (%.2lf%% of bin)\n", lo, niter, v-file->vel[lo],
-            100.0*(v-file->vel[lo])/(file->vel[lo+1]-file->vel[lo]));
-#endif
-    if (v < file->vel[lo] || v > file->vel[lo + 1]) { /* Sanity check and out-of-bounds check. */
+    int lo = jibal_gsto_velocity_to_index(file, v);
+    if (lo < 0) { /* Out of bounds */
         return nan(NULL);
     }
     const double *data=jibal_gsto_file_get_data(file, Z1, Z2);

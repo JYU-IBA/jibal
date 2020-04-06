@@ -28,6 +28,14 @@ double jibal_energy_classical(double v, double m) {
     return 0.5*m*v*v;
 }
 
+double jibal_velocity_classical_more_accurate(double E, double m) {
+    return (C_C*sqrt(2.0/3.0)*sqrt(-1.0+sqrt(6*E/m/C_C2+1)));
+}
+
+double jibal_energy_classical_more_accurate(double v, double m) {
+    return (0.5*m*v*v + (3.0/8.0)*m*pow(v, 4.0));
+}
+
 double jibal_velocity_relativistic(double E, double m) {
     return sqrt((1-pow((1.0+E/(m*C_C2)),-2.0))*C_C2);
 }

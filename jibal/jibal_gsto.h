@@ -70,9 +70,9 @@ typedef struct {
     int xpoints; /* How many points of stopping per Z1, Z2 combination */
     double xmin; /* The first point of stopping corresponds to x=xmin */
     double xmax; /* The last point of stopping corresponds to x=xmax */
+    double xmin_speedup; /* xmin or log10(xmin) */
+    double xdiv; /* speedup variable, calculated from xpoints, xmin and xmax */
     double *vel; /* Array of velocities (size: xpoints) */
-    double vel0; /* same as vel[0] in linear scale, or log10(vel[0]) if xscale is log10. Used to speed up lookups. */
-    double veldiv; /* also a xscale dependant speedup variable. */
     stopping_xscale_t xscale; /* The scale specifies how stopping points are spread between min and max (linear, log...) */
     stopping_xunit_t xunit; /* Stopping as a function of what? */
     stopping_stounit_t stounit; /* Stopping unit */
