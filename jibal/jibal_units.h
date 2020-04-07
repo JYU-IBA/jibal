@@ -22,6 +22,15 @@
 #ifndef _JIBAL_UNITS_H_
 #define _JIBAL_UNITS_H_
 
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 #ifndef M_PI

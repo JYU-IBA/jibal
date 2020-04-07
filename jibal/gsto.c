@@ -571,6 +571,7 @@ jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *stopping
     workspace = gsto_allocate(Z_max, Z_max);
     workspace->stop_step = JIBAL_STEP_SIZE; /* TODO: set this from some configuration. Used only for layer energy
  * loss calculations */
+    workspace->extrapolate = FALSE;
     if(!stoppings_file_name) { /* If filename given (not NULL), attempt to load settings file */
         stoppings_file_name=JIBAL_STOPPINGS_FILE;
     }
@@ -780,25 +781,29 @@ double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y) {
 double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
     gsto_file_t *file= jibal_gsto_get_assigned_file(workspace, Z1, Z2);
     if(!file) {
-#if 1
-        fprintf(stderr, "No stopping file assigned to Z1=%i Z2=%i\n", Z1, Z2);
-#endif
-        return 0.0;
+        return nan(NULL);
     }
+    const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
+    assert(data);
     int lo;
     if(file->vel[file->vel_index_accel] <= v && v < file->vel[file->vel_index_accel+1]) {
         lo = file->vel_index_accel;
     } else {
         lo = jibal_gsto_velocity_to_index(file, v);
         if (lo < 0) { /* Out of bounds */
-
+            if(workspace->extrapolate) {
+                if(v >= 0 && v <= file->vel[0]) {
+                    return jibal_linear_interpolation(0.0, file->vel[0], 0.0, data[0], v);
+                    /* Linear interpolation from (0, 0) to lowest real data point */
+                }
+                if(v >= file->vel[file->xpoints - 1]) {
+                    return data[file->xpoints - 1];
+                }
+            }
             return nan(NULL);
         }
         file->vel_index_accel = lo;
     }
-    const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
-    //fprintf(stderr, "v=%g m/s (%g keV/u)\n", v, 0.5*pow(v, 2.0)*C_U/C_KEV);
-    assert(data);
     double sto;
     sto=jibal_linear_interpolation(file->vel[lo], file->vel[lo+1], data[lo], data[lo+1], v);
     return sto;

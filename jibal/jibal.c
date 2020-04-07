@@ -23,6 +23,7 @@ jibal jibal_init(const char *config_filename) {
     if(!jibal.gsto) {
         fprintf(stderr, "Could not initialize GSTO.\n");
     }
+    jibal.gsto->extrapolate = jibal.config.extrapolate;
     return jibal;
 }
 
@@ -87,6 +88,7 @@ jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure 
             {JIBAL_CONFIG_VAR_STRING, "abundances_file", &config->abundances_file},
             {JIBAL_CONFIG_VAR_STRING, "stoppings_file", &config->stoppings_file},
             {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
+            {JIBAL_CONFIG_VAR_BOOL, "extrapolate", &config->extrapolate},
             0}; /* null terminated, we use .type == 0 to stop a loop */
             int n_vars;
             for(n_vars=0; vars[n_vars].type != 0; n_vars++);
@@ -106,11 +108,14 @@ int jibal_config_file_write(jibal_config *config, FILE *f) {
             case JIBAL_CONFIG_VAR_STRING:
                 fprintf(f, "%s = %s\n", var->name, *((char**)var->variable));
                 break;
-            case JIBAL_CONFIG_VAR_DOUBLE:
-                fprintf(f, "%s = %g\n", var->name, *((double *)var->variable));
+            case JIBAL_CONFIG_VAR_BOOL:
+                fprintf(f, "%s = %s\n", var->name, *((int *)var->variable)?"true":"false");
                 break;
             case JIBAL_CONFIG_VAR_INT:
                 fprintf(f, "%s = %i\n", var->name, *((int *)var->variable));
+                break;
+            case JIBAL_CONFIG_VAR_DOUBLE:
+                fprintf(f, "%s = %g\n", var->name, *((double *)var->variable));
                 break;
             case JIBAL_CONFIG_VAR_UNIT:
                 fprintf(f, "%s = %g\n", var->name, *((double *)var->variable));
@@ -177,11 +182,14 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
                     }
                     *((char **)var->variable)=strdup(line_val);
                     break;
-                case JIBAL_CONFIG_VAR_DOUBLE:
-                    *((double *)var->variable)=strtod(line_val, NULL);
+                case JIBAL_CONFIG_VAR_BOOL:
+                    *((int *)var->variable)=!strcmp(line_val, "true"); /* exactly "true" is 1, everything else is 0 */
                     break;
                 case JIBAL_CONFIG_VAR_INT:
                     *((int *)var->variable)=(int)strtol(line, NULL, 0); /* Unsafe for large integers */
+                    break;
+                case JIBAL_CONFIG_VAR_DOUBLE:
+                    *((double *)var->variable)=strtod(line_val, NULL);
                     break;
                 case JIBAL_CONFIG_VAR_UNIT:
                     *((double *)var->variable)=jibal_get_val(units, 0, line_val);
@@ -202,7 +210,7 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
 }
 
 jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
-    jibal_config config = {};
+    jibal_config config = {.Z_max = JIBAL_MAX_Z, .extrapolate = FALSE};
     const char *c;
     const char *config_dir;
     const char *config_subdir;
@@ -274,9 +282,6 @@ jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
     }
     if(!config.stoppings_file) {
         asprintf(&config.stoppings_file, "%s/%s", config.datadir, JIBAL_STOPPINGS_FILE);
-    }
-    if(config.Z_max==0) {
-        config.Z_max = JIBAL_MAX_Z;
     }
     return config; /* Note: configuration is not validated in any way! */
 }

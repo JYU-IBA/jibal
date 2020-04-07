@@ -95,6 +95,7 @@ typedef struct {
     gsto_file_t **assignments; /* array of n_comb gsto_file_t pointers. For each Z1 and Z2 combination there can be a
  * file assigned. Access with functions. */
     double stop_step; /* as stopping cross section */
+    int extrapolate; /* boolean */
 } jibal_gsto;
 
 
