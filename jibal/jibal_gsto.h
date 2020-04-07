@@ -73,6 +73,7 @@ typedef struct {
     double xmin_speedup; /* xmin or log10(xmin) */
     double xdiv; /* speedup variable, calculated from xpoints, xmin and xmax */
     double *vel; /* Array of velocities (size: xpoints) */
+    int vel_index_accel; /* Store the velocity bin that was last found in an attempt to accelerate calculations */
     stopping_xscale_t xscale; /* The scale specifies how stopping points are spread between min and max (linear, log...) */
     stopping_xunit_t xunit; /* Stopping as a function of what? */
     stopping_stounit_t stounit; /* Stopping unit */

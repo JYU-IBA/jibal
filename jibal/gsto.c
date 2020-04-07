@@ -459,6 +459,7 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
     file->vel = jibal_gsto_velocity_table(file);
     file->xmin_speedup = 0.0;
     file->xdiv = 0.0;
+    file->vel_index_accel = 0;
     switch (file->xscale) {
         case GSTO_XSCALE_LINEAR:
             file->xmin_speedup = file->xmin;
@@ -784,14 +785,22 @@ double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
 #endif
         return 0.0;
     }
-    int lo = jibal_gsto_velocity_to_index(file, v);
-    if (lo < 0) { /* Out of bounds */
-        return nan(NULL);
+    int lo;
+    if(file->vel[file->vel_index_accel] <= v && v < file->vel[file->vel_index_accel+1]) {
+        lo = file->vel_index_accel;
+    } else {
+        lo = jibal_gsto_velocity_to_index(file, v);
+        if (lo < 0) { /* Out of bounds */
+
+            return nan(NULL);
+        }
+        file->vel_index_accel = lo;
     }
     const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
     //fprintf(stderr, "v=%g m/s (%g keV/u)\n", v, 0.5*pow(v, 2.0)*C_U/C_KEV);
     assert(data);
-    double sto=jibal_linear_interpolation(file->vel[lo], file->vel[lo+1], data[lo], data[lo+1], v);
+    double sto;
+    sto=jibal_linear_interpolation(file->vel[lo], file->vel[lo+1], data[lo], data[lo+1], v);
     return sto;
 }
 
@@ -840,6 +849,8 @@ E_0, double factor) {
         k3 = factor*jibal_stop(workspace, incident, layer->material, E + (h / 2) * k2);
         k4 = factor*jibal_stop(workspace, incident, layer->material, E + h * k3);
         E += (h / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
+        if(!isnormal(E))
+            return 0.0;
     }
     return E;
 }
