@@ -32,6 +32,9 @@ void print_stopping_range(jibal *jibal, experiment *exp, double E_low, double E_
     if(i_max > 1000000) {
         i_max=1000000;
     }
+    if(i_max < 1) {
+        i_max = 1;
+    }
     for(i=0; i < i_max; i++) {
         E=E_low + i*E_step;
         double S_ele=jibal_stop_ele(jibal->gsto, exp->incident, exp->target->material, E);
@@ -41,27 +44,28 @@ void print_stopping_range(jibal *jibal, experiment *exp, double E_low, double E_
     }
 }
 int main(int argc, char **argv) {
-    if(argc < 2)
-        return -1;
+    if(argc < 4) {
+        fprintf(stderr, "Usage: get_stop <incident ion> <target material> <energy>\n");
+        return EXIT_FAILURE;
+    }
     experiment exp;
     jibal jibal=jibal_init(NULL);
+    if(!jibal.gsto)
+        return EXIT_FAILURE;
     exp.incident=jibal_isotope_find(jibal.isotopes, argv[1], 0,0 );
     if(!exp.incident) {
         fprintf(stderr, "No such isotope: %s\n", argv[1]);
         return EXIT_FAILURE;
     }
-    fprintf(stderr, "Z1=%i\nm1=%g kg (%g u)\n", exp.incident->Z, exp.incident->mass, exp.incident->mass/C_U);
+    fprintf(stderr, "Z1 = %i\nm1=%g kg (%g u)\n", exp.incident->Z, exp.incident->mass, exp.incident->mass/C_U);
 
-    char *target_string=argv[2];
-
-    exp.target=jibal_layer_new(jibal_material_create(jibal.elements, target_string), 0.0);
+    exp.target=jibal_layer_new(jibal_material_create(jibal.elements, argv[2]), 0.0);
     if(!exp.target) {
-        fprintf(stderr, "Error in creating layer \"%s\"", target_string);
+        fprintf(stderr, "Error in creating layer \"%s\"\n", argv[2]);
         return -1;
     }
     jibal_material_print(stderr, exp.target->material);
-    if(!jibal.gsto)
-        return -1;
+
     if(!jibal_gsto_auto_assign_material(jibal.gsto, exp.incident, exp.target->material)) /* TODO: loop over layers */
         return -1;
     jibal_gsto_load_all(jibal.gsto);
@@ -72,16 +76,15 @@ int main(int argc, char **argv) {
     if(argc >= 4) {
         E=jibal_get_val(jibal.units, UNIT_TYPE_ENERGY, argv[3]);
     }
-
     if(argc == 4) {
         print_stopping_range(&jibal, &exp, E, E, E);
     } else if(argc == 5) {
-        fprintf(stderr, "E = %g keV\n", E/C_KEV);
+        fprintf(stdout, "E = %g keV\n", E/C_KEV);
         exp.target->thickness=jibal_get_val(jibal.units, UNIT_TYPE_LAYER_THICKNESS, argv[4]);
-        fprintf(stderr, "Layer thickness = %g tfu (1e15 at./cm2)\n", exp.target->thickness/C_TFU);
+        fprintf(stdout, "thickness = %g tfu (1e15 at./cm2)\n", exp.target->thickness/C_TFU);
         double E_out= jibal_layer_energy_loss(jibal.gsto, exp.incident, exp.target, E, -1.0);
-        fprintf(stderr, "E_out = %g keV\n", E_out/C_KEV);
-        fprintf(stderr, "delta E = %g keV\n", (E_out-E)/C_KEV);
+        fprintf(stdout, "E_out = %g keV\n", E_out/C_KEV);
+        fprintf(stdout, "delta E = %g keV\n", (E_out-E)/C_KEV);
     } else if(argc == 6) {
         double E_low, E_step, E_high;
         E_low=E;
