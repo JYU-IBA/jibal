@@ -201,6 +201,8 @@ jibal_element *jibal_element_new(const element_name name, int Z, int n_isotopes)
 }
 
 jibal_element *jibal_element_find(jibal_element *elements, element_name name) {
+    /* Element name is typically something like "Si", but if the name looks like a number (only digits 0-9) and is in
+     * the valid range, we assume it is the proton number. */
     int Z;
     char *n=name;
     if(*name == '\0')
@@ -320,18 +322,43 @@ jibal_isotope *jibal_isotope_find(jibal_isotope *isotopes, const char *name, int
     jibal_isotope *isotope;
     int i=0;
     if(name != NULL) {
-        for (isotope = isotopes; isotope->A != 0; isotope++) {
-            if (strcmp(isotope->name, name) == 0) {
-                return isotope;
+        if (isdigit(*name)) { /* Isotope names usually start with a mass number */
+            for (isotope = isotopes; isotope->A != 0; isotope++) {
+                if (strcmp(isotope->name, name) == 0) {
+                    return isotope;
+                }
             }
+            return NULL; /* No match */
         }
-        return  NULL;
-    } else {
-        for (isotope = isotopes; isotope->A != 0; isotope++) {
-            if(isotope->Z == Z && isotope->A == A) {
-                return isotope;
-            }
+        switch (*name) { /* Couple of exceptions (hard coded one character nicknames) */
+            case 'n': /* Not sure we should support neutrons, but here we are */
+                Z = 0;
+                A = 1;
+                break;
+            case 'p':
+                Z = 1;
+                A = 1;
+                break;
+            case 'D':
+                Z = 1;
+                A = 2;
+                break;
+            case 'T':
+                Z = 1;
+                A = 3;
+                break;
+            case 'a':
+                Z = 2;
+                A = 4;
+                break;
+            default:
+                return NULL;
         }
-        return NULL;
     }
+    for (isotope = isotopes; isotope->A != 0; isotope++) {
+        if(isotope->Z == Z && isotope->A == A) {
+            return isotope;
+        }
+    }
+    return NULL;
 }
