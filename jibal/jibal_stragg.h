@@ -19,4 +19,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+double jibal_stragg(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E);
+double jibal_stragg_bohr(int Z1, int Z2);
+double jibal_layer_stragg(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_layer *layer, double
+E_0, double factor);
+
 #endif // _JIBAL_STRAGG_H_
