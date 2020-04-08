@@ -1,9 +1,9 @@
-#include <jibal.h>
-#include <defaults.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <jibal.h>
+#include <defaults.h>
 
 jibal jibal_init(const char *config_filename) {
     jibal jibal;
