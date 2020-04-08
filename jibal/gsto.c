@@ -835,7 +835,6 @@ double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *targe
 
 double jibal_layer_energy_loss(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_layer *layer, double
 E_0, double factor) {
-    double k1, k2, k3, k4;
     double E = E_0;
     double x;
     double h = workspace->stop_step;
@@ -849,11 +848,16 @@ E_0, double factor) {
                 break;
             }
         }
+#ifndef NO_RUNGE_KUTTA
+        double k1, k2, k3, k4;
         k1 = factor*jibal_stop(workspace, incident, layer->material, E);
         k2 = factor*jibal_stop(workspace, incident, layer->material, E + (h / 2) * k1);
         k3 = factor*jibal_stop(workspace, incident, layer->material, E + (h / 2) * k2);
         k4 = factor*jibal_stop(workspace, incident, layer->material, E + h * k3);
         E += (h / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
+#else
+        E += factor*h*jibal_stop(workspace, incident, layer->material, E);
+#endif
         if(!isnormal(E))
             return 0.0;
     }
