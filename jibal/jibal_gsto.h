@@ -82,6 +82,7 @@ typedef struct {
     stopping_data_format_t data_format; /* What does the data look like (after headers) */
     FILE *fp;
     char *name; /* Descriptive name of the file, from the settings file */
+    char *source; /* Source of data (meta data from the file) */
     char *filename; /* Filename (relative or full path, whatever fopen can chew) */
     double **data; /* Data is stored here. Array of pointers. Access with functions. */
 } gsto_file_t;
@@ -116,6 +117,7 @@ int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2);
 int jibal_gsto_auto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target);
 int jibal_gsto_print_files(jibal_gsto *workspace);
 int jibal_gsto_print_assignments(jibal_gsto *workspace);
+const char *jibal_gsto_file_source(gsto_file_t *file);
 void jibal_gsto_file_free(gsto_file_t *file);
 void jibal_gsto_free(jibal_gsto *workspace);
 

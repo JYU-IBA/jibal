@@ -97,6 +97,9 @@ jibal_gsto *gsto_allocate(int Z1_max, int Z2_max) {
     return table;
 }
 
+const char *jibal_gsto_file_source(gsto_file_t *file) {
+    return file->source;
+}
 
 void jibal_gsto_file_free(gsto_file_t *file) {
     int i;
@@ -112,6 +115,9 @@ void jibal_gsto_file_free(gsto_file_t *file) {
         free(file->vel);
     }
     free(file->name);
+    if(file->source) {
+        free(file->source);
+    }
     free(file->filename);
 }
 
@@ -183,6 +189,9 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, stopping_data_for
     Z2_min=Z2_min<file->Z2_min?file->Z2_min:Z2_min;
     Z2_max=Z2_max>file->Z2_max?file->Z2_max:Z2_max;
 
+    if(file->source) {
+        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_SOURCE], file->source);
+    }
     fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_FORMAT], formats[format]);
     fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MIN], Z1_min);
     fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MAX], Z1_max);
@@ -379,8 +388,11 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
                 fprintf(stderr, "Yes.\n");
 #endif
                 switch (header) {
+                    case GSTO_HEADER_SOURCE:
+                        file->source = strdup(columns[1]);
+                        break;
                     case GSTO_HEADER_FORMAT:
-                        for (property = 0; property < GSTO_N_STO_UNITS; property++) {
+                        for (property = 0; property < GSTO_N_DATA_FORMATS; property++) {
                             if (strncmp(formats[property], columns[1], strlen(formats[property])) == 0) {
                                 file->data_format = property;
                             }
@@ -514,7 +526,11 @@ int jibal_gsto_print_files(jibal_gsto *workspace) {
                 }
             }        
         }
-        fprintf(stderr, "%i: %s (%s),\n", i+1, file->name, file->filename);
+        fprintf(stderr, "%i: %s,\n", i+1, file->name);
+        fprintf(stderr, "\tfilename: %s\n", file->filename);
+        if(file->source) {
+            fprintf(stderr, "\tdata source: %s\n", file->source);
+        }
         fprintf(stderr, "\t%i assignments,\n", assignments);
         fprintf(stderr, "\t%i <= Z1 <= %i,\n", file->Z1_min, file->Z1_max);
         fprintf(stderr, "\t%i <= Z2 <= %i,\n", file->Z2_min, file->Z2_max);
