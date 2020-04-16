@@ -186,7 +186,7 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
                     *((int *)var->variable)=!strcmp(line_val, "true"); /* exactly "true" is 1, everything else is 0 */
                     break;
                 case JIBAL_CONFIG_VAR_INT:
-                    *((int *)var->variable)=(int)strtol(line, NULL, 0); /* Unsafe for large integers */
+                    *((int *)var->variable)=(int)strtol(line_val, NULL, 0); /* Unsafe for large integers */
                     break;
                 case JIBAL_CONFIG_VAR_DOUBLE:
                     *((double *)var->variable)=strtod(line_val, NULL);
