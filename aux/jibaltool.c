@@ -204,7 +204,7 @@ int extract_stop(jibaltool_global *global, int argc, char **argv) {
     }
     jibal_gsto_load(jibal->gsto, file);
     FILE *out=jibaltool_open_output(global);
-    stopping_data_format_t format=GSTO_DF_ASCII;
+    gsto_data_format format=GSTO_DF_ASCII;
     if(global->format && strcmp(global->format, "bin")==0) {
         format=GSTO_DF_DOUBLE;
     }

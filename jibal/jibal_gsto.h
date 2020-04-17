@@ -5,46 +5,85 @@
 
 #define GSTO_MAX_LINE_LEN 1024
 #define GSTO_END_OF_HEADERS "==END-OF-HEADER=="
-#define GSTO_N_STOPPING_TYPES 4
-typedef enum {
-    STO_NONE=0,
-    STO_NUCL=1,
-    STO_ELE=2,
-    STO_TOT=3
-} stopping_type_t;
 
-#define GSTO_N_DATA_FORMATS 2
+typedef struct {
+    const char *s;
+    int val;
+} gsto_header; /* Association between strings and ints (ints preferably from enums). */
+
+typedef enum {
+    GSTO_STO_NONE=0,
+    GSTO_STO_NUCL=1,
+    GSTO_STO_ELE=2,
+    GSTO_STO_TOT=3
+} gsto_stopping_type;
+
+static const gsto_header gsto_stopping_types[] = {
+        {"none", GSTO_STO_NONE},
+        {"nuclear", GSTO_STO_NUCL},
+        {"electronic", GSTO_STO_ELE},
+        {"total", GSTO_STO_TOT},
+        {NULL, 0}
+};
+
+typedef enum {
+    GSTO_STO_UNIT_NONE=0,
+    GSTO_STO_UNIT_EV15CM2=1, /* eV/(1e15 at/cm^2)*/
+    GSTO_STO_UNIT_JM2=2, /* J m^2, the SI unit for stopping cross sections... */
+} gsto_stounit;
+
+static const gsto_header gsto_sto_units[] = {
+        {"none", GSTO_STO_UNIT_NONE},
+        {"eV/(1e15 atoms/cm2)", GSTO_STO_UNIT_EV15CM2},
+        {"Jm2", GSTO_STO_UNIT_JM2},
+        {NULL, 0}
+};
+
 typedef enum {
     GSTO_DF_NONE=0,
     GSTO_DF_ASCII=1,
     GSTO_DF_DOUBLE=2
-} stopping_data_format_t;
+} gsto_data_format;
 
-#define GSTO_N_X_SCALES 3
+static const gsto_header gsto_data_formats[] = {
+        {"none", GSTO_DF_NONE},
+        {"ascii", GSTO_DF_ASCII},
+        {"binary", GSTO_DF_DOUBLE},
+        {NULL, 0}
+};
+
 typedef enum {
     GSTO_XSCALE_NONE=0,
     GSTO_XSCALE_LINEAR=1,
     GSTO_XSCALE_LOG10=2,
     GSTO_XSCALE_ARBITRARY=3
-} stopping_xscale_t;
+} gsto_stopping_xscale;
 
-#define GSTO_N_X_UNITS 4
+static const gsto_header gsto_xscales[] = {
+        {"none", GSTO_XSCALE_NONE},
+        {"linear", GSTO_XSCALE_LINEAR},
+        {"log10", GSTO_XSCALE_LOG10},
+        {"arb", GSTO_XSCALE_ARBITRARY},
+        {NULL, 0}
+};
+
 typedef enum {
     GSTO_X_UNIT_NONE=0,
     GSTO_X_UNIT_M_S=1, /* m/s */
     GSTO_X_UNIT_KEV_U=2, /* keV/u */
     GSTO_X_UNIT_MEV_U=3, /* MeV/u */
     GSTO_X_UNIT_J_KG=4, /* J/kg = m^2/s^2 (N.B. this is NOT velocity squared!)*/
-} stopping_xunit_t;
+} gsto_xunit;
 
-#define GSTO_N_STO_UNITS 2
-typedef enum {
-    GSTO_STO_UNIT_NONE=0,
-    GSTO_STO_UNIT_EV15CM2=1, /* eV/(1e15 at/cm^2)*/
-    GSTO_STO_UNIT_JM2=2, /* J m^2, the SI unit for stopping cross sections... */
-} stopping_stounit_t;
+static const gsto_header gsto_xunits[] = {
+        {"none", GSTO_X_UNIT_NONE},
+        {"m/s", GSTO_X_UNIT_M_S},
+        {"keV/u", GSTO_X_UNIT_KEV_U},
+        {"MeV/u", GSTO_X_UNIT_MEV_U},
+        {"J/kg", GSTO_X_UNIT_J_KG},
+        {NULL, 0}
+};
 
-#define GSTO_N_HEADER_TYPES 13
 typedef enum {
     GSTO_HEADER_NONE=0,
     GSTO_HEADER_SOURCE=1,
@@ -59,7 +98,25 @@ typedef enum {
     GSTO_HEADER_XMAX=10,
     GSTO_HEADER_XPOINTS=11,
     GSTO_HEADER_XSCALE=12
-} header_properties_t;
+} gsto_header_type;
+#define GSTO_N_HEADER_TYPES 13
+
+static const gsto_header gsto_headers[] = {
+        {"      ", GSTO_HEADER_NONE},
+        {"source", GSTO_HEADER_SOURCE},
+        {"z1-min", GSTO_HEADER_Z1MIN},
+        {"z1-max", GSTO_HEADER_Z1MAX},
+        {"z2-min", GSTO_HEADER_Z2MIN},
+        {"z2-max", GSTO_HEADER_Z2MAX},
+        {"sto-unit", GSTO_HEADER_STOUNIT},
+        {"x-unit", GSTO_HEADER_XUNIT},
+        {"format", GSTO_HEADER_FORMAT},
+        {"x-min", GSTO_HEADER_XMIN},
+        {"x-max", GSTO_HEADER_XMAX},
+        {"x-points", GSTO_HEADER_XPOINTS},
+        {"x-scale", GSTO_HEADER_XSCALE},
+        {NULL, 0}
+};
 
 typedef struct {
     int lineno; /* Keep track of how many lines read */
@@ -77,12 +134,12 @@ typedef struct {
     double *em; /* Array of energy/mass (size: xpoints). In SI units! */
     int em_index_accel; /* Store the energy/mass bin (of the array above) that was last found in an attempt to
  * accelerate successive seeks */
-    stopping_xscale_t xscale; /* The scale specifies how stopping points are spread between min and max (linear, log...) */
-    stopping_xunit_t xunit; /* Stopping as a function of what? */
-    stopping_stounit_t stounit; /* Stopping unit */
-    stopping_type_t type; /* does this file contain nuclear, electronic or total stopping? TODO: only electronic
+    gsto_stopping_xscale xscale; /* The scale specifies how stopping points are spread between min and max (linear, log...) */
+    gsto_xunit xunit; /* Stopping as a function of what? */
+    gsto_stounit stounit; /* Stopping unit */
+    gsto_stopping_type type; /* does this file contain nuclear, electronic or total stopping? TODO: only electronic
  * makes sense, remove others */
-    stopping_data_format_t data_format; /* What does the data look like (after headers) */
+    gsto_data_format data_format; /* What does the data look like (after headers) */
     FILE *fp;
     char *name; /* Descriptive name of the file, from the settings file */
     char *source; /* Source of data (meta data from the file) */
@@ -140,7 +197,7 @@ factor);
 jibal_gsto *jibal_gsto_allocate(int Z1_max, int Z2_max);
 int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file);
 int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file);
-void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, stopping_data_format_t format, int Z1_min, int Z1_max,
+void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, gsto_data_format format, int Z1_min, int Z1_max,
         int Z2_min, int Z2_max);
 
 int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2);

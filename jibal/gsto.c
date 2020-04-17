@@ -9,59 +9,38 @@
 #include <defaults.h>
 #include "win_compat.h"
 
-static char *gsto_stopping_types[] ={ /* The first three characters are tested with e.g. strncmp(stopping_types[i], "tot", 3*sizeof(char)). So make them unique. */ 
-    "none",
-    "nuclear",
-    "electronic",
-    "total"
-};
 
-static char *sto_units[] = {
-    "none",
-    "eV/(1e15 atoms/cm2)",
-    "Jm2"
-};
+int gsto_header_n(const gsto_header *header) {
+    const gsto_header *h;
+    int n=0;
+    if (!header)
+        return 0;
+    for (h = header; h->s; h++) {
+        n++;
+    }
+    return n;
+}
 
-static char *formats[] = {
-    "none",
-    "ascii",
-    "binary"
-};
-
-static char *xscales[] = {
-    "none",
-    "linear",
-    "log10",
-    "arb"
-};
-
-static char *xunits[] = {
-    "none",
-    "m/s",
-    "keV/u",
-    "MeV/u",
-    "J/kg"
-};
-
-static char *gsto_headers[] = {
-    "      ",
-    "source",
-    "z1-min",
-    "z1-max",
-    "z2-min",
-    "z2-max",
-    "sto-unit",
-    "x-unit",
-    "format",
-    "x-min",
-    "x-max",
-    "x-points",
-    "x-scale"
-};
-
-header_properties_t gsto_get_headers_property(const char *property) {
-    
+int gsto_get_header_value(const gsto_header *header, const char *s) {
+    const gsto_header *h;
+    int i=0;
+    if(!s)
+        return 0; /* TODO: is returning zero a sane fail safe? */
+    for(h=header; h->s; h++) {
+        if (strcmp(h->s, s) == 0) {
+            return i;
+        }
+        i++;
+    }
     return 0;
+}
+
+const char *gsto_get_header_string(const gsto_header *header, int val) {
+    int n = gsto_header_n(header);
+    if (val >= n)
+        return "";
+    else
+        return header[val].s;
 }
 
 int gsto_add_file(jibal_gsto *table, const char *name, const char *filename) {
@@ -183,7 +162,7 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
     return 1;
 }
 
-void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, stopping_data_format_t format, int Z1_min, int
+void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, gsto_data_format format, int Z1_min, int
         Z1_max, int Z2_min, int Z2_max) {
     int i, Z1, Z2;
     Z1_min=Z1_min<file->Z1_min?file->Z1_min:Z1_min;
@@ -192,28 +171,28 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, stopping_data_for
     Z2_max=Z2_max>file->Z2_max?file->Z2_max:Z2_max;
 
     if(file->source) {
-        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_SOURCE], file->source);
+        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_SOURCE].s, file->source);
     }
-    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_FORMAT], formats[format]);
-    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MIN], Z1_min);
-    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MAX], Z1_max);
-    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z2MIN], Z2_min);
-    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z2MAX], Z2_max);
-    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_STOUNIT],
-            format==GSTO_DF_ASCII?sto_units[GSTO_STO_UNIT_EV15CM2]:sto_units[GSTO_STO_UNIT_JM2]); /* We convert
- * numbers if we are outputting ASCII, but binary stays as internal binary (SI units) */
+    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_FORMAT].s, gsto_data_formats[format].s);
+    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MIN].s, Z1_min);
+    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MAX].s, Z1_max);
+    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z2MIN].s, Z2_min);
+    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z2MAX].s, Z2_max);
+    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_STOUNIT].s,
+            format==GSTO_DF_ASCII?gsto_data_formats[GSTO_STO_UNIT_EV15CM2].s:gsto_data_formats[GSTO_STO_UNIT_JM2].s);
+    /* We convert numbers if we are outputting ASCII, but binary stays as internal binary (SI units) */
     if(file->xscale == GSTO_XSCALE_ARBITRARY) { /* Arbitrary scales are converted */
-        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT], xunits[GSTO_X_UNIT_KEV_U]);
-        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMIN], file->em[0]/(C_KEV/C_U));
-        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMAX], file->em[file->xpoints - 1]/(C_KEV/C_U));
-        fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_XPOINTS], file->xpoints);
-        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XSCALE], xscales[GSTO_XSCALE_ARBITRARY]);
+        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT].s, gsto_xunits[GSTO_X_UNIT_KEV_U].s);
+        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMIN].s, file->em[0]/(C_KEV/C_U));
+        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMAX].s, file->em[file->xpoints - 1]/(C_KEV/C_U));
+        fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_XPOINTS].s, file->xpoints);
+        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XSCALE].s, gsto_xscales[GSTO_XSCALE_ARBITRARY].s);
     } else {
-        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT], xunits[file->xunit]);
-        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMIN], file->xmin);
-        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMAX], file->xmax);
-        fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_XPOINTS], file->xpoints);
-        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XSCALE], xscales[file->xscale]);
+        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT].s, gsto_xunits[file->xunit].s);
+        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMIN].s, file->xmin);
+        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMAX].s, file->xmax);
+        fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_XPOINTS].s, file->xpoints);
+        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XSCALE].s, gsto_xscales[file->xscale].s);
     }
     fprintf(file_out, "%s\n", GSTO_END_OF_HEADERS);
     if(file->xscale == GSTO_XSCALE_ARBITRARY) {
@@ -385,7 +364,7 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
 #ifdef DEBUG
             fprintf(stderr, "Does \"%s\" match \"%s\"? ", columns[0], gsto_headers[header]);
 #endif
-            if (strncmp(columns[0], gsto_headers[header], strlen(gsto_headers[header])) == 0) {
+            if (strcmp(columns[0], gsto_headers[header].s) == 0) {
 #ifdef DEBUG
                 fprintf(stderr, "Yes.\n");
 #endif
@@ -394,32 +373,16 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
                         file->source = strdup(columns[1]);
                         break;
                     case GSTO_HEADER_FORMAT:
-                        for (property = 0; property < GSTO_N_DATA_FORMATS; property++) {
-                            if (strncmp(formats[property], columns[1], strlen(formats[property])) == 0) {
-                                file->data_format = property;
-                            }
-                        }
+                        file->data_format = gsto_get_header_value(gsto_data_formats, columns[1]);
                         break;
                     case GSTO_HEADER_STOUNIT:
-                        for (property = 0; property < GSTO_N_STO_UNITS; property++) {
-                            if (strncmp(sto_units[property], columns[1], strlen(sto_units[property])) == 0) {
-                                file->stounit = property;
-                            }
-                        }
+                        file->stounit = gsto_get_header_value(gsto_sto_units, columns[1]);
                         break;
                     case GSTO_HEADER_XSCALE:
-                        for (property = 0; property < GSTO_N_X_SCALES; property++) {
-                            if (strncmp(xscales[property], columns[1], strlen(xscales[property])) == 0) {
-                                file->xscale = property;
-                            }
-                        }
+                        file->xscale = gsto_get_header_value(gsto_xscales, columns[1]);
                         break;
                     case GSTO_HEADER_XUNIT:
-                        for (property = 0; property < GSTO_N_X_UNITS; property++) {
-                            if (strncmp(xunits[property], columns[1], strlen(xunits[property])) == 0) {
-                                file->xunit = property;
-                            }
-                        }
+                        file->xunit = gsto_get_header_value(gsto_xunits, columns[1]);
                         break;
                     case GSTO_HEADER_XPOINTS:
                         file->xpoints = strtol(columns[1], NULL, 10);
@@ -550,9 +513,11 @@ int jibal_gsto_print_files(jibal_gsto *workspace) {
         fprintf(stderr, "\t%i assignments,\n", assignments);
         fprintf(stderr, "\t%i <= Z1 <= %i,\n", file->Z1_min, file->Z1_max);
         fprintf(stderr, "\t%i <= Z2 <= %i,\n", file->Z2_min, file->Z2_max);
-        fprintf(stderr, "\tx-points=%i, x-scale=%s, x-unit=%s,\n", file->xpoints, xscales[file->xscale],
-                xunits[file->xunit]);
-        fprintf(stderr, "\tstopping unit=%s, format=%s\n", sto_units[file->stounit], formats[file->data_format]);
+        fprintf(stderr, "\tx-points=%i, x-scale=%s, x-unit=%s,\n", file->xpoints,
+                gsto_get_header_string(gsto_xscales, file->xscale),
+                gsto_get_header_string(gsto_xunits, file->xunit));
+        fprintf(stderr, "\tstopping unit=%s, format=%s\n", gsto_get_header_string(gsto_sto_units, file->stounit),
+                gsto_get_header_string(gsto_data_formats, file->data_format));
     }
     return 1;
 }
