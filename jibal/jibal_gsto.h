@@ -99,7 +99,8 @@ typedef enum {
     GSTO_HEADER_XPOINTS=11,
     GSTO_HEADER_XSCALE=12
 } gsto_header_type;
-#define GSTO_N_HEADER_TYPES 13
+#define GSTO_N_HEADER_TYPES 13 /* Note that this must be equal to the number of ints in the enum above and especially
+ * the number of elements in the following array. This constant is here just because of laziness. */
 
 static const gsto_header gsto_headers[] = {
         {"      ", GSTO_HEADER_NONE},

@@ -161,6 +161,95 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
     }
     return 1;
 }
+void jibal_gsto_fprint_header_property(FILE *f, gsto_header_type h, int val) {
+    const gsto_header *properties;
+    switch(h) {
+        case GSTO_HEADER_STOUNIT:
+            properties=gsto_sto_units;
+            break;
+        case GSTO_HEADER_XUNIT:
+            properties=gsto_xunits;
+            break;
+        case GSTO_HEADER_FORMAT:
+            properties=gsto_data_formats;
+            break;
+        case GSTO_HEADER_XSCALE:
+            properties=gsto_xscales;
+            break;
+        default:
+            properties=NULL;
+            break;
+    }
+    if(!properties) {
+        fprintf(stderr, "GSTO Warning: header type %i doesn't correspond to a header with properties\n", h);
+        return;
+    }
+    if(val < gsto_header_n(properties))
+        fprintf(f, "%s=%s\n", gsto_headers[h].s, properties[val].s);
+    else
+        fprintf(stderr, "Warning: can't print GSTO header. val=%i (should be < %i)\n",
+                val, gsto_header_n(properties));
+}
+void jibal_gsto_fprint_header_scientific(FILE *f, gsto_header_type h, double val) {
+    fprintf(f, "%s=%e\n", gsto_get_header_string(gsto_headers, h), val);
+}
+
+void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, void *val) { /* Value is interpreted based on
+ * header to be int, double or char *. In the last case void * is char **!. */
+    char type;
+    if(h >= GSTO_N_HEADER_TYPES) {
+        fprintf(stderr, "GSTO Error: %i is not v valid header type. This shouldn't happen, check GSTO_N_HEADER_TYPES\n", h);
+        return;
+    }
+    const char *header=gsto_headers[h].s;
+    switch(h) {
+        case GSTO_HEADER_NONE:
+            type=0;
+            break;
+        case GSTO_HEADER_SOURCE:
+            type='s';
+            break;
+        case GSTO_HEADER_XPOINTS:
+        case GSTO_HEADER_Z1MIN:
+        case GSTO_HEADER_Z1MAX:
+        case GSTO_HEADER_Z2MIN:
+        case GSTO_HEADER_Z2MAX:
+            type='i';
+            break;
+        case GSTO_HEADER_STOUNIT:
+        case GSTO_HEADER_XUNIT:
+        case GSTO_HEADER_FORMAT:
+        case GSTO_HEADER_XSCALE:
+            type='p';
+            break;
+        case GSTO_HEADER_XMIN:
+        case GSTO_HEADER_XMAX:
+            type='e';
+            break;
+        default:
+            type=0;
+            break;
+    }
+    switch(type) {
+        case 'i':
+            fprintf(f, "%s=%i\n", header, *((int *)val));
+            break;
+        case 'e':
+            fprintf(f, "%s=%e\n", header, *((double *) val));
+            break;
+        case 'f': /* Note that this is still a double, not a float */
+            fprintf(f, "%s=%lf\n", header, *((double *) val));
+            break;
+        case 's':
+            fprintf(f, "%s=%s\n", header, *((char **) val));
+            break;
+        case 'p':
+            jibal_gsto_fprint_header_property(f, h, *(int *)val);
+            break;
+        default:
+            fprintf(stderr, "Unknown header type %c (%i)\n", type, type);
+    }
+}
 
 void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, gsto_data_format format, int Z1_min, int
         Z1_max, int Z2_min, int Z2_max) {
@@ -173,26 +262,26 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, gsto_data_format 
     if(file->source) {
         fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_SOURCE].s, file->source);
     }
-    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_FORMAT].s, gsto_data_formats[format].s);
-    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MIN].s, Z1_min);
-    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z1MAX].s, Z1_max);
-    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z2MIN].s, Z2_min);
-    fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_Z2MAX].s, Z2_max);
-    fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_STOUNIT].s,
-            format==GSTO_DF_ASCII?gsto_data_formats[GSTO_STO_UNIT_EV15CM2].s:gsto_data_formats[GSTO_STO_UNIT_JM2].s);
+    jibal_gsto_fprint_header(file_out, GSTO_HEADER_FORMAT, &format);
+    jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z1MIN, &Z1_min);
+    jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z1MAX, &Z1_max);
+    jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z2MIN, &Z2_min);
+    jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z2MAX, &Z2_max);
+    jibal_gsto_fprint_header_property(file_out, GSTO_HEADER_STOUNIT,
+            (format==GSTO_DF_ASCII)?GSTO_STO_UNIT_EV15CM2:GSTO_STO_UNIT_JM2);
     /* We convert numbers if we are outputting ASCII, but binary stays as internal binary (SI units) */
     if(file->xscale == GSTO_XSCALE_ARBITRARY) { /* Arbitrary scales are converted */
-        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT].s, gsto_xunits[GSTO_X_UNIT_KEV_U].s);
-        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMIN].s, file->em[0]/(C_KEV/C_U));
-        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMAX].s, file->em[file->xpoints - 1]/(C_KEV/C_U));
-        fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_XPOINTS].s, file->xpoints);
-        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XSCALE].s, gsto_xscales[GSTO_XSCALE_ARBITRARY].s);
+        jibal_gsto_fprint_header_property(file_out,GSTO_HEADER_XUNIT, GSTO_X_UNIT_KEV_U);
+        jibal_gsto_fprint_header_scientific(file_out,GSTO_HEADER_XMIN, file->em[0]/(C_KEV/C_U));
+        jibal_gsto_fprint_header_scientific(file_out,GSTO_HEADER_XMAX, file->em[file->xpoints - 1]/(C_KEV/C_U));
+        jibal_gsto_fprint_header(file_out,GSTO_HEADER_XPOINTS, &file->xpoints);
+        jibal_gsto_fprint_header(file_out,GSTO_HEADER_XSCALE, &file->xscale);
     } else {
-        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT].s, gsto_xunits[file->xunit].s);
-        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMIN].s, file->xmin);
-        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMAX].s, file->xmax);
-        fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_XPOINTS].s, file->xpoints);
-        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XSCALE].s, gsto_xscales[file->xscale].s);
+        jibal_gsto_fprint_header_property(file_out, GSTO_HEADER_XUNIT, file->xunit);
+        jibal_gsto_fprint_header(file_out, GSTO_HEADER_XMIN, &file->xmin);
+        jibal_gsto_fprint_header(file_out, GSTO_HEADER_XMAX, &file->xmax);
+        jibal_gsto_fprint_header(file_out,GSTO_HEADER_XPOINTS, &file->xpoints);
+        jibal_gsto_fprint_header(file_out,GSTO_HEADER_XSCALE, &file->xscale);
     }
     fprintf(file_out, "%s\n", GSTO_END_OF_HEADERS);
     if(file->xscale == GSTO_XSCALE_ARBITRARY) {
@@ -357,72 +446,50 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
             if (**col != '\0')
                 if (++col >= &columns[3])
                     break;
-#ifdef DEBUG
-        fprintf(stderr, "Line %i, property %s is %s.\n", file->lineno, columns[0], columns[1]);
-#endif
-        for (header = 0; header < GSTO_N_HEADER_TYPES; header++) {
-#ifdef DEBUG
-            fprintf(stderr, "Does \"%s\" match \"%s\"? ", columns[0], gsto_headers[header]);
-#endif
-            if (strcmp(columns[0], gsto_headers[header].s) == 0) {
-#ifdef DEBUG
-                fprintf(stderr, "Yes.\n");
-#endif
-                switch (header) {
-                    case GSTO_HEADER_SOURCE:
-                        file->source = strdup(columns[1]);
-                        break;
-                    case GSTO_HEADER_FORMAT:
-                        file->data_format = gsto_get_header_value(gsto_data_formats, columns[1]);
-                        break;
-                    case GSTO_HEADER_STOUNIT:
-                        file->stounit = gsto_get_header_value(gsto_sto_units, columns[1]);
-                        break;
-                    case GSTO_HEADER_XSCALE:
-                        file->xscale = gsto_get_header_value(gsto_xscales, columns[1]);
-                        break;
-                    case GSTO_HEADER_XUNIT:
-                        file->xunit = gsto_get_header_value(gsto_xunits, columns[1]);
-                        break;
-                    case GSTO_HEADER_XPOINTS:
-                        file->xpoints = strtol(columns[1], NULL, 10);
-#ifdef DEBUG
-                        fprintf(stderr, "Set number of x points to %i\n", file->xpoints);
-#endif
-                        break;
-                    case GSTO_HEADER_XMIN:
-                        file->xmin = strtod(columns[1], NULL);
-#ifdef DEBUG
-                        fprintf(stderr, "Set minimum value of table to be %lf\n", file->xmin);
-#endif
-                        break;
-                    case GSTO_HEADER_XMAX:
-                        file->xmax = strtod(columns[1], NULL);
-#ifdef DEBUG
-                        fprintf(stderr, "Set maximum value of table to be %lf\n", file->xmax);
-#endif
-                        break;
-                    case GSTO_HEADER_Z1MIN:
-                        file->Z1_min = strtol(columns[1], NULL, 10);
-                        break;
-                    case GSTO_HEADER_Z1MAX:
-                        file->Z1_max = strtol(columns[1], NULL, 10);
-                        break;
-                    case GSTO_HEADER_Z2MIN:
-                        file->Z2_min = strtol(columns[1], NULL, 10);
-                        break;
-                    case GSTO_HEADER_Z2MAX:
-                        file->Z2_max = strtol(columns[1], NULL, 10);
-                        break;
-                    default:
-                        break;
-                }
+
+        header = gsto_get_header_value(gsto_headers, columns[0]);
+        switch (header) {
+            case GSTO_HEADER_SOURCE:
+                file->source = strdup(columns[1]);
                 break;
-            } else {
-#ifdef DEBUG
-                fprintf(stderr, "No.\n");
-#endif
-            }
+            case GSTO_HEADER_FORMAT:
+                file->data_format = gsto_get_header_value(gsto_data_formats, columns[1]);
+                break;
+            case GSTO_HEADER_STOUNIT:
+                file->stounit = gsto_get_header_value(gsto_sto_units, columns[1]);
+                break;
+            case GSTO_HEADER_XSCALE:
+                file->xscale = gsto_get_header_value(gsto_xscales, columns[1]);
+                break;
+            case GSTO_HEADER_XUNIT:
+                file->xunit = gsto_get_header_value(gsto_xunits, columns[1]);
+                break;
+            case GSTO_HEADER_XPOINTS:
+                file->xpoints = strtol(columns[1], NULL, 10);
+                break;
+            case GSTO_HEADER_XMIN:
+                file->xmin = strtod(columns[1], NULL);
+                break;
+            case GSTO_HEADER_XMAX:
+                file->xmax = strtod(columns[1], NULL);
+                break;
+            case GSTO_HEADER_Z1MIN:
+                file->Z1_min = strtol(columns[1], NULL, 10);
+                break;
+            case GSTO_HEADER_Z1MAX:
+                file->Z1_max = strtol(columns[1], NULL, 10);
+                break;
+            case GSTO_HEADER_Z2MIN:
+                file->Z2_min = strtol(columns[1], NULL, 10);
+                break;
+            case GSTO_HEADER_Z2MAX:
+                file->Z2_max = strtol(columns[1], NULL, 10);
+                break;
+            case GSTO_HEADER_NONE:
+            default:
+                fprintf(stderr, "GSTO Warning: unknown header \"%s\" on line %i of file %s\n", columns[0], file->lineno,
+                        file->filename);
+                break;
         }
     } /* End of headers */
     file->n_comb = (file->Z1_max - file->Z1_min + 1) * (file->Z2_max - file->Z2_min + 1);
