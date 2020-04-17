@@ -38,7 +38,9 @@ static char *xscales[] = {
 static char *xunits[] = {
     "none",
     "m/s",
-    "keV/u"
+    "keV/u",
+    "MeV/u",
+    "J/kg"
 };
 
 static char *gsto_headers[] = {
@@ -111,8 +113,8 @@ void jibal_gsto_file_free(gsto_file_t *file) {
         }
         free(file->data);
     }
-    if(file->vel) {
-        free(file->vel);
+    if(file->em) {
+        free(file->em);
     }
     free(file->name);
     if(file->source) {
@@ -201,9 +203,9 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, stopping_data_for
             format==GSTO_DF_ASCII?sto_units[GSTO_STO_UNIT_EV15CM2]:sto_units[GSTO_STO_UNIT_JM2]); /* We convert
  * numbers if we are outputting ASCII, but binary stays as internal binary (SI units) */
     if(file->xscale == GSTO_XSCALE_ARBITRARY) { /* Arbitrary scales are converted */
-        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT], xunits[GSTO_X_UNIT_M_S]);
-        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMIN], file->vel[0]);
-        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMAX], file->vel[file->xpoints - 1]);
+        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XUNIT], xunits[GSTO_X_UNIT_KEV_U]);
+        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMIN], file->em[0]/(C_KEV/C_U));
+        fprintf(file_out, "%s=%e\n", gsto_headers[GSTO_HEADER_XMAX], file->em[file->xpoints - 1]/(C_KEV/C_U));
         fprintf(file_out, "%s=%i\n", gsto_headers[GSTO_HEADER_XPOINTS], file->xpoints);
         fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_XSCALE], xscales[GSTO_XSCALE_ARBITRARY]);
     } else {
@@ -216,7 +218,7 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, stopping_data_for
     fprintf(file_out, "%s\n", GSTO_END_OF_HEADERS);
     if(file->xscale == GSTO_XSCALE_ARBITRARY) {
         for(i=0; i < file->xpoints; i++) {
-            fprintf(file_out, "%e\n", file->vel[i]);
+            fprintf(file_out, "%e\n", file->em[i]/(C_KEV/C_U));
         }
     }
     for (Z1=Z1_min; Z1 <= Z1_max; Z1++) {
@@ -465,13 +467,27 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
         free(file->data);
     }
     file->data = calloc(file->n_comb, sizeof(double *));
-    if(file->vel) {
-        free(file->vel);
+    if(file->em) {
+        free(file->em);
     }
-    file->vel = jibal_gsto_velocity_table(file);
+    file->em = jibal_gsto_em_table(file);
     file->xmin_speedup = 0.0;
     file->xdiv = 0.0;
-    file->vel_index_accel = 0;
+    file->em_index_accel = 0;
+#ifndef GSTO_DONT_CONVERT_TO_SI
+    /* We convert energy per mass units to SI, this will possibly reduce conversions later. Note that we only need
+     * recalculate xmin and xmax, since other variables are internally in SI. */
+    if(file->xunit == GSTO_X_UNIT_MEV_U) {
+        file->xmin *= C_MEV/C_U;
+        file->xmax *= C_MEV/C_U;
+        file->xunit = GSTO_X_UNIT_J_KG;
+    } else if(file->xunit == GSTO_X_UNIT_KEV_U) {
+        file->xmin *= C_KEV/C_U;
+        file->xmax *= C_KEV/C_U;
+        file->xunit = GSTO_X_UNIT_J_KG;
+    }
+#endif
+
     switch (file->xscale) {
         case GSTO_XSCALE_LINEAR:
             file->xmin_speedup = file->xmin;
@@ -683,10 +699,29 @@ gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name) {
     return NULL;
 }
 
-double *jibal_gsto_velocity_table(const gsto_file_t *file) { /* Note: for internal use only, may read the file->fp */
+double jibal_gsto_em_from_file_units(double x, const gsto_file_t *file) {
+    double em;
+    switch (file->xunit) {
+        case GSTO_X_UNIT_MEV_U:
+            em=x*(C_MEV/C_U);
+            break;
+        case GSTO_X_UNIT_KEV_U:
+            em=x*(C_KEV/C_U);
+            break;
+        case GSTO_X_UNIT_M_S:
+            em=energy_per_mass(x);
+            break;
+        default:
+            em=0.0;
+            break;
+    }
+    return em;
+}
+
+double *jibal_gsto_em_table(const gsto_file_t *file) { /* Note: for internal use only, may read the file->fp */
     double *table = malloc(sizeof(double) * file->xpoints);
     int i;
-    double x, v;
+    double x, em;
 #ifdef DEBUG
     fprintf(stderr, "Making velocity table, %i points, xmin=%g, xmax=%g, xscale=%i, xunit=%i\n", file->xpoints,
             file->xmin, file->xmax, file->xscale, file->xunit);
@@ -706,35 +741,32 @@ double *jibal_gsto_velocity_table(const gsto_file_t *file) { /* Note: for intern
                 fscanf(file->fp, "%lf\n", &x);
                 break;
         }
-        switch (file->xunit) {
-            case GSTO_X_UNIT_KEV_U:
-                v=velocity(x*C_KEV, C_U);
-                break;
-            case GSTO_X_UNIT_M_S:
-                v=x;
-                break;
-            default:
-                v=0.0;
-                break;
-        }
-        table[i]=v;
+        table[i]=jibal_gsto_em_from_file_units(x, file);
     }
     return table;
 }
 
-int jibal_gsto_velocity_to_index(const gsto_file_t *file, double v) { /* Returns the low bin, i.e. i of vel[i], where
- * vel[i] <= v < vel[i+1], or -1 if vel is beyond limits of the file. Includes speedups for lin and log scale, but
- * there is a conversion cost if the file xunits are not m/s. For arbitrarily spaced X values binary search is
- * employed. Due to floating point issues the log speedup might return i+1 if v is very close to vel[i+1]. This
- * shouldn't make much of a difference after (linear) interpolation. */
+int jibal_gsto_em_to_index(const gsto_file_t *file, double em) { /* Returns the low bin, i.e. i of em[i], where
+ * file->em[i] <= em < file->em[i+1], or -1 if vel is beyond limits of the file. Includes speedups for lin and log
+ * scale, but there is a conversion cost to units of the file. keV/u and MeV/u files are by default converted into
+ * J/kg, to avoid (the extremely low) conversion cost for these.
+ *
+ * For arbitrarily spaced X values binary search is employed. Due to floating point issues the log speedup might
+ * return i+1 if v is very close to em[i+1]. This shouldn't make much of a difference after (linear) interpolation. */
     double x, index;
     switch (file->xunit) {
+        case GSTO_X_UNIT_J_KG:
+            x = em;
+            break;
+        case GSTO_X_UNIT_MEV_U:
+            x = em/(C_MEV/C_U);
+            break;
         case GSTO_X_UNIT_KEV_U:
-            x=energy(v, C_U)/C_KEV;
+            x = em/(C_KEV/C_U);
             break;
         case GSTO_X_UNIT_M_S:
         default:
-            x=v;
+            x=velocity_from_em(em);
             break;
     }
     int lo, mi, hi;
@@ -757,7 +789,7 @@ int jibal_gsto_velocity_to_index(const gsto_file_t *file, double v) { /* Returns
             lo = 0;
             while (hi - lo > 1) {
                 mi = (hi + lo) / 2;
-                if (v >= file->vel[mi]) {
+                if (em >= file->em[mi]) {
                     lo = mi;
                 } else {
                     hi = mi;
@@ -773,7 +805,7 @@ fprintf(stderr, "lo=%i, residual=%e m/s (%.2lf%% of bin)\n", lo, v-file->vel[lo]
         return -1;
     }
 #else
-    if (v < file->vel[0] || v > file->vel[file->xpoints - 1]) {
+    if (em < file->em[0] || em > file->em[file->xpoints - 1]) {
         return -1;
     }
 #endif
@@ -794,7 +826,7 @@ double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y) {
     }
 }
 
-double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
+double jibal_gsto_stop_em(jibal_gsto *workspace, int Z1, int Z2, double em) {
     gsto_file_t *file= jibal_gsto_get_assigned_file(workspace, Z1, Z2);
     if(!file) {
         return nan(NULL);
@@ -802,27 +834,31 @@ double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
     const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
     assert(data);
     int lo;
-    if(file->vel[file->vel_index_accel] <= v && v < file->vel[file->vel_index_accel+1]) {
-        lo = file->vel_index_accel;
+    if(file->em[file->em_index_accel] <= em && em < file->em[file->em_index_accel+1]) {
+        lo = file->em_index_accel;
     } else {
-        lo = jibal_gsto_velocity_to_index(file, v);
+        lo = jibal_gsto_em_to_index(file, em);
         if (lo < 0) { /* Out of bounds */
             if(workspace->extrapolate) {
-                if(v >= 0 && v <= file->vel[0]) {
-                    return jibal_linear_interpolation(0.0, file->vel[0], 0.0, data[0], v);
+                if(em >= 0 && em <= file->em[0]) {
+                    return jibal_linear_interpolation(0.0, file->em[0], 0.0, data[0], em);
                     /* Linear interpolation from (0, 0) to lowest real data point */
                 }
-                if(v >= file->vel[file->xpoints - 1]) {
+                if(em >= file->em[file->xpoints - 1]) {
                     return data[file->xpoints - 1];
                 }
             }
             return nan(NULL);
         }
-        file->vel_index_accel = lo;
+        file->em_index_accel = lo;
     }
     double sto;
-    sto=jibal_linear_interpolation(file->vel[lo], file->vel[lo+1], data[lo], data[lo+1], v);
+    sto=jibal_linear_interpolation(file->em[lo], file->em[lo+1], data[lo], data[lo+1], em);
     return sto;
+}
+
+double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
+    return jibal_gsto_stop_em(workspace, Z1, Z2, energy_per_mass(v));
 }
 
 double jibal_stop(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {

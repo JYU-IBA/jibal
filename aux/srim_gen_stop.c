@@ -64,7 +64,7 @@ int generate_sr_in(char *out_filename, int Z1, int Z2, int xsteps, double xmin, 
     fprintf(sr_file, "0  0\r\n");
     for(i=0; i<xsteps; i++) {
         x=xmin*pow(xmax/xmin,1.0*i/(xsteps-1)); /* log scale */
-        double E = energy(x, C_U)/C_KEV;
+        double E = x/(C_KEV/C_U);
         fprintf(sr_file, "%lf\r\n", E);
     }
     fclose(sr_file);
@@ -180,13 +180,13 @@ int main (int argc, char **argv) {
     fprintf(stderr, "Input minimum energy in keV/u (e.g. 10): ");
     fgets(input, 1000, stdin);
     xmin=strtod(input, NULL);
-    xmin=velocity(xmin*C_KEV, C_U);
-    fprintf(stderr, "xmin=%g m/s\n", xmin);
+    xmin=xmin*C_KEV/C_U;
+    fprintf(stderr, "xmin=%g keV/u\n", xmin/(C_KEV/C_U));
     fprintf(stderr, "Input maximum energy in keV/u (e.g. 10000): ");
     fgets(input, 1000, stdin);
     xmax=strtod(input, NULL);
-    xmax=velocity(xmax*C_KEV, C_U);
-    fprintf(stderr, "xmax=%g m/s\n", xmax);
+    xmax=xmax*C_KEV/C_U;
+    fprintf(stderr, "xmax=%g keV/u\n", xmax/(C_KEV/C_U));
     fprintf(stderr, "Input number of stopping steps to calculate between xmin and xmax in log scale (e.g. 101): ");
     fgets(input, 1000, stdin);
     xsteps=strtol(input, NULL, 10);
@@ -204,7 +204,7 @@ int main (int argc, char **argv) {
     z2_max=strtol(input, NULL, 10);
     n_combinations = (z1_max-z1_min+1)*(z2_max-z2_min+1);
     fprintf(stopping_output_file, "source=srim\nz1-min=%i\nz1-max=%i\nz2-min=%i\nz2-max=%i\n"
-                                  "sto-unit=eV/(1e15 atoms/cm2)\nx-unit=m/s\nformat=ascii\n"
+                                  "sto-unit=eV/(1e15 atoms/cm2)\nx-unit=keV/u\nformat=ascii\n"
                                   "x-min=%e\nx-max=%e\nx-points=%i\nx-scale=log10\n"
                                   "==END-OF-HEADER==\n", z1_min, z1_max, z2_min, z2_max, xmin, xmax, xsteps);
     i=0;

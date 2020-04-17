@@ -24,16 +24,25 @@
 #ifdef CLASSICAL
 #define energy(energy,mass) jibal_energy_classical(energy,mass)
 #define velocity(energy,mass) jibal_velocity_classical(energy,mass)
+#define energy_per_mass(velocity) jibal_em_classical(velocity)
+#define velocity_from_em(em) jibal_velocity_em_classical(em)
 #else
-#define energy(a,b) jibal_energy_relativistic(a,b)
-#define velocity(a,b) jibal_velocity_relativistic(a,b)
+#define energy(velocity,mass) jibal_energy_relativistic(velocity,mass) /* v => E */
+#define velocity(energy,mass) jibal_velocity_relativistic(energy,mass)  /* E => v */
+#define energy_per_mass(velocity) jibal_em_relativistic(velocity) /* v => E/m */
+#define velocity_from_em(em) jibal_velocity_em_relativistic(em) /* E/m => v */
 #endif
 
 double jibal_velocity_relativistic(double E, double mass);
 double jibal_energy_relativistic(double v, double mass);
+double jibal_em_relativistic(double v);
+double jibal_velocity_em_relativistic(double em);
 
 double jibal_velocity_classical(double E, double mass);
 double jibal_energy_classical(double v, double mass);
+double jibal_em_classical(double v);
+double jibal_velocity_em_classical(double em);
+
 
 double jibal_velocity_classical_more_accurate(double E, double mass);
 double jibal_velocity_classical_more_accurate(double v, double mass);

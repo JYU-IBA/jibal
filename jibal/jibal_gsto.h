@@ -28,11 +28,13 @@ typedef enum {
     GSTO_XSCALE_ARBITRARY=3
 } stopping_xscale_t;
 
-#define GSTO_N_X_UNITS 3
+#define GSTO_N_X_UNITS 4
 typedef enum {
     GSTO_X_UNIT_NONE=0,
     GSTO_X_UNIT_M_S=1, /* m/s */
     GSTO_X_UNIT_KEV_U=2, /* keV/u */
+    GSTO_X_UNIT_MEV_U=3, /* MeV/u */
+    GSTO_X_UNIT_J_KG=4, /* J/kg = m^2/s^2 (N.B. this is NOT velocity squared!)*/
 } stopping_xunit_t;
 
 #define GSTO_N_STO_UNITS 2
@@ -68,12 +70,13 @@ typedef struct {
     int Z2_max;
     int n_comb;
     int xpoints; /* How many points of stopping per Z1, Z2 combination */
-    double xmin; /* The first point of stopping corresponds to x=xmin */
+    double xmin; /* The first point of stopping corresponds to x=xmin. N.B.: in units of the file, not converted to SI*/
     double xmax; /* The last point of stopping corresponds to x=xmax */
     double xmin_speedup; /* xmin or log10(xmin) */
     double xdiv; /* speedup variable, calculated from xpoints, xmin and xmax */
-    double *vel; /* Array of velocities (size: xpoints) */
-    int vel_index_accel; /* Store the velocity bin that was last found in an attempt to accelerate calculations */
+    double *em; /* Array of energy/mass (size: xpoints). In SI units! */
+    int em_index_accel; /* Store the energy/mass bin (of the array above) that was last found in an attempt to
+ * accelerate successive seeks */
     stopping_xscale_t xscale; /* The scale specifies how stopping points are spread between min and max (linear, log...) */
     stopping_xunit_t xunit; /* Stopping as a function of what? */
     stopping_stounit_t stounit; /* Stopping unit */
@@ -147,10 +150,12 @@ gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, int Z1, int Z2)
 gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name);
 
 int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2);
-double *jibal_gsto_velocity_table(const gsto_file_t *file);
+double jibal_gsto_em_from_file_units(double x, const gsto_file_t *file);
+double *jibal_gsto_em_table(const gsto_file_t *file);
 int jibal_gsto_velocity_to_index(const gsto_file_t *file, double v);
 double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y); /* to SI units */
 double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v);
+double jibal_gsto_stop_em(jibal_gsto *workspace, int Z1, int Z2, double Em);
 double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, double m2);
 
 #endif /* _JIBAL_GSTO_H_ */

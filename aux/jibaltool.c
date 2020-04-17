@@ -131,7 +131,7 @@ int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
     fprintf(out, "#Stopping Units =  eV/(1E15 atoms/cm2)\n"
                  "#Energy(keV)  S(Elec)    S(Nuc)\n");
     for(i=0; i < file->xpoints; i++) {
-        double E=energy(file->vel[i], incident->mass);
+        double E=file->em[i]*incident->mass;
         double S_ele=jibal_stop_ele(jibal->gsto, incident, target, E);
         double S_nuc=jibal_stop_nuc(incident, target, E);
         fprintf(out, "%.3e   %.3e   %e\n", E/C_KEV, S_ele/C_EV_TFU, S_nuc/C_EV_TFU);
