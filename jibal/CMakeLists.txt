@@ -144,5 +144,6 @@ set(CPACK_SOURCE_IGNORE_FILES
         ".DS_Store$"
         "^${CMAKE_SOURCE_DIR}/build/"
         "^${CMAKE_SOURCE_DIR}/cmake-build-.*/"
+        "^${CMAKE_SOURCE_DIR}/gui/build-.*/"
         )
 include(CPack)
