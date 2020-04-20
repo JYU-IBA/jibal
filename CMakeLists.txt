@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 project(jibal
-        VERSION 0.1.2
+        VERSION 0.1.3
         DESCRIPTION "JIBAL - Jyväskylä ion beam analysis library"
         LANGUAGES C
         )
