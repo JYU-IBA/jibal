@@ -100,7 +100,6 @@ int parse_output(char *filename, FILE *stopping_output_file, int xsteps) {
         return 0;
     char *line=malloc(sizeof(char)*SRIM_OUTPUT_LINE_LENGTH);
     char *line_split;
-    double energy, S_elec, S_nuc;
     while(fgets(line, SRIM_OUTPUT_LINE_LENGTH, in_file) != NULL) {
         lineno++;
         if(lineno<=SRIM_OUTPUT_N_HEADERS) /* Headers */
@@ -111,14 +110,14 @@ int parse_output(char *filename, FILE *stopping_output_file, int xsteps) {
                 if (++col >= &columns[SRIM_OUTPUT_N_COLS])
                     break;
     
-        energy=strtod(fix_exponential_notation(columns[0]), NULL);
-        S_elec=strtod(fix_exponential_notation(columns[1]), NULL);
+        double energy=strtod(fix_exponential_notation(columns[0]), NULL);
+        double S_elec=strtod(fix_exponential_notation(columns[1]), NULL);
         if(S_elec == 0.0) {
             fprintf(stderr, "Problems.\n");
             return 0;
         }
 #if INCLUDE_NUCLEAR /* We use m1=1u and m2=1u so this doesn't make much sense */
-        S_nuc=strtod(fix_exponential_notation(columns[2]), NULL);
+        double S_nuc=strtod(fix_exponential_notation(columns[2]), NULL);
         fprintf(stopping_output_file, "%e\n", S_elec+S_nuc);
 #else
         fprintf(stopping_output_file, "%.3e\n", S_elec); /* Three is the magic number of decimals */
@@ -144,7 +143,7 @@ void remove_newline(char *s) {
 }
 
 int main (int argc, char **argv) {
-    int Z1, Z2, i, j;
+    int Z1, Z2, i;
     double xmin=10.0; /* keV/amu */
     double xmax=10000.0; 
     int xsteps=XSTEPS; /* steps numbered 0, 1, 2, ...., vsteps-1 */

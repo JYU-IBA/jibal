@@ -142,7 +142,6 @@ void jibal_material_free(jibal_material *material) {
     if(!material) {
         return;
     }
-    int i;
     free(material->elements);
     free(material->concs);
     free(material);

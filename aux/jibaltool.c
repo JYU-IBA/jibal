@@ -94,7 +94,6 @@ void read_options(jibaltool_global *global, int *argc, char ***argv) {
                 break;
         }
     }
-    int i;
     *argc -= optind;
     *argv += optind;
 }
@@ -141,7 +140,6 @@ int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
 }
 
 int extract_stop(jibaltool_global *global, int argc, char **argv) {
-    int i;
     if (argc < 2 || !global->stopfile) {
         if(argc < 2) {
             fprintf(stderr, "ERROR: Too few arguments!\n");
@@ -242,7 +240,6 @@ int print_elements(jibaltool_global *global, int argc, char **argv) {
 }
 
 int print_config(jibaltool_global *global, int argc, char **argv) {
-    int Z;
     FILE *out=jibaltool_open_output(global);
     jibal_config_file_write(&global->jibal.config, out);
     jibaltool_close_output(out);

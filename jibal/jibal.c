@@ -14,10 +14,7 @@ jibal jibal_init(const char *config_filename) {
         fprintf(stderr, "Could not load isotope table from file %s.\n", jibal.config.masses_file);
         return jibal;
     }
-    int n=jibal_abundances_load(jibal.isotopes, jibal.config.abundances_file);
-#ifdef DEBUG
-    fprintf(stderr, "%i isotopes with abundance data.\n", n);
-#endif
+    jibal_abundances_load(jibal.isotopes, jibal.config.abundances_file);
     jibal.elements=jibal_elements_populate(jibal.isotopes);
     jibal.gsto=jibal_gsto_init(jibal.config.Z_max, jibal.config.datadir, jibal.config.stoppings_file);
     if(!jibal.gsto) {
@@ -47,7 +44,6 @@ char *make_path_and_check_if_exists(const char *directory, const char *subdirect
      * otherwise. *
      */
     char *filename;
-    FILE *f;
     if(!directory || !file) {
         return NULL;
     }
@@ -89,7 +85,8 @@ jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure 
             {JIBAL_CONFIG_VAR_STRING, "stoppings_file", &config->stoppings_file},
             {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
             {JIBAL_CONFIG_VAR_BOOL, "extrapolate", &config->extrapolate},
-            0}; /* null terminated, we use .type == 0 to stop a loop */
+            {0, 0, NULL}
+    }; /* null terminated, we use .type == 0 to stop a loop */
             int n_vars;
             for(n_vars=0; vars[n_vars].type != 0; n_vars++);
             size_t s=sizeof(jibal_config_var)*n_vars;

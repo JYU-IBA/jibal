@@ -67,7 +67,6 @@ int gsto_add_file(jibal_gsto *table, const char *name, const char *filename) {
 }
 
 jibal_gsto *gsto_allocate(int Z1_max, int Z2_max) {
-    int Z1;
     jibal_gsto *table = malloc(sizeof(jibal_gsto));
     table->Z1_max=Z1_max;
     table->Z2_max=Z2_max;
@@ -315,9 +314,7 @@ int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2) {
     }
     int z1 = (Z1 - 1);
     int z2 = (Z2 - 1);
-    int n_z1 = (workspace->Z1_max - 1 + 1);
-    int n_z2 = (workspace->Z2_max - 1 + 1);
-    int i = (n_z2 * z1 + z2);
+    int i = (workspace->Z2_max * z1 + z2);
     assert(i >= 0 && i < workspace->n_comb);
     return i;
 }
@@ -329,7 +326,6 @@ int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2) {
     assert(Z2 <= file->Z2_max);
     int z1=(Z1 - file->Z1_min);
     int z2=(Z2 - file->Z2_min);
-    int n_z1=(file->Z1_max-file->Z1_min+1);
     int n_z2=(file->Z2_max-file->Z2_min+1);
     int i=(n_z2*z1+z2);
     assert(i < file->n_comb);
@@ -343,7 +339,6 @@ const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2) {
 }
 
 double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2) {
-    double *data;
     int i=jibal_gsto_file_get_data_index(file, Z1, Z2);
     assert(i >= 0 && i < file->n_comb);
     if(file->data[i]) {
@@ -416,12 +411,11 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
 
 
 int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
-    int i;
     char *line;
     char *line_split;
     char *columns[3];
     char **col;
-    int header = 0, property;
+    int header = 0;
     if (!file) {
         return 0;
     }
@@ -624,7 +618,6 @@ int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
 
 jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *stoppings_file_name) {
     int i=0, n_files=0, n_errors=0;
-    char *env_path;
     char *line=calloc(GSTO_MAX_LINE_LEN, sizeof(char));
     char *line_split;
     char *columns[2];
@@ -753,7 +746,7 @@ double jibal_gsto_em_from_file_units(double x, const gsto_file_t *file) {
 double *jibal_gsto_em_table(const gsto_file_t *file) { /* Note: for internal use only, may read the file->fp */
     double *table = malloc(sizeof(double) * file->xpoints);
     int i;
-    double x, em;
+    double x;
 #ifdef DEBUG
     fprintf(stderr, "Making velocity table, %i points, xmin=%g, xmax=%g, xscale=%i, xunit=%i\n", file->xpoints,
             file->xmin, file->xmax, file->xscale, file->xunit);
@@ -785,7 +778,7 @@ int jibal_gsto_em_to_index(const gsto_file_t *file, double em) { /* Returns the 
  *
  * For arbitrarily spaced X values binary search is employed. Due to floating point issues the log speedup might
  * return i+1 if v is very close to em[i+1]. This shouldn't make much of a difference after (linear) interpolation. */
-    double x, index;
+    double x;
     switch (file->xunit) {
         case GSTO_X_UNIT_J_KG:
             x = em;

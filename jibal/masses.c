@@ -28,7 +28,6 @@
 //#include "win_compat.h"
 
 int isotope_set(jibal_isotope *isotope, int Z, int N, int A, double mass, isotope_name name) {
-    int i;
     if(!isotope) {
         return -1;
     }
@@ -320,7 +319,6 @@ void jibal_element_normalize(jibal_element *element) {
 
 jibal_isotope *jibal_isotope_find(jibal_isotope *isotopes, const char *name, int Z, int A) {
     jibal_isotope *isotope;
-    int i=0;
     if(name != NULL) {
         if (isdigit(*name)) { /* Isotope names usually start with a mass number */
             for (isotope = isotopes; isotope->A != 0; isotope++) {
