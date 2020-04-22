@@ -199,6 +199,7 @@ typedef struct {
 jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *stoppings_file_name);
 int gsto_add_file(jibal_gsto *workspace, const char *name, const char *filename);
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file);
+void jibal_gsto_assign_clear_all(jibal_gsto *workspace);
 int jibal_gsto_assign_range(jibal_gsto *workspace, int Z1_min, int Z1_max, int Z2_min, int Z2_max, gsto_file_t *file);
 int jibal_gsto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target,
         gsto_file_t *file);

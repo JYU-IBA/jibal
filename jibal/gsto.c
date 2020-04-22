@@ -140,6 +140,11 @@ int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file) 
     return 1; /* Success */
 }
 
+void jibal_gsto_assign_clear_all(jibal_gsto *workspace) {
+    memset(workspace->stop_assignments, 0, workspace->n_comb*sizeof(gsto_file_t *));
+    memset(workspace->stragg_assignments, 0, workspace->n_comb*sizeof(gsto_file_t *));
+}
+
 int jibal_gsto_assign_range(jibal_gsto *workspace, int Z1_min, int Z1_max, int Z2_min, int Z2_max, gsto_file_t
 *file) {
     int Z1, Z2;
@@ -835,7 +840,7 @@ gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, gsto_stopping_t
         return NULL;
     if(type == GSTO_STO_ELE)
         return workspace->stop_assignments[i];
-    if(type == GSTO_STO_STRAGG);
+    if(type == GSTO_STO_STRAGG)
         return workspace->stragg_assignments[i];
 }
 
