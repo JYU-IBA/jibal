@@ -32,6 +32,7 @@ int gsto_get_header_value(const gsto_header *header, const char *s) {
         }
         i++;
     }
+    fprintf(stderr, "WARNING: \"%s\" is not a valid header field or value.\n", s);
     return 0;
 }
 
@@ -53,6 +54,7 @@ int gsto_add_file(jibal_gsto *table, const char *name, const char *filename) {
     table->files = realloc(table->files, sizeof(gsto_file_t)*(table->n_files+1));
     gsto_file_t *new_file=&table->files[table->n_files];
     memset(new_file, 0, sizeof(gsto_file_t));
+    new_file->valid = TRUE; /* Will be set to FALSE if there are errors later */
     new_file->name = strdup(name);
     new_file->filename = strdup(filename);
     success=jibal_gsto_load(table, TRUE, new_file);
@@ -150,13 +152,20 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
         for (Z2=file->Z2_min; Z2<=file->Z2_max; Z2++) {
             if (file == jibal_gsto_get_assigned_file(workspace, Z1, Z2)) {
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
-                fread(data, sizeof(double), file->xpoints, file->fp);
+                size_t n = fread(data, sizeof(double), file->xpoints, file->fp);
+                if(n != file->xpoints) {
+                    file->valid=FALSE;
+                    return 0;
+                }
                 int i;
                 for(i=0; i<file->xpoints; i++) {
                     data[i] = jibal_gsto_scale_y_to_stopping(file, data[i]);
                 }
             } else {
-                fseek(file->fp, sizeof(double)*file->xpoints, SEEK_CUR);
+                if(fseek(file->fp, sizeof(double)*file->xpoints, SEEK_CUR)) {
+                    file->valid=FALSE;
+                    return 0;
+                }
             }
         }
     }
@@ -294,7 +303,7 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, gsto_data_format 
         jibal_gsto_fprint_header(file_out,GSTO_HEADER_XSCALE, &file->xscale);
     }
     jibal_gsto_fprint_header(file_out, GSTO_HEADER_FORMAT, &format);
-    fprintf(file_out, "%s\n", GSTO_END_OF_HEADERS);
+    fprintf(file_out, "\n");
     if(file->xscale == GSTO_XSCALE_ARBITRARY) {
         for(i=0; i < file->xpoints; i++) {
             fprintf(file_out, "%e\n", file->em[i]/(C_KEV/C_U));
@@ -411,6 +420,7 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
                     if(!fgets(line, GSTO_MAX_LINE_LEN, file->fp)) {
                         fprintf(stderr, "ERROR: File %s ended prematurely when reading Z1=%i Z2=%i stopping point=%i/%i"
                                         ".\n", file->filename, Z1, Z2, i+1, file->xpoints);
+                        file->valid = FALSE;
                         break;
                     }
                     file->lineno++;
@@ -458,25 +468,25 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
     char *line_split;
     char *columns[3];
     char **col;
+    int n_errors=0;
     if (!file) {
         return 0;
     }
     file->fp = fopen(file->filename, "r");
     if (!file->fp) {
         fprintf(stderr, "Could not open file \"%s\".\n", file->filename);
+        file->valid = FALSE;
         return 0;
     }
     file->lineno = 0;
     line = calloc(GSTO_MAX_LINE_LEN, sizeof(char));
     /* parse headers, stop when end of headers found */
-    while (fgets(line, GSTO_MAX_LINE_LEN, file->fp) != NULL) {
+    while (fgets(line, GSTO_MAX_LINE_LEN, file->fp) != NULL && file->valid) {
         file->lineno++;
-        if (strncmp(line, GSTO_END_OF_HEADERS, strlen(GSTO_END_OF_HEADERS)) == 0) {
-#ifdef DEBUG
-            fprintf(stderr, "End of headers on line %i of settings file.\n", file->lineno);
-#endif
+        if(*line == '#') /* Comments are allowed */
+            continue;
+        if(*line == '\r' || *line == '\n')
             break;
-        }
         line_split = line;
         for (col = columns; (*col = strsep(&line_split, "=\n\r\t")) != NULL;)
             if (**col != '\0')
@@ -540,16 +550,29 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
                 break;
             case GSTO_HEADER_NONE:
             default:
-                fprintf(stderr, "GSTO Warning: unknown header \"%s\" on line %i of file %s\n", columns[0], file->lineno,
+                fprintf(stderr, "WARNING: unknown header \"%s\" on line %i of file %s.\n", columns[0],
+                        file->lineno,
                         file->filename);
+                n_errors++;
                 break;
+        }
+        if(n_errors >= 10) { /* This prevents us from flooding the output with error messages if the headers are not
+ * properly terminated */
+            fprintf(stderr, "WARNING: too many errors, considering the file invalid.\n");
+            file->valid=FALSE;
+            break;
         }
     } /* End of headers */
     free(line);
+    if(file->type != GSTO_STO_ELE && file->type != GSTO_STO_STRAGG) {
+        fprintf(stderr, "WARNING: GSTO files of type %s are not supported. Missing type header?\n",
+                gsto_get_header_string(gsto_stopping_types, file->type));
+        file->valid=FALSE;
+    }
     jibal_gsto_file_calculate_ncombs(file);
-    if(headers_only) {
+    if(headers_only || file->valid == FALSE) {
         fclose(file->fp);
-        return 1;
+        return file->valid;
     }
     if(file->data) {
         free(file->data);

@@ -4,8 +4,7 @@
 #include <stdio.h>
 #include <jibal_masses.h>
 
-#define GSTO_MAX_LINE_LEN 1024
-#define GSTO_END_OF_HEADERS "==END-OF-HEADER=="
+#define GSTO_MAX_LINE_LEN 128
 #define GSTO_STR_NONE "none"
 
 typedef struct {
@@ -141,6 +140,7 @@ static const gsto_header gsto_headers[] = {
 };
 
 typedef struct {
+    int valid;
     int lineno; /* Keep track of how many lines read */
     /* file contains stopping for Z1 = Z1_min .. Z1_max inclusive in Z2 = Z2_min .. Z2_max inclusive i.e. (Z1_max-Z1_min+1)*(Z2_max-Z2_min+1) combinations */
     int Z1_min; 
