@@ -59,7 +59,7 @@ void read_options(jibaltool_global *global, int *argc, char ***argv) {
     };
     while (1) {
         int option_index = 0;
-        char c = getopt_long(*argc, *argv, "hvz:s:", long_options, &option_index);
+        char c = getopt_long(*argc, *argv, "hv::Vz:s:", long_options, &option_index);
         if (c == -1)
             break;
         switch (c) {
@@ -91,6 +91,7 @@ void read_options(jibaltool_global *global, int *argc, char ***argv) {
                     global->verbose = atoi(optarg);
                 else
                     global->verbose++;
+                break;
             case 'F':
                 global->format=strdup(optarg);
                 break;
@@ -130,7 +131,7 @@ int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
                 file->name);
         return  -1;
     }
-    jibal_gsto_load(jibal->gsto, file);
+    jibal_gsto_load(jibal->gsto, FALSE, file);
     FILE *out=jibaltool_open_output(global);
     int i;
     fprintf(out, "#Stopping Units =  eV/(1E15 atoms/cm2)\n"
@@ -206,7 +207,7 @@ int extract_stop(jibaltool_global *global, int argc, char **argv) {
         fprintf(stderr, "Could not assign this range to this file.\n");
         return -1;
     }
-    jibal_gsto_load(jibal->gsto, file);
+    jibal_gsto_load(jibal->gsto, FALSE, file);
     FILE *out=jibaltool_open_output(global);
     gsto_data_format format=GSTO_DF_ASCII;
     if(global->format && strcmp(global->format, "bin")==0) {
@@ -218,7 +219,7 @@ int extract_stop(jibaltool_global *global, int argc, char **argv) {
 }
 
 int print_stopfiles(jibaltool_global *global, int argc, char **argv) {
-    jibal_gsto_print_files(global->jibal.gsto);
+    jibal_gsto_print_files(global->jibal.elements, global->jibal.gsto);
     return 0;
 }
 

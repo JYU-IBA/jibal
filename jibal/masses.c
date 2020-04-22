@@ -360,3 +360,15 @@ jibal_isotope *jibal_isotope_find(jibal_isotope *isotopes, const char *name, int
     }
     return NULL;
 }
+
+const char *jibal_element_name(const jibal_element *elements, int Z) {
+    if(Z == JIBAL_ANY_Z)
+        return "Any";
+    if(Z < 0 || Z > JIBAL_ELEMENTS)
+        return "Err";
+    const jibal_element *e=&elements[Z];
+    if(Z == e->Z)
+        return e->name;
+    else
+        return "Err";
+}

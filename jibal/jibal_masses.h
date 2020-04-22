@@ -34,6 +34,9 @@
 
 #define ABUNDANCE_THRESHOLD (1e-6)
 
+#define JIBAL_ANY_Z (-1) /* Z number that has a special meaning (Z is anything!). This is used when we want to have
+ * 1D arrays in stead of 2D arrays */
+
 typedef char isotope_name[8]; /* These should be null terminated */
 typedef char element_name[4];
 
@@ -65,7 +68,7 @@ int jibal_element_number_of_isotopes(jibal_element *element, double abundance_th
 jibal_element *jibal_element_copy(jibal_element *element, int A); /* Create a copy of a single element, either with all known isotopes (A=-1), naturally abundant isotopes (A=0) or a single isotope (A = mass number) */
 void jibal_element_normalize(jibal_element *element);
 jibal_isotope *jibal_isotope_find(jibal_isotope *isotopes, const char *name, int Z, int A); /* Give either name or Z and A. If name is NULL Z and A are used. */
-
+const char *jibal_element_name(const jibal_element *elements, int Z);
 
 double velocity(double E, double mass); /* Use SI units */
 double energy(double v, double mass);

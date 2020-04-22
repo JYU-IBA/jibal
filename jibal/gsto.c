@@ -53,7 +53,7 @@ int gsto_add_file(jibal_gsto *table, const char *name, const char *filename) {
     memset(new_file, 0, sizeof(gsto_file_t));
     new_file->name = strdup(name);
     new_file->filename = strdup(filename);
-    success=jibal_gsto_load(table, new_file);
+    success=jibal_gsto_load(table, TRUE, new_file);
 
     if(success) {
         table->n_files++;
@@ -163,8 +163,14 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
 void jibal_gsto_fprint_header_property(FILE *f, gsto_header_type h, int val) {
     const gsto_header *properties;
     switch(h) {
+        case GSTO_HEADER_TYPE:
+            properties=gsto_stopping_types;
+            break;
         case GSTO_HEADER_STOUNIT:
             properties=gsto_sto_units;
+            break;
+        case GSTO_HEADER_STRAGGUNIT:
+            properties=gsto_stragg_units;
             break;
         case GSTO_HEADER_XUNIT:
             properties=gsto_xunits;
@@ -216,7 +222,9 @@ void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, void *val) { /* Value
         case GSTO_HEADER_Z2MAX:
             type='i';
             break;
+        case GSTO_HEADER_TYPE:
         case GSTO_HEADER_STOUNIT:
+        case GSTO_HEADER_STRAGGUNIT:
         case GSTO_HEADER_XUNIT:
         case GSTO_HEADER_FORMAT:
         case GSTO_HEADER_XSCALE:
@@ -259,10 +267,10 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, gsto_data_format 
     Z2_min=Z2_min<file->Z2_min?file->Z2_min:Z2_min;
     Z2_max=Z2_max>file->Z2_max?file->Z2_max:Z2_max;
 
+    jibal_gsto_fprint_header(file_out, GSTO_HEADER_TYPE, &file->type);
     if(file->source) {
-        fprintf(file_out, "%s=%s\n", gsto_headers[GSTO_HEADER_SOURCE].s, file->source);
+        jibal_gsto_fprint_header(file_out, GSTO_HEADER_SOURCE, &file->source);
     }
-    jibal_gsto_fprint_header(file_out, GSTO_HEADER_FORMAT, &format);
     jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z1MIN, &Z1_min);
     jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z1MAX, &Z1_max);
     jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z2MIN, &Z2_min);
@@ -277,12 +285,13 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, gsto_data_format 
         jibal_gsto_fprint_header(file_out,GSTO_HEADER_XPOINTS, &file->xpoints);
         jibal_gsto_fprint_header(file_out,GSTO_HEADER_XSCALE, &file->xscale);
     } else {
-        jibal_gsto_fprint_header_property(file_out, GSTO_HEADER_XUNIT, file->xunit);
-        jibal_gsto_fprint_header(file_out, GSTO_HEADER_XMIN, &file->xmin);
-        jibal_gsto_fprint_header(file_out, GSTO_HEADER_XMAX, &file->xmax);
+        jibal_gsto_fprint_header_property(file_out, GSTO_HEADER_XUNIT, file->xunit_original);
+        jibal_gsto_fprint_header(file_out, GSTO_HEADER_XMIN, &file->xmin_original);
+        jibal_gsto_fprint_header(file_out, GSTO_HEADER_XMAX, &file->xmax_original);
         jibal_gsto_fprint_header(file_out,GSTO_HEADER_XPOINTS, &file->xpoints);
         jibal_gsto_fprint_header(file_out,GSTO_HEADER_XSCALE, &file->xscale);
     }
+    jibal_gsto_fprint_header(file_out, GSTO_HEADER_FORMAT, &format);
     fprintf(file_out, "%s\n", GSTO_END_OF_HEADERS);
     if(file->xscale == GSTO_XSCALE_ARBITRARY) {
         for(i=0; i < file->xpoints; i++) {
@@ -298,9 +307,8 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, gsto_data_format 
                 return;
             }
             if(format == GSTO_DF_ASCII) {
-                int i;
                 for (i = 0; i < file->xpoints; i++) {
-                    fprintf(file_out, "%e\n", data[i] / C_EV_TFU);
+                    fprintf(file_out, "%e\n", data[i] / C_EV_TFU); /* TODO: should output always be in these units? */
                 }
             } else if(format == GSTO_DF_DOUBLE) {
                 fwrite(data, sizeof(double), file->xpoints, file_out);
@@ -321,6 +329,20 @@ int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2) {
 }
 
 int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2) {
+    if(Z1 == JIBAL_ANY_Z) {
+        if(Z2 == JIBAL_ANY_Z) {
+            return 0; /* Only one index is possible Z1=any, Z2=any */
+        } else {
+            assert(Z2 <= file->Z2_max);
+            assert(Z2 >= file->Z2_min);
+            return Z2-file->Z2_min;
+        }
+    }
+    if(Z2 == JIBAL_ANY_Z) {
+        assert(Z1 <= file->Z1_max);
+        assert(Z1 >= file->Z1_min);
+        return Z1-file->Z1_min;
+    }
     assert(Z1 >= file->Z1_min);
     assert(Z2 >= file->Z2_min);
     assert(Z1 <= file->Z2_max);
@@ -409,9 +431,27 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
     return 1;
 }
 
+void jibal_gsto_file_calculate_ncombs(gsto_file_t *file) {
+    if(file->Z1_min == JIBAL_ANY_Z) {
+        file->Z1_max = JIBAL_ANY_Z; /* For sanity, we can't have any Z1 but with a maximum. Then we should also have
+ * a clearly defined minimum. */
+        if(file->Z2_min == JIBAL_ANY_Z) {
+            file->Z2_max = JIBAL_ANY_Z;
+            file->n_comb = 1; /* Any Z1, Z2, so maybe just one? */
+            return;
+        }
+        file->n_comb = (file->Z2_max - file->Z2_min + 1); /* Any Z1, some Z2 range */
+        return;
+    }
+    if(file->Z2_min == JIBAL_ANY_Z) {
+        file->Z2_max = JIBAL_ANY_Z;
+        file->n_comb = (file->Z1_max - file->Z1_min + 1); /* Any Z2, some Z1 range */
+        return;
+    }
+    file->n_comb = (file->Z1_max - file->Z1_min + 1) * (file->Z2_max - file->Z2_min + 1); /* Z1 and Z2 range */
+}
 
-
-int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
+int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) {
     char *line;
     char *line_split;
     char *columns[3];
@@ -452,27 +492,43 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
                 break;
             case GSTO_HEADER_STOUNIT:
                 file->stounit = gsto_get_header_value(gsto_sto_units, columns[1]);
+                file->stounit_original = file->stounit;
+                break;
+            case GSTO_HEADER_STRAGGUNIT:
+                file->straggunit = gsto_get_header_value(gsto_stragg_units, columns[1]);
+                file->straggunit_original = file->straggunit;
                 break;
             case GSTO_HEADER_XSCALE:
                 file->xscale = gsto_get_header_value(gsto_xscales, columns[1]);
                 break;
             case GSTO_HEADER_XUNIT:
                 file->xunit = gsto_get_header_value(gsto_xunits, columns[1]);
+                file->xunit_original = file->xunit;
                 break;
             case GSTO_HEADER_XPOINTS:
                 file->xpoints = strtol(columns[1], NULL, 10);
                 break;
             case GSTO_HEADER_XMIN:
                 file->xmin = strtod(columns[1], NULL);
+                file->xmin_original = file->xmin;
                 break;
             case GSTO_HEADER_XMAX:
                 file->xmax = strtod(columns[1], NULL);
+                file->xmax_original = file->xmax;
+                break;
+            case GSTO_HEADER_Z1:
+                file->Z1_min = strtol(columns[1], NULL, 10);
+                file->Z1_max = file->Z1_min;
                 break;
             case GSTO_HEADER_Z1MIN:
                 file->Z1_min = strtol(columns[1], NULL, 10);
                 break;
             case GSTO_HEADER_Z1MAX:
                 file->Z1_max = strtol(columns[1], NULL, 10);
+                break;
+            case GSTO_HEADER_Z2:
+                file->Z2_min = strtol(columns[1], NULL, 10);
+                file->Z2_max = file->Z2_min;
                 break;
             case GSTO_HEADER_Z2MIN:
                 file->Z2_min = strtol(columns[1], NULL, 10);
@@ -487,7 +543,12 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
                 break;
         }
     } /* End of headers */
-    file->n_comb = (file->Z1_max - file->Z1_min + 1) * (file->Z2_max - file->Z2_min + 1);
+    free(line);
+    jibal_gsto_file_calculate_ncombs(file);
+    if(headers_only) {
+        fclose(file->fp);
+        return 1;
+    }
     if(file->data) {
         free(file->data);
     }
@@ -530,14 +591,15 @@ int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file) {
     switch (file->data_format) {
         case GSTO_DF_DOUBLE:
             jibal_gsto_load_binary_file(workspace, file);
+            file->stounit = GSTO_STO_UNIT_JM2;
             break;
         case GSTO_DF_ASCII:
         default:
             jibal_gsto_load_ascii_file(workspace, file);
+            file->stounit = GSTO_STO_UNIT_JM2;
             break;
     }
     fclose(file->fp);
-    free(line);
     return 1;
 }
 
@@ -546,12 +608,12 @@ int jibal_gsto_load_all(jibal_gsto *workspace) { /* For every file, load combina
     int n_success=0;
     for(i=0; i < workspace->n_files; i++) {
         gsto_file_t *file = &workspace->files[i];
-        n_success += jibal_gsto_load(workspace, file);
+        n_success += jibal_gsto_load(workspace, FALSE, file);
     }
     return n_success;
 }
 
-int jibal_gsto_print_files(jibal_gsto *workspace) {
+int jibal_gsto_print_files(jibal_element *elements, jibal_gsto *workspace) {
     int i, Z1, Z2;
     int assignments;
     gsto_file_t *file;
@@ -568,18 +630,43 @@ int jibal_gsto_print_files(jibal_gsto *workspace) {
             }        
         }
         fprintf(stderr, "%i: %s,\n", i+1, file->name);
+        fprintf(stderr, "\ttype: %s\n", gsto_get_header_string(gsto_stopping_types, file->type));
         fprintf(stderr, "\tfilename: %s\n", file->filename);
         if(file->source) {
             fprintf(stderr, "\tdata source: %s\n", file->source);
         }
-        fprintf(stderr, "\t%i assignments,\n", assignments);
-        fprintf(stderr, "\t%i <= Z1 <= %i,\n", file->Z1_min, file->Z1_max);
-        fprintf(stderr, "\t%i <= Z2 <= %i,\n", file->Z2_min, file->Z2_max);
-        fprintf(stderr, "\tx-points=%i, x-scale=%s, x-unit=%s,\n", file->xpoints,
-                gsto_get_header_string(gsto_xscales, file->xscale),
-                gsto_get_header_string(gsto_xunits, file->xunit));
-        fprintf(stderr, "\tstopping unit=%s, format=%s\n", gsto_get_header_string(gsto_sto_units, file->stounit),
-                gsto_get_header_string(gsto_data_formats, file->data_format));
+        if(assignments) {
+            fprintf(stderr, "\t%i assignments,\n", assignments);
+        }
+        if(file->Z1_min == file->Z1_max) {
+            fprintf(stderr, "\tZ1 = %i (%s)\n", file->Z1_min, jibal_element_name(elements, file->Z1_min));
+        } else {
+            fprintf(stderr, "\t%i (%s) <= Z1 <= %i (%s),\n", file->Z1_min, jibal_element_name(elements, file->Z1_min),
+                    file->Z1_max, jibal_element_name(elements, file->Z1_max));
+        }
+        if(file->Z2_min == file->Z2_max) {
+            fprintf(stderr, "\tZ2 = %i (%s)\n", file->Z2_min, jibal_element_name(elements, file->Z2_min));
+        } else {
+            fprintf(stderr, "\t%i (%s) <= Z2 <= %i (%s),\n", file->Z2_min, jibal_element_name(elements, file->Z2_min),
+                    file->Z2_max, jibal_element_name(elements, file->Z2_max));
+        }
+        fprintf(stderr, "\tx-points=%i\n", file->xpoints);
+        fprintf(stderr, "\tx-scale=%s\n", gsto_get_header_string(gsto_xscales, file->xscale));
+        if(file->xunit == file->xunit_original) {
+            fprintf(stderr, "\tx-unit=%s\n", gsto_get_header_string(gsto_xunits, file->xunit_original));
+        } else {
+            fprintf(stderr, "\tx-unit=%s (converted to %s)\n", gsto_get_header_string(gsto_xunits, file->xunit_original),
+                    gsto_get_header_string(gsto_xunits, file->xunit));
+
+        }
+        if(file->stounit == file->stounit_original) {
+            fprintf(stderr, "\tstopping unit=%s\n", gsto_get_header_string(gsto_sto_units, file->stounit_original));
+        } else {
+            fprintf(stderr, "\tstopping unit=%s (converted to %s)\n",
+                    gsto_get_header_string(gsto_sto_units, file->stounit_original),
+                    gsto_get_header_string(gsto_sto_units, file->stounit));
+        }
+        fprintf(stderr, "\tformat=%s\n", gsto_get_header_string(gsto_data_formats, file->data_format));
     }
     return 1;
 }

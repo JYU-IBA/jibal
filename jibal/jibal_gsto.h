@@ -2,6 +2,7 @@
 #define _JIBAL_GSTO_H_
 
 #include <stdio.h>
+#include <jibal_masses.h>
 
 #define GSTO_MAX_LINE_LEN 1024
 #define GSTO_END_OF_HEADERS "==END-OF-HEADER=="
@@ -15,14 +16,16 @@ typedef enum {
     GSTO_STO_NONE=0,
     GSTO_STO_NUCL=1,
     GSTO_STO_ELE=2,
-    GSTO_STO_TOT=3
-} gsto_stopping_type;
+    GSTO_STO_TOT=3,
+    GSTO_STO_STRAGG=4
+} gsto_stopping_type; /* TODO: rename */
 
-static const gsto_header gsto_stopping_types[] = {
+static const gsto_header gsto_stopping_types[] = {/* TODO: rename */
         {"none", GSTO_STO_NONE},
         {"nuclear", GSTO_STO_NUCL},
         {"electronic", GSTO_STO_ELE},
         {"total", GSTO_STO_TOT},
+        {"stragg", GSTO_STO_STRAGG},
         {NULL, 0}
 };
 
@@ -36,6 +39,17 @@ static const gsto_header gsto_sto_units[] = {
         {"none", GSTO_STO_UNIT_NONE},
         {"eV/(1e15 atoms/cm2)", GSTO_STO_UNIT_EV15CM2},
         {"Jm2", GSTO_STO_UNIT_JM2},
+        {NULL, 0}
+};
+
+typedef enum {
+    GSTO_STRAGG_UNIT_NONE=0,
+    GSTO_STRAGG_UNIT_BOHR=1
+} gsto_straggunit;
+
+static const gsto_header gsto_stragg_units[] = {
+        {"none", GSTO_STO_UNIT_NONE},
+        {"bohr", GSTO_STRAGG_UNIT_BOHR},
         {NULL, 0}
 };
 
@@ -86,30 +100,36 @@ static const gsto_header gsto_xunits[] = {
 
 typedef enum {
     GSTO_HEADER_NONE=0,
-    GSTO_HEADER_SOURCE=1,
-    GSTO_HEADER_Z1MIN=2,
-    GSTO_HEADER_Z1MAX=3,
-    GSTO_HEADER_Z2MIN=4,
-    GSTO_HEADER_Z2MAX=5,
-    GSTO_HEADER_STOUNIT=6,
-    GSTO_HEADER_XUNIT=7,
-    GSTO_HEADER_FORMAT=8,
-    GSTO_HEADER_XMIN=9,
-    GSTO_HEADER_XMAX=10,
-    GSTO_HEADER_XPOINTS=11,
-    GSTO_HEADER_XSCALE=12
+    GSTO_HEADER_TYPE=1,
+    GSTO_HEADER_SOURCE=2,
+    GSTO_HEADER_Z1=3,
+    GSTO_HEADER_Z1MIN=4,
+    GSTO_HEADER_Z1MAX=5,
+    GSTO_HEADER_Z2=6,
+    GSTO_HEADER_Z2MIN=7,
+    GSTO_HEADER_Z2MAX=8,
+    GSTO_HEADER_STOUNIT=9,
+    GSTO_HEADER_STRAGGUNIT=10,
+    GSTO_HEADER_XUNIT=11,
+    GSTO_HEADER_FORMAT=12,
+    GSTO_HEADER_XMIN=13,
+    GSTO_HEADER_XMAX=14,
+    GSTO_HEADER_XPOINTS=15,
+    GSTO_HEADER_XSCALE=16
 } gsto_header_type;
-#define GSTO_N_HEADER_TYPES 13 /* Note that this must be equal to the number of ints in the enum above and especially
- * the number of elements in the following array. This constant is here just because of laziness. */
 
 static const gsto_header gsto_headers[] = {
         {"      ", GSTO_HEADER_NONE},
+        {"type", GSTO_HEADER_TYPE},
         {"source", GSTO_HEADER_SOURCE},
+        {"z1", GSTO_HEADER_Z1},
         {"z1-min", GSTO_HEADER_Z1MIN},
         {"z1-max", GSTO_HEADER_Z1MAX},
+        {"z2", GSTO_HEADER_Z2},
         {"z2-min", GSTO_HEADER_Z2MIN},
         {"z2-max", GSTO_HEADER_Z2MAX},
         {"sto-unit", GSTO_HEADER_STOUNIT},
+        {"stragg-unit", GSTO_HEADER_STRAGGUNIT},
         {"x-unit", GSTO_HEADER_XUNIT},
         {"format", GSTO_HEADER_FORMAT},
         {"x-min", GSTO_HEADER_XMIN},
@@ -128,16 +148,22 @@ typedef struct {
     int Z2_max;
     int n_comb;
     int xpoints; /* How many points of stopping per Z1, Z2 combination */
-    double xmin; /* The first point of stopping corresponds to x=xmin. N.B.: in units of the file, not converted to SI*/
-    double xmax; /* The last point of stopping corresponds to x=xmax */
+    double xmin; /* The first point of stopping corresponds to x=xmin. In units of xunit.*/
+    double xmin_original; /* xmin as read from file */
+    double xmax; /* The last point of stopping corresponds to x=xmax. In units of xunit. */
+    double xmax_original; /* xmax as read from file */
     double xmin_speedup; /* xmin or log10(xmin) */
     double xdiv; /* speedup variable, calculated from xpoints, xmin and xmax */
     double *em; /* Array of energy/mass (size: xpoints). In SI units! */
     int em_index_accel; /* Store the energy/mass bin (of the array above) that was last found in an attempt to
  * accelerate successive seeks */
     gsto_stopping_xscale xscale; /* The scale specifies how stopping points are spread between min and max (linear, log...) */
-    gsto_xunit xunit; /* Stopping as a function of what? */
+    gsto_xunit xunit; /* Stopping as a function of what? Can be converted (to SI) or not! */
+    gsto_xunit xunit_original; /* As it was read. */
     gsto_stounit stounit; /* Stopping unit */
+    gsto_stounit stounit_original;
+    gsto_stounit straggunit; /* Straggling unit */
+    gsto_stounit straggunit_original;
     gsto_stopping_type type; /* does this file contain nuclear, electronic or total stopping? TODO: only electronic
  * makes sense, remove others */
     gsto_data_format data_format; /* What does the data look like (after headers) */
@@ -176,13 +202,13 @@ int jibal_gsto_assign_material(jibal_gsto *workspace, const jibal_isotope *incid
         gsto_file_t *file);
 int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2);
 int jibal_gsto_auto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target);
-int jibal_gsto_print_files(jibal_gsto *workspace);
+int jibal_gsto_print_files(jibal_element *elements, jibal_gsto *workspace);
 int jibal_gsto_print_assignments(jibal_gsto *workspace);
 const char *jibal_gsto_file_source(gsto_file_t *file);
 void jibal_gsto_file_free(gsto_file_t *file);
 void jibal_gsto_free(jibal_gsto *workspace);
 
-int jibal_gsto_load(jibal_gsto *workspace, gsto_file_t *file);
+int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file);
 int jibal_gsto_load_all(jibal_gsto *workspace);
 
 double jibal_stop(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E);
@@ -203,6 +229,7 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, gsto_data_format 
 
 int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2);
 const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2);
+void jibal_gsto_file_calculate_ncombs(gsto_file_t *file);
 double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2);
 gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, int Z1, int Z2);
 gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name);
