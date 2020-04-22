@@ -50,8 +50,11 @@ int main(int argc, char **argv) {
     }
     experiment exp;
     jibal jibal=jibal_init(NULL);
-    if(!jibal.gsto)
+    if(jibal.error) {
+        fprintf(stderr, "Initializing JIBAL failed with error code: %i (%s)\n", jibal.error,
+                jibal_error_string(jibal.error));
         return EXIT_FAILURE;
+    }
     exp.incident=jibal_isotope_find(jibal.isotopes, argv[1], 0,0 );
     if(!exp.incident) {
         fprintf(stderr, "No such isotope: %s\n", argv[1]);

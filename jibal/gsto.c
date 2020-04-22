@@ -196,8 +196,9 @@ void jibal_gsto_fprint_header_scientific(FILE *f, gsto_header_type h, double val
 void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, void *val) { /* Value is interpreted based on
  * header to be int, double or char *. In the last case void * is char **!. */
     char type;
-    if(h >= GSTO_N_HEADER_TYPES) {
-        fprintf(stderr, "GSTO Error: %i is not v valid header type. This shouldn't happen, check GSTO_N_HEADER_TYPES\n", h);
+    int n = gsto_header_n(gsto_headers);
+    if(h >= n) {
+        fprintf(stderr, "GSTO Error: %i is not v valid header type. This shouldn't happen.\n", h);
         return;
     }
     const char *header=gsto_headers[h].s;

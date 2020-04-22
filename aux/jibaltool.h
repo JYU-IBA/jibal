@@ -9,6 +9,7 @@
 typedef  struct {
     jibal jibal;
     int Z;
+    int verbose;
     char *config_filename;
     char *outfilename;
     char *stopfile;

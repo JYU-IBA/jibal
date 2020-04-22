@@ -94,7 +94,7 @@ int jibal_abundances_load(jibal_isotope *isotopes, const char *filename) {
     FILE *in_file=fopen(filename, "r");
     if(!in_file) {
         fprintf(stderr, "Could not load isotope abundances table from file %s\n", filename);
-        return 0;
+        return -1;
     }
     char line[JIBAL_LINE_LENGTH];
     for(n=0; fgets(line, JIBAL_LINE_LENGTH, in_file) != NULL; n++) {

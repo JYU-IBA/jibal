@@ -20,9 +20,15 @@
 #include <jibal.h>
 #include <jibal_kin.h>
 #include <jibal_cross_section.h>
+#include <stdlib.h>
 
 int main(int argc, char **argv) {
     jibal jibal = jibal_init(NULL);
+    if(jibal.error) {
+        fprintf(stderr, "Initializing JIBAL failed with error code: %i (%s)\n", jibal.error,
+                jibal_error_string(jibal.error));
+        return EXIT_FAILURE;
+    }
     if(argc<=4) {
         return -1;
 
@@ -48,5 +54,5 @@ int main(int argc, char **argv) {
     fprintf(stderr, "E_erd = %g keV\n", E_erd/C_KEV);
     fprintf(stderr, "ERD cross section = %g mb/sr\n", cs_erd/C_MB_SR);
     fprintf(stderr, "RBS cross section = %g mb/sr\n", cs_rbs/C_MB_SR);
-    return 0;
+    return EXIT_SUCCESS;
 }

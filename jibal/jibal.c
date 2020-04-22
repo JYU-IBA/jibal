@@ -7,18 +7,37 @@
 
 jibal jibal_init(const char *config_filename) {
     jibal jibal;
+    jibal.error = JIBAL_ERROR_NONE;
     jibal.units=jibal_units_default();
+    if(!jibal.units) {
+        jibal.error = JIBAL_ERROR_UNITS;
+        return jibal;
+    }
     jibal.config=jibal_config_init(jibal.units, config_filename);
+    if(jibal.config.error) {
+        jibal.error = JIBAL_ERROR_CONFIG;
+        return jibal;
+    }
     jibal.isotopes=jibal_isotopes_load(jibal.config.masses_file);
     if(!jibal.isotopes) {
         fprintf(stderr, "Could not load isotope table from file %s.\n", jibal.config.masses_file);
+        jibal.error = JIBAL_ERROR_MASSES;
         return jibal;
     }
-    jibal_abundances_load(jibal.isotopes, jibal.config.abundances_file);
+    if(jibal_abundances_load(jibal.isotopes, jibal.config.abundances_file) < 0) {
+        jibal.error = JIBAL_ERROR_ABUNDANCES;
+        return jibal;
+    }
     jibal.elements=jibal_elements_populate(jibal.isotopes);
+    if(!jibal.elements) {
+        jibal.error = JIBAL_ERROR_ELEMENTS;
+        return jibal;
+    }
     jibal.gsto=jibal_gsto_init(jibal.config.Z_max, jibal.config.datadir, jibal.config.stoppings_file);
     if(!jibal.gsto) {
         fprintf(stderr, "Could not initialize GSTO.\n");
+        jibal.error = JIBAL_ERROR_GSTO;
+        return jibal;
     }
     jibal.gsto->extrapolate = jibal.config.extrapolate;
     return jibal;
@@ -207,12 +226,11 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
 }
 
 jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
-    jibal_config config = {.Z_max = JIBAL_MAX_Z, .extrapolate = FALSE};
+    jibal_config config = {.Z_max = JIBAL_MAX_Z, .extrapolate = FALSE, .error = 0};
     const char *c;
     const char *config_dir;
     const char *config_subdir;
     unsigned int attempt=1;
-    int error=0;
     /* Lets look for a configuration file!
      * 1. It is given to us explicitly, or we look for JIBAL_CONFIG_FILE (= jibal.conf) in the following places:
      * 2. Environmental variable (JIBAL_CONFIG_DIR)
@@ -224,7 +242,7 @@ jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
      * It is possible to read another file using jibal_config_file_read()
      * */
     if(filename) {
-        error=jibal_config_file_read(units, &config, filename);
+        config.error=jibal_config_file_read(units, &config, filename);
     } else {
         char *filename_attempt=NULL;
         while (!filename_attempt && attempt) { /* Loop until somebody sets attempt = 0 (no success) or filename candidate is
@@ -258,7 +276,7 @@ jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
             attempt++;
         }
         if(filename_attempt) {
-            error = jibal_config_file_read(units, &config, filename_attempt);
+            config.error = jibal_config_file_read(units, &config, filename_attempt);
             free(filename_attempt);
         }
     }
@@ -281,6 +299,27 @@ jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
         asprintf(&config.stoppings_file, "%s/%s", config.datadir, JIBAL_STOPPINGS_FILE);
     }
     return config; /* Note: configuration is not validated in any way! */
+}
+
+const char *jibal_error_string(jibal_error err) {
+    switch(err) {
+        case JIBAL_ERROR_NONE:
+            return "ERROR_NONE";
+        case JIBAL_ERROR_CONFIG:
+            return "ERROR_CONFIG";
+        case JIBAL_ERROR_UNITS:
+            return "ERROR_UNITS";
+        case JIBAL_ERROR_MASSES:
+            return "ERROR_MASSES";
+        case JIBAL_ERROR_ABUNDANCES:
+            return "ERROR_ABUNDANCES";
+        case JIBAL_ERROR_ELEMENTS:
+            return "ERROR_ELEMENTS";
+        case JIBAL_ERROR_GSTO:
+            return "ERROR_GSTO";
+        default:
+            return "ERROR_UNKNOWN";
+    }
 }
 
 void jibal_config_free(jibal_config *config) {

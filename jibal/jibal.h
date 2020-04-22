@@ -24,7 +24,18 @@
 #include <jibal_material.h>
 #include <jibal_gsto.h>
 
+typedef enum {
+    JIBAL_ERROR_NONE = 0,
+    JIBAL_ERROR_CONFIG = 1,
+    JIBAL_ERROR_UNITS = 2,
+    JIBAL_ERROR_MASSES = 3,
+    JIBAL_ERROR_ABUNDANCES = 4,
+    JIBAL_ERROR_ELEMENTS = 5,
+    JIBAL_ERROR_GSTO = 6
+} jibal_error;
+
 typedef struct {
+    int error;
     char *datadir;
     char *masses_file;
     char *abundances_file;
@@ -34,6 +45,7 @@ typedef struct {
 } jibal_config; /* Some internal configuration (environment etc) */
 
 typedef struct {
+    jibal_error error;
     jibal_units *units;
     jibal_isotope *isotopes;
     jibal_element *elements;
@@ -63,6 +75,7 @@ void jibal_free(jibal *jibal);
 jibal_config jibal_config_init(const jibal_units *units, const char *filename);
 int jibal_config_file_read(const jibal_units *units, jibal_config *config, const char *filename);
 int jibal_config_file_write(jibal_config *config, FILE *file);
+const char *jibal_error_string(jibal_error err);
 void jibal_config_free();
 
 

@@ -47,7 +47,8 @@ void jibaltool_close_output(FILE *out) {
 void read_options(jibaltool_global *global, int *argc, char ***argv) {
     static struct option long_options[] = {
             {"help",        no_argument,        NULL, 'h'},
-            {"version",     no_argument,        NULL, 'v'},
+            {"version",     no_argument,        NULL, 'V'},
+            {"verbose",     optional_argument,  NULL, 'v'},
             {"nop",         no_argument,        NULL, 'n'},
             {"out",         required_argument,  NULL, 'o'},
             {"stopfile",    required_argument,  NULL, 's'},
@@ -81,10 +82,15 @@ void read_options(jibaltool_global *global, int *argc, char ***argv) {
             case 's':
                 global->stopfile=strdup(optarg);
                 break;
-            case 'v':
+            case 'V':
                 printf("%s\n", jibal_VERSION);
                 exit(EXIT_SUCCESS);
                 break; /* Unnecessary */
+            case 'v':
+                if(optarg)
+                    global->verbose = atoi(optarg);
+                else
+                    global->verbose++;
             case 'F':
                 global->format=strdup(optarg);
                 break;
@@ -256,7 +262,7 @@ void print_commands(FILE *f, const struct command *commands) {
 }
 
 int main(int argc, char **argv) {
-    jibaltool_global global = {.Z=0, .outfilename=NULL, .stopfile=NULL, .format=NULL};
+    jibaltool_global global = {.Z=0, .outfilename=NULL, .stopfile=NULL, .format=NULL, .verbose=0};
     read_options(&global, &argc, &argv);
     static const struct command commands[] = {
             {"extract_stop", &extract_stop, "Extract stopping (e.g. He in Si or a range) in GSTO"
@@ -276,8 +282,9 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
     global.jibal = jibal_init(global.config_filename);
-    if(!global.jibal.gsto || !global.jibal.isotopes) {
-        fprintf(stderr, "Initializing JIBAL failed\n");
+    if(global.jibal.error) {
+        fprintf(stderr, "Initializing JIBAL failed with error code: %i (%s)\n", global.jibal.error,
+                jibal_error_string(global.jibal.error));
         return EXIT_FAILURE;
     }
     const struct command *c;
