@@ -458,7 +458,6 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
     char *line_split;
     char *columns[3];
     char **col;
-    int header = 0;
     if (!file) {
         return 0;
     }
@@ -483,9 +482,10 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
             if (**col != '\0')
                 if (++col >= &columns[3])
                     break;
-
-        header = gsto_get_header_value(gsto_headers, columns[0]);
-        switch (header) {
+        switch (gsto_get_header_value(gsto_headers, columns[0])) {
+            case GSTO_HEADER_TYPE:
+                file->type = gsto_get_header_value(gsto_stopping_types, columns[1]);
+                break;
             case GSTO_HEADER_SOURCE:
                 file->source = strdup(columns[1]);
                 break;
