@@ -1,4 +1,4 @@
-/* 
+/*
     Copyright (C) 2013-2020 Jaakko Julin <jaakko.julin@jyu.fi>
     See file LICENCE for a copy of the GNU General Public Licence
 */
@@ -74,7 +74,7 @@ int generate_sr_in(char *out_filename, int Z1, int Z2, int xsteps, double xmin, 
 int run_srim(char *sr_module_path) {
     int result;
     result=system(sr_module_path);
-    if(result==-1 || result==127) 
+    if(result==-1 || result==127)
         return 0;
     return 1;
 }
@@ -145,11 +145,11 @@ void remove_newline(char *s) {
 int main (int argc, char **argv) {
     int Z1, Z2, i;
     double xmin=10.0; /* keV/amu */
-    double xmax=10000.0; 
+    double xmax=10000.0;
     int xsteps=XSTEPS; /* steps numbered 0, 1, 2, ...., vsteps-1 */
     int z1_min=1;
     int z2_min=1;
-    int z1_max=Z_MAX; 
+    int z1_max=Z_MAX;
     int z2_max=Z_MAX;
     int n_combinations;
     FILE *stopping_output_file;
@@ -202,10 +202,10 @@ int main (int argc, char **argv) {
     fgets(input, 1000, stdin);
     z2_max=strtol(input, NULL, 10);
     n_combinations = (z1_max-z1_min+1)*(z2_max-z2_min+1);
-    fprintf(stopping_output_file, "source=srim\nz1-min=%i\nz1-max=%i\nz2-min=%i\nz2-max=%i\n"
+    fprintf(stopping_output_file, "type=electronic\nsource=SRIM\nz1-min=%i\nz1-max=%i\nz2-min=%i\nz2-max=%i\n"
                                   "sto-unit=eV/(1e15 atoms/cm2)\nx-unit=keV/u\nformat=ascii\n"
-                                  "x-min=%e\nx-max=%e\nx-points=%i\nx-scale=log10\n"
-                                  "==END-OF-HEADER==\n", z1_min, z1_max, z2_min, z2_max, xmin, xmax, xsteps);
+                                  "x-min=%e\nx-max=%e\nx-points=%i\nx-scale=log10\n\n",
+                                  z1_min, z1_max, z2_min, z2_max, xmin, xmax, xsteps);
     i=0;
     fprintf(stderr, "\n");
     for(Z1=z1_min; Z1<=z1_max; Z1++) {

@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
     int Z1, Z2, i;
     double E_min=f.E[0];
     double E_max=f.E[f.n_points-1];
-    //fprintf(stderr, "E_min=%g MeV/u\nE_max=%g MeV/u\n", E_min, E_max);
+    fprintf(file_out, "type=electronic\n");
     fprintf(file_out, "source=DPASS\n"); /* TODO: version? */
     fprintf(file_out, "z1-min=%i\n", 1);
     fprintf(file_out, "z1-max=%i\n", Z_MAX);
@@ -161,8 +161,7 @@ int main(int argc, char **argv) {
     fprintf(file_out, "x-max=%e\n", E_max);
     fprintf(file_out, "x-points=%i\n", f.n_points);
     fprintf(file_out, "x-scale=log10\n");
-    fprintf(file_out, "==END-OF-HEADER==\n");
-    fprintf(stderr, "E/n, %i values\n", f.n_points);
+    fprintf(file_out, "\n");
     for(i=0; i < f.n_points; i++) {
         double E_read=f.E[i];
         double E_predicted=E_min*pow(E_max/E_min,1.0*i/(f.n_points-1));
