@@ -181,8 +181,9 @@ typedef struct {
     int n_files;
     int n_comb;
     gsto_file_t *files; /* table of gsto_file_t. Note: not a table of pointers. */
-    gsto_file_t **assignments; /* array of n_comb gsto_file_t pointers. For each Z1 and Z2 combination there can be a
- * file assigned. Access with functions. */
+    gsto_file_t **stop_assignments; /* array of n_comb gsto_file_t pointers. For each Z1 and Z2 combination there can
+ * be a file assigned. Access with functions. */
+    gsto_file_t **stragg_assignments;
     double stop_step; /* as stopping cross section */
     int extrapolate; /* boolean */
 } jibal_gsto;
@@ -232,14 +233,15 @@ int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2);
 const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2);
 void jibal_gsto_file_calculate_ncombs(gsto_file_t *file);
 double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2);
-gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, int Z1, int Z2);
+gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2);
 gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name);
 
 int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2);
 double jibal_gsto_em_from_file_units(double x, const gsto_file_t *file);
 double *jibal_gsto_em_table(const gsto_file_t *file);
 int jibal_gsto_velocity_to_index(const gsto_file_t *file, double v);
-double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y); /* to SI units */
+double jibal_gsto_scale_y_to_internal(const gsto_file_t *file, double y); /* to SI units (stopping), ratio to Bohr
+ * (straggling) */
 double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v);
 double jibal_gsto_stop_em(jibal_gsto *workspace, int Z1, int Z2, double Em);
 double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, double m2);

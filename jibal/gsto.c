@@ -71,14 +71,15 @@ int gsto_add_file(jibal_gsto *table, const char *name, const char *filename) {
 }
 
 jibal_gsto *gsto_allocate(int Z1_max, int Z2_max) {
-    jibal_gsto *table = malloc(sizeof(jibal_gsto));
-    table->Z1_max=Z1_max;
-    table->Z2_max=Z2_max;
-    table->n_files=0;
-    table->files=NULL; /* These will be allocated by gsto_new_file */
-    table->n_comb=Z1_max*Z2_max; /* From 1..Z1_max inclusive and from 1..Z2_max inclusive */
-    table->assignments = calloc(table->n_comb, sizeof(gsto_file_t *));
-    return table;
+    jibal_gsto *workspace = malloc(sizeof(jibal_gsto));
+    workspace->Z1_max=Z1_max;
+    workspace->Z2_max=Z2_max;
+    workspace->n_files=0;
+    workspace->files=NULL; /* These will be allocated by gsto_new_file */
+    workspace->n_comb=Z1_max*Z2_max; /* From 1..Z1_max inclusive and from 1..Z2_max inclusive */
+    workspace->stop_assignments = calloc(workspace->n_comb, sizeof(gsto_file_t *));
+    workspace->stragg_assignments = calloc(workspace->n_comb, sizeof(gsto_file_t *));
+    return workspace;
 }
 
 const char *jibal_gsto_file_source(gsto_file_t *file) {
@@ -114,19 +115,28 @@ void jibal_gsto_free(jibal_gsto *workspace) {
         }
         free(workspace->files);
     }
-    free(workspace->assignments);
+    free(workspace->stop_assignments);
+    free(workspace->stragg_assignments);
 }
 
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file) { /* Used internally, can be used after init to override autoinit */
-    if (Z1 < file->Z1_min || Z1 > file->Z1_max || Z2 < file->Z2_min || Z2 > file->Z2_max) {
-        return 0; /* Fail */
+    if(file->Z1_min != JIBAL_ANY_Z && (Z1 < file->Z1_min || Z1 > file->Z1_max)) {
+        return 0; /* Z1 out of range of the file */
+    }
+    if(file->Z2_min != JIBAL_ANY_Z && (Z2 < file->Z2_min || Z1 > file->Z2_max)) {
+        return 0; /* Z1 out of range of the file */
     }
     if(Z1 > workspace->Z1_max || Z2 > workspace->Z2_max) {
-        return 0;
+        return 0; /* Z1 or Z2 out of range of our workspace */
     }
     int i=jibal_gsto_table_get_index(workspace, Z1, Z2);
     assert(i >= 0 && i <= workspace->n_comb);
-    workspace->assignments[jibal_gsto_table_get_index(workspace, Z1, Z2)]=file;
+    if(file->type == GSTO_STO_ELE) {
+        workspace->stop_assignments[jibal_gsto_table_get_index(workspace, Z1, Z2)] = file;
+    }
+    if(file->type == GSTO_STO_STRAGG) {
+        workspace->stragg_assignments[jibal_gsto_table_get_index(workspace, Z1, Z2)] = file;
+    }
     return 1; /* Success */
 }
 
@@ -150,7 +160,7 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
 #endif
     for (Z1=file->Z1_min; Z1<=file->Z1_max; Z1++) {
         for (Z2=file->Z2_min; Z2<=file->Z2_max; Z2++) {
-            if (file == jibal_gsto_get_assigned_file(workspace, Z1, Z2)) {
+            if (file == jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2)) { /* OK */
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
                 size_t n = fread(data, sizeof(double), file->xpoints, file->fp);
                 if(n != file->xpoints) {
@@ -159,7 +169,7 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
                 }
                 int i;
                 for(i=0; i<file->xpoints; i++) {
-                    data[i] = jibal_gsto_scale_y_to_stopping(file, data[i]);
+                    data[i] = jibal_gsto_scale_y_to_internal(file, data[i]);
                 }
             } else {
                 if(fseek(file->fp, sizeof(double)*file->xpoints, SEEK_CUR)) {
@@ -392,7 +402,8 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
     
     for (Z1=file->Z1_min; Z1 <= file->Z1_max && Z1 <= workspace->Z1_max; Z1++) {
         for (Z2=file->Z2_min; Z2 <= file->Z2_max && Z2 <= workspace->Z2_max; Z2++) {
-            if (file == jibal_gsto_get_assigned_file(workspace, Z1, Z2)) { /* This file is assigned to this Z1, Z2 combination, so we have to load the stopping in. */
+            if (file == jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2)) { /* This file is assigned to
+ * this Z1, Z2 combination, so we have to load the stopping in. */
                 skip=file->xpoints*((Z1-previous_Z1)*(file->Z2_max-file->Z2_min+1)+(Z2-previous_Z2-1)); /* Not sure if correct, but it works. */
 #ifdef DEBUG
                 fprintf(stderr, "Skipping %i*(%i*%i+%i)=%i lines.\n", file->xpoints, Z1-previous_Z1, file->Z1_max-file->Z2_min+1, Z2-previous_Z2-1, skip);
@@ -430,7 +441,7 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
 #ifdef DEBUG
                         fprintf(stderr, "Loaded stopping [%i][%i][%i] from line %i.\n", Z1, Z2, i, file->lineno);
 #endif
-                        data[i] = jibal_gsto_scale_y_to_stopping(file, strtod(line, NULL));
+                        data[i] = jibal_gsto_scale_y_to_internal(file, strtod(line, NULL));
                     }
                 }
                 previous_Z1=Z1;
@@ -642,14 +653,14 @@ int jibal_gsto_print_files(jibal_element *elements, jibal_gsto *workspace) {
     int i, Z1, Z2;
     int assignments;
     gsto_file_t *file;
-    fprintf(stderr, "List of available stopping files:\n");
+    fprintf(stderr, "List of available GSTO files:\n");
     
     for(i=0; i < workspace->n_files; i++) {
         assignments=0;
         file=&workspace->files[i];
         for (Z1=1; Z1 <= workspace->Z1_max; Z1++) {
             for (Z2=1; Z2 <= workspace->Z2_max; Z2++) {
-                if(jibal_gsto_get_assigned_file(workspace, Z1, Z2) == file) {
+                if(jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2) == file) { /* OK */
                     assignments++;
                 }
             }        
@@ -698,10 +709,10 @@ int jibal_gsto_print_files(jibal_element *elements, jibal_gsto *workspace) {
 
 int jibal_gsto_print_assignments(jibal_gsto *workspace) {
     int Z1, Z2;
-    fprintf(stderr, "LIST OF ASSIGNED STOPPING FILES FOLLOWS\n=====\n");
+    fprintf(stderr, "List of assigned electronic stopping files:\n=====\n");
     for (Z1=1; Z1 <= workspace->Z1_max; Z1++) {
         for (Z2=1; Z2 <= workspace->Z2_max; Z2++) {
-            gsto_file_t *file= jibal_gsto_get_assigned_file(workspace, Z1, Z2);
+            gsto_file_t *file= jibal_gsto_get_assigned_file(workspace, GSTO_STO_ELE, Z1, Z2);
             if(file) {
                 fprintf(stderr, "Stopping for Z1=%i in Z2=%i assigned to file %s.\n", Z1, Z2, file->name);
             } else {
@@ -711,7 +722,7 @@ int jibal_gsto_print_assignments(jibal_gsto *workspace) {
             }
         }        
     }
-    fprintf(stderr, "=====\n");
+    fprintf(stderr, "\n\n");
     return 1;
 }
 
@@ -818,11 +829,14 @@ double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, do
     return S;
 }
 
-gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, int Z1, int Z2) {
+gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2) {
     int i = jibal_gsto_table_get_index(workspace, Z1, Z2);
     if(i < 0)
         return NULL;
-    return workspace->assignments[i];
+    if(type == GSTO_STO_ELE)
+        return workspace->stop_assignments[i];
+    if(type == GSTO_STO_STRAGG);
+        return workspace->stragg_assignments[i];
 }
 
 gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name) {
@@ -951,21 +965,28 @@ fprintf(stderr, "lo=%i, residual=%e m/s (%.2lf%% of bin)\n", lo, v-file->vel[lo]
     return lo;
 }
 
-double jibal_gsto_scale_y_to_stopping(const gsto_file_t *file, double y) {
+double jibal_gsto_scale_y_to_internal(const gsto_file_t *file, double y) {
     switch (file->stounit) {
-        case GSTO_STO_UNIT_NONE:
-            return y;
         case GSTO_STO_UNIT_EV15CM2:
             return y*C_EV_TFU;
         case GSTO_STO_UNIT_JM2:
             return y; /* The SI unit, used internally */
+        case GSTO_STO_UNIT_NONE:
         default:
-            return y;
+            break;
     }
+    switch (file->straggunit) {
+        case GSTO_STRAGG_UNIT_BOHR:
+            return y; /* Default internal unit */
+        case GSTO_STRAGG_UNIT_NONE:
+        default:
+            break;
+    }
+    return y; /* We silently assume everything else is in our internal units. */
 }
 
 double jibal_gsto_stop_em(jibal_gsto *workspace, int Z1, int Z2, double em) {
-    gsto_file_t *file= jibal_gsto_get_assigned_file(workspace, Z1, Z2);
+    gsto_file_t *file= jibal_gsto_get_assigned_file(workspace, GSTO_STO_ELE, Z1, Z2); /* TODO: stragg? */
     if(!file) {
         return nan(NULL);
     }

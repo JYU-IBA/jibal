@@ -218,7 +218,7 @@ int extract_stop(jibaltool_global *global, int argc, char **argv) {
     return 0;
 }
 
-int print_stopfiles(jibaltool_global *global, int argc, char **argv) {
+int print_gstofiles(jibaltool_global *global, int argc, char **argv) {
     jibal_gsto_print_files(global->jibal.elements, global->jibal.gsto);
     return 0;
 }
@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
                                             " compatible format."},
             {"extract_stop_material", &extract_stop_material, "Extract stopping from a single stopping"
                                                               " file for a given ion and material. (e.g. 4He in SiO2)"},
-            {"stopfiles", &print_stopfiles, "Print available stopping files."},
+            {"files", &print_gstofiles, "Print available GSTO files."},
             {"isotopes", &print_isotopes, "Print a list of isotopes."},
             {"elements", &print_elements, "Print a list of elements."},
             {"config", &print_config, "Print current configuration (config file)."},
