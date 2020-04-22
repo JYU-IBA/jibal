@@ -6,6 +6,7 @@
 
 #define GSTO_MAX_LINE_LEN 1024
 #define GSTO_END_OF_HEADERS "==END-OF-HEADER=="
+#define GSTO_STR_NONE "none"
 
 typedef struct {
     const char *s;
@@ -21,7 +22,7 @@ typedef enum {
 } gsto_stopping_type; /* TODO: rename */
 
 static const gsto_header gsto_stopping_types[] = {/* TODO: rename */
-        {"none", GSTO_STO_NONE},
+        {GSTO_STR_NONE, GSTO_STO_NONE},
         {"nuclear", GSTO_STO_NUCL},
         {"electronic", GSTO_STO_ELE},
         {"total", GSTO_STO_TOT},
@@ -36,7 +37,7 @@ typedef enum {
 } gsto_stounit;
 
 static const gsto_header gsto_sto_units[] = {
-        {"none", GSTO_STO_UNIT_NONE},
+        {GSTO_STR_NONE, GSTO_STO_UNIT_NONE},
         {"eV/(1e15 atoms/cm2)", GSTO_STO_UNIT_EV15CM2},
         {"Jm2", GSTO_STO_UNIT_JM2},
         {NULL, 0}
@@ -48,7 +49,7 @@ typedef enum {
 } gsto_straggunit;
 
 static const gsto_header gsto_stragg_units[] = {
-        {"none", GSTO_STO_UNIT_NONE},
+        {GSTO_STR_NONE, GSTO_STO_UNIT_NONE},
         {"bohr", GSTO_STRAGG_UNIT_BOHR},
         {NULL, 0}
 };
@@ -60,7 +61,7 @@ typedef enum {
 } gsto_data_format;
 
 static const gsto_header gsto_data_formats[] = {
-        {"none", GSTO_DF_NONE},
+        {GSTO_STR_NONE, GSTO_DF_NONE},
         {"ascii", GSTO_DF_ASCII},
         {"binary", GSTO_DF_DOUBLE},
         {NULL, 0}
@@ -74,7 +75,7 @@ typedef enum {
 } gsto_stopping_xscale;
 
 static const gsto_header gsto_xscales[] = {
-        {"none", GSTO_XSCALE_NONE},
+        {GSTO_STR_NONE, GSTO_XSCALE_NONE},
         {"linear", GSTO_XSCALE_LINEAR},
         {"log10", GSTO_XSCALE_LOG10},
         {"arb", GSTO_XSCALE_ARBITRARY},
@@ -90,7 +91,7 @@ typedef enum {
 } gsto_xunit;
 
 static const gsto_header gsto_xunits[] = {
-        {"none", GSTO_X_UNIT_NONE},
+        {GSTO_STR_NONE, GSTO_X_UNIT_NONE},
         {"m/s", GSTO_X_UNIT_M_S},
         {"keV/u", GSTO_X_UNIT_KEV_U},
         {"MeV/u", GSTO_X_UNIT_MEV_U},
@@ -119,7 +120,7 @@ typedef enum {
 } gsto_header_type;
 
 static const gsto_header gsto_headers[] = {
-        {"      ", GSTO_HEADER_NONE},
+        {GSTO_STR_NONE, GSTO_HEADER_NONE},
         {"type", GSTO_HEADER_TYPE},
         {"source", GSTO_HEADER_SOURCE},
         {"z1", GSTO_HEADER_Z1},

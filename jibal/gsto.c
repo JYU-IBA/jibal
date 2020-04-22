@@ -36,11 +36,13 @@ int gsto_get_header_value(const gsto_header *header, const char *s) {
 }
 
 const char *gsto_get_header_string(const gsto_header *header, int val) {
-    int n = gsto_header_n(header);
-    if (val >= n)
-        return "";
-    else
-        return header[val].s;
+    const gsto_header *h;
+    for(h=header; h->s; h++) {
+        if(h->val == val) {
+            return h->s;
+        }
+    }
+    return GSTO_STR_NONE;
 }
 
 int gsto_add_file(jibal_gsto *table, const char *name, const char *filename) {
