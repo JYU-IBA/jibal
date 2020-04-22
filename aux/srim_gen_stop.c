@@ -205,7 +205,7 @@ int main (int argc, char **argv) {
     fprintf(stopping_output_file, "type=electronic\nsource=SRIM\nz1-min=%i\nz1-max=%i\nz2-min=%i\nz2-max=%i\n"
                                   "sto-unit=eV/(1e15 atoms/cm2)\nx-unit=keV/u\nformat=ascii\n"
                                   "x-min=%e\nx-max=%e\nx-points=%i\nx-scale=log10\n\n",
-                                  z1_min, z1_max, z2_min, z2_max, xmin, xmax, xsteps);
+                                  z1_min, z1_max, z2_min, z2_max, xmin/(C_KEV/C_U), xmax/(C_KEV/C_U), xsteps);
     i=0;
     fprintf(stderr, "\n");
     for(Z1=z1_min; Z1<=z1_max; Z1++) {
