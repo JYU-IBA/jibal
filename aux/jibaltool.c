@@ -226,9 +226,27 @@ int print_gstofiles(jibaltool_global *global, int argc, char **argv) {
 int print_isotopes(jibaltool_global *global, int argc, char **argv) {
     jibal_isotope *isotopes=global->jibal.isotopes;
     jibal_isotope *i;
+    int Z=JIBAL_ANY_Z;
+    double threshold=0.0;
+    if(argc >= 1) {
+        jibal_element *e=jibal_element_find(global->jibal.elements, argv[0]);
+        if(e)
+            Z=e->Z;
+    }
+    if(argc >= 2) {
+        if(strcmp(argv[1], "nat")==0) {
+            threshold=ABUNDANCE_THRESHOLD;
+        } else {
+            char *le;
+            threshold=strtod(argv[1], &le);
+            if(*le == '%')
+                threshold /= 100.0;
+        }
+    }
     FILE *out=jibaltool_open_output(global);
     for(i = isotopes; i->A != 0; i++) {
-        fprintf(out, "%5s %3i %3i %3i %9.5lf %8.6lf\n", i->name, i->Z, i->N, i->A, i->mass/C_U, i->abundance);
+        if((Z == JIBAL_ANY_Z || Z == i->Z) && i->abundance >= threshold)
+            fprintf(out, "%5s %3i %3i %3i %9.5lf %8.6lf\n", i->name, i->Z, i->N, i->A, i->mass/C_U, i->abundance);
     }
     jibaltool_close_output(out);
     return 0;
