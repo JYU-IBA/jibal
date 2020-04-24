@@ -651,8 +651,8 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
     } /* End of headers */
     free(line);
     if(file->type != GSTO_STO_ELE && file->type != GSTO_STO_STRAGG) {
-        fprintf(stderr, "WARNING: GSTO files of type %s are not supported. Missing type header?\n",
-                gsto_get_header_string(gsto_stopping_types, file->type));
+        fprintf(stderr, "WARNING: GSTO files of type %s are not supported. Missing/wrong type header in file %s?\n",
+                gsto_get_header_string(gsto_stopping_types, file->type), file->name);
         file->valid=FALSE;
     }
     jibal_gsto_file_calculate_ncombs(file);
@@ -668,6 +668,12 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
         free(file->em);
     }
     file->em = jibal_gsto_em_table(file);
+    if(!file->em) {
+        fprintf(stderr, "WARNING: Could not make E/m table for file %s\n", file->name);
+        file->valid = FALSE;
+        fclose(file->fp);
+        return file->valid;
+    }
     file->xmin_speedup = 0.0;
     file->xdiv = 0.0;
     file->em_index_accel = 0;
@@ -979,7 +985,10 @@ double *jibal_gsto_em_table(const gsto_file_t *file) { /* Note: for internal use
                 x = 0.0;
                 break;
             case GSTO_XSCALE_ARBITRARY:
-                fscanf(file->fp, "%lf\n", &x); /* TODO: check conversion */
+                if(fscanf(file->fp, "%lf\n", &x) != 1) {
+                    free(table);
+                    return NULL;
+                }
                 break;
         }
         table[i]=jibal_gsto_em_from_file_units(x, file);
