@@ -247,4 +247,9 @@ double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v);
 double jibal_gsto_stop_em(jibal_gsto *workspace, int Z1, int Z2, double Em);
 double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, double m2);
 
+void jibal_gsto_fprint_header_property(FILE *f, gsto_header_type h, int val);
+void jibal_gsto_fprint_header_int(FILE *f, gsto_header_type h, int i);
+void jibal_gsto_fprint_header_string(FILE *f, gsto_header_type h, const char *str);
+void jibal_gsto_fprint_header_scientific(FILE *f, gsto_header_type h, double val);
+void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, void *val);
 #endif /* _JIBAL_GSTO_H_ */

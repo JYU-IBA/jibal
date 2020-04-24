@@ -221,6 +221,13 @@ void jibal_gsto_fprint_header_property(FILE *f, gsto_header_type h, int val) {
         fprintf(stderr, "Warning: can't print GSTO header. val=%i (should be < %i)\n",
                 val, gsto_header_n(properties));
 }
+void jibal_gsto_fprint_header_int(FILE *f, gsto_header_type h, int i) {
+    fprintf(f, "%s=%i\n", gsto_get_header_string(gsto_headers, h), i);
+}
+void jibal_gsto_fprint_header_string(FILE *f, gsto_header_type h, const char *str) {
+    fprintf(f, "%s=%s\n", gsto_get_header_string(gsto_headers, h), str);
+}
+
 void jibal_gsto_fprint_header_scientific(FILE *f, gsto_header_type h, double val) {
     fprintf(f, "%s=%e\n", gsto_get_header_string(gsto_headers, h), val);
 }
