@@ -213,7 +213,7 @@ int extract_stop(jibaltool_global *global, int argc, char **argv) {
     if(global->format && strcmp(global->format, "bin")==0) {
         format=GSTO_DF_DOUBLE;
     }
-    jibal_gsto_fprint_file(out, file, format, Z1_low, Z1_high, Z2_low, Z2_high);
+    jibal_gsto_fprint_file(out, jibal->gsto, file, format, Z1_low, Z1_high, Z2_low, Z2_high);
     jibaltool_close_output(out);
     return 0;
 }

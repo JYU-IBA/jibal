@@ -4,7 +4,8 @@
 #include <stdio.h>
 #include <jibal_masses.h>
 
-#define GSTO_MAX_LINE_LEN 128
+#define GSTO_DATAFILES_MAX_LINE_LEN 128
+#define GSTO_METADATA_MAX_LINE_LEN 1024
 #define GSTO_STR_NONE "none"
 
 typedef struct {
@@ -196,8 +197,10 @@ typedef struct {
 
 
 
-jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *stoppings_file_name);
-int gsto_add_file(jibal_gsto *workspace, const char *name, const char *filename);
+jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *files_file_name);
+int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *datadir, const char *filename);
+int jibal_gsto_add_file(jibal_gsto *workspace, const char *name, const char *filename);
+int jibal_gsto_has_combination(gsto_file_t *file, int Z1, int Z2);
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file);
 void jibal_gsto_assign_clear_all(jibal_gsto *workspace);
 int jibal_gsto_assign_range(jibal_gsto *workspace, int Z1_min, int Z1_max, int Z2_min, int Z2_max, gsto_file_t *file);
@@ -206,7 +209,7 @@ int jibal_gsto_assign_material(jibal_gsto *workspace, const jibal_isotope *incid
 int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2);
 int jibal_gsto_auto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target);
 int jibal_gsto_print_files(jibal_element *elements, jibal_gsto *workspace);
-int jibal_gsto_print_assignments(jibal_gsto *workspace);
+int jibal_gsto_print_assignments(jibal_element *elements, jibal_gsto *workspace);
 const char *jibal_gsto_file_source(gsto_file_t *file);
 void jibal_gsto_file_free(gsto_file_t *file);
 void jibal_gsto_free(jibal_gsto *workspace);
@@ -227,7 +230,8 @@ factor);
 jibal_gsto *jibal_gsto_allocate(int Z1_max, int Z2_max);
 int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file);
 int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file);
-void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, gsto_data_format format, int Z1_min, int Z1_max,
+void jibal_gsto_fprint_file(FILE *file_out, jibal_gsto *workspace, gsto_file_t *file, gsto_data_format format, int
+Z1_min, int Z1_max,
         int Z2_min, int Z2_max);
 
 int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2);

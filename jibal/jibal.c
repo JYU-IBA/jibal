@@ -34,7 +34,7 @@ jibal jibal_init(const char *config_filename) {
         jibal.error = JIBAL_ERROR_ELEMENTS;
         return jibal;
     }
-    jibal.gsto=jibal_gsto_init(jibal.config.Z_max, jibal.config.datadir, jibal.config.stoppings_file);
+    jibal.gsto=jibal_gsto_init(jibal.config.Z_max, jibal.config.datadir, jibal.config.files_file);
     if(!jibal.gsto) {
         fprintf(stderr, "Could not initialize GSTO.\n");
         jibal.error = JIBAL_ERROR_GSTO;
@@ -102,14 +102,14 @@ jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure 
             {JIBAL_CONFIG_VAR_STRING, "datadir", &config->datadir},
             {JIBAL_CONFIG_VAR_STRING, "masses_file", &config->masses_file},
             {JIBAL_CONFIG_VAR_STRING, "abundances_file", &config->abundances_file},
-            {JIBAL_CONFIG_VAR_STRING, "stoppings_file", &config->stoppings_file},
+            {JIBAL_CONFIG_VAR_STRING, "files_file", &config->files_file},
             {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
             {JIBAL_CONFIG_VAR_BOOL, "extrapolate", &config->extrapolate},
             {0, 0, NULL}
     }; /* null terminated, we use .type == 0 to stop a loop */
             int n_vars;
             for(n_vars=0; vars[n_vars].type != 0; n_vars++);
-            size_t s=sizeof(jibal_config_var)*n_vars;
+            size_t s=sizeof(jibal_config_var)*(n_vars+1); /* +1 because the null termination didn't count */
             jibal_config_var *vars_out=malloc(s);
             memcpy(vars_out, vars, s);
             return vars_out;
@@ -296,8 +296,8 @@ jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
     if(!config.abundances_file) {
         asprintf(&config.abundances_file, "%s/%s", config.datadir, JIBAL_ABUNDANCES_FILE);
     }
-    if(!config.stoppings_file) {
-        asprintf(&config.stoppings_file, "%s/%s", config.datadir, JIBAL_STOPPINGS_FILE);
+    if(!config.files_file) {
+        asprintf(&config.files_file, "%s/%s", config.datadir, JIBAL_FILES_FILE);
     }
     return config; /* Note: configuration is not validated in any way! */
 }

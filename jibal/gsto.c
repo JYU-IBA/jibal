@@ -46,21 +46,21 @@ const char *gsto_get_header_string(const gsto_header *header, int val) {
     return GSTO_STR_NONE;
 }
 
-int gsto_add_file(jibal_gsto *table, const char *name, const char *filename) {
+int gsto_add_file(jibal_gsto *workspace, const char *name, const char *filename) {
     int success=0;
 #ifdef DEBUG
     fprintf(stderr, "Adding file %s (%s).\n", name, filename);
 #endif
-    table->files = realloc(table->files, sizeof(gsto_file_t)*(table->n_files+1));
-    gsto_file_t *new_file=&table->files[table->n_files];
+    workspace->files = realloc(workspace->files, sizeof(gsto_file_t) * (workspace->n_files + 1));
+    gsto_file_t *new_file=&workspace->files[workspace->n_files];
     memset(new_file, 0, sizeof(gsto_file_t));
     new_file->valid = TRUE; /* Will be set to FALSE if there are errors later */
     new_file->name = strdup(name);
     new_file->filename = strdup(filename);
-    success=jibal_gsto_load(table, TRUE, new_file);
+    success=jibal_gsto_load(workspace, TRUE, new_file);
 
     if(success) {
-        table->n_files++;
+        workspace->n_files++;
     } else {
         fprintf(stderr, "Error in adding stopping file %s (%s).\n", name, filename);
         free(new_file->name);
@@ -119,15 +119,25 @@ void jibal_gsto_free(jibal_gsto *workspace) {
     free(workspace->stragg_assignments);
 }
 
+int jibal_gsto_has_combination(gsto_file_t *file, int Z1, int Z2) {
+    if(file->Z1_min == JIBAL_ANY_Z && file->Z2_min == JIBAL_ANY_Z) {
+        return 1;
+    }
+    if (file->Z1_min != JIBAL_ANY_Z && (Z1 < file->Z1_min || Z1 > file->Z1_max)) {
+        return 0; /* Z1 out of range of the file */
+    }
+    if (file->Z2_min != JIBAL_ANY_Z && (Z2 < file->Z2_min || Z2 > file->Z2_max)) {
+        return 0; /* Z2 out of range of the file */
+    }
+    return 1;
+}
+
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file) { /* Used internally, can be used after init to override autoinit */
-    if(file->Z1_min != JIBAL_ANY_Z && (Z1 < file->Z1_min || Z1 > file->Z1_max)) {
-        return 0; /* Z1 out of range of the file */
-    }
-    if(file->Z2_min != JIBAL_ANY_Z && (Z2 < file->Z2_min || Z1 > file->Z2_max)) {
-        return 0; /* Z1 out of range of the file */
-    }
     if(Z1 > workspace->Z1_max || Z2 > workspace->Z2_max) {
         return 0; /* Z1 or Z2 out of range of our workspace */
+    }
+    if(!jibal_gsto_has_combination(file, Z1, Z2)) {
+        return 0;
     }
     int i=jibal_gsto_table_get_index(workspace, Z1, Z2);
     assert(i >= 0 && i <= workspace->n_comb);
@@ -249,8 +259,10 @@ void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, void *val) { /* Value
             type='s';
             break;
         case GSTO_HEADER_XPOINTS:
+        case GSTO_HEADER_Z1:
         case GSTO_HEADER_Z1MIN:
         case GSTO_HEADER_Z1MAX:
+        case GSTO_HEADER_Z2:
         case GSTO_HEADER_Z2MIN:
         case GSTO_HEADER_Z2MAX:
             type='i';
@@ -292,22 +304,56 @@ void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, void *val) { /* Value
     }
 }
 
-void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, gsto_data_format format, int Z1_min, int
-        Z1_max, int Z2_min, int Z2_max) {
+void jibal_gsto_fprint_file(FILE *file_out, jibal_gsto *workspace, gsto_file_t *file, gsto_data_format format, int
+Z1_min, int Z1_max, int Z2_min, int Z2_max) {
     int i, Z1, Z2;
-    Z1_min=Z1_min<file->Z1_min?file->Z1_min:Z1_min;
-    Z1_max=Z1_max>file->Z1_max?file->Z1_max:Z1_max;
-    Z2_min=Z2_min<file->Z2_min?file->Z2_min:Z2_min;
-    Z2_max=Z2_max>file->Z2_max?file->Z2_max:Z2_max;
+    /* TODO: this is an absolute mess! We have to consider the Z1, Z2 range we are given, the Z1, Z2 range of the
+     * file, and also the global Z1, Z2 range (from workspace), since only that data can ever be loaded!
+     * To make it even more interesting the we also have the special value JIBAL_ANY_Z.
+     * */
+    if(file->Z1_min == JIBAL_ANY_Z) {
+        Z1_min = Z1_max = JIBAL_ANY_Z;
+    } else if(Z1_min == JIBAL_ANY_Z) {
+        Z1_min = file->Z1_min;
+        Z2_max = file->Z1_max;
+    } else {
+        Z1_min = Z1_min < file->Z1_min ? file->Z1_min : Z1_min;
+        Z1_max = Z1_max > file->Z1_max ? file->Z1_max : Z1_max;
+    }
+    if(file->Z2_min == JIBAL_ANY_Z) {
+        Z2_min = Z2_max = JIBAL_ANY_Z;
+    } else if(Z2_min == JIBAL_ANY_Z) {
+        Z2_min = file->Z2_min;
+        Z2_max = file->Z2_max;
+    } else {
+        Z2_min = Z2_min < file->Z2_min ? file->Z2_min : Z2_min;
+        Z2_max = Z2_max > file->Z2_max ? file->Z2_max : Z2_max;
+    }
 
     jibal_gsto_fprint_header(file_out, GSTO_HEADER_TYPE, &file->type);
     if(file->source) {
         jibal_gsto_fprint_header(file_out, GSTO_HEADER_SOURCE, &file->source);
     }
-    jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z1MIN, &Z1_min);
-    jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z1MAX, &Z1_max);
-    jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z2MIN, &Z2_min);
-    jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z2MAX, &Z2_max);
+    if(Z1_min == JIBAL_ANY_Z) {
+        jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z1, &file->Z1_min);
+    } else {
+        if(Z1_min == Z1_max) {
+            jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z1, &Z1_min);
+        } else {
+            jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z1MIN, &Z1_min);
+            jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z1MAX, &Z1_max);
+        }
+    }
+    if(Z2_min == JIBAL_ANY_Z) {
+        jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z2, &file->Z2_min);
+    } else {
+        if(Z2_min == Z2_max) {
+            jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z2, &Z2_min);
+        } else {
+            jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z2MIN, &Z2_min);
+            jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z2MAX, &Z2_max);
+        }
+    }
     jibal_gsto_fprint_header_property(file_out, GSTO_HEADER_STOUNIT,
             (format==GSTO_DF_ASCII)?GSTO_STO_UNIT_EV15CM2:GSTO_STO_UNIT_JM2);
     /* We convert numbers if we are outputting ASCII, but binary stays as internal binary (SI units) */
@@ -331,8 +377,8 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, gsto_data_format 
             fprintf(file_out, "%e\n", file->em[i]/(C_KEV/C_U));
         }
     }
-    for (Z1=Z1_min; Z1 <= Z1_max; Z1++) {
-        for (Z2 = Z2_min; Z2 <= Z2_max; Z2++) {
+    for (Z1=Z1_min; Z1 <= Z1_max  && Z1 <= workspace->Z1_max; Z1++) {
+        for (Z2 = Z2_min; Z2 <= Z2_max && Z2 <= workspace->Z2_max; Z2++) {
             const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
             if(!data) {
                 fprintf(stderr, "Error: no data for Z1=%i and Z2=%i in %s.%s\n",
@@ -341,7 +387,16 @@ void jibal_gsto_fprint_file(FILE *file_out, gsto_file_t *file, gsto_data_format 
             }
             if(format == GSTO_DF_ASCII) {
                 for (i = 0; i < file->xpoints; i++) {
-                    fprintf(file_out, "%e\n", data[i] / C_EV_TFU); /* TODO: should output always be in these units? */
+                    double out = data[i];
+                    switch (file->type) {
+                        case GSTO_STO_ELE:
+                            out /=  C_EV_TFU; /* TODO: should output always be in these units? */
+                            break;
+                        case GSTO_STO_STRAGG:
+                        default:
+                            break;
+                    }
+                    fprintf(file_out, "%e\n", out);
                 }
             } else if(format == GSTO_DF_DOUBLE) {
                 fwrite(data, sizeof(double), file->xpoints, file_out);
@@ -406,17 +461,25 @@ double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2) {
 
 int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
     int Z1, Z2, previous_Z1=file->Z1_min, previous_Z2=file->Z2_min-1, skip, i;
-    char *line = calloc(GSTO_MAX_LINE_LEN, sizeof(char));
+    char *line = calloc(GSTO_DATAFILES_MAX_LINE_LEN, sizeof(char));
     int actually_skipped=0;
 #ifdef DEBUG
     fprintf(stderr, "Loading ascii data.\n");
 #endif
-    
-    for (Z1=file->Z1_min; Z1 <= file->Z1_max && Z1 <= workspace->Z1_max; Z1++) {
-        for (Z2=file->Z2_min; Z2 <= file->Z2_max && Z2 <= workspace->Z2_max; Z2++) {
-            if (file == jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2)) { /* This file is assigned to
- * this Z1, Z2 combination, so we have to load the stopping in. */
-                skip=file->xpoints*((Z1-previous_Z1)*(file->Z2_max-file->Z2_min+1)+(Z2-previous_Z2-1)); /* Not sure if correct, but it works. */
+
+    for (Z1 = file->Z1_min; Z1 <= file->Z1_max && Z1 <= workspace->Z1_max; Z1++) {
+        for (Z2 = file->Z2_min; Z2 <= file->Z2_max && Z2 <= workspace->Z2_max; Z2++) {
+            if (file == jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2)
+            || Z1 != JIBAL_ANY_Z || Z2 != JIBAL_ANY_Z) {
+                /* This file is assigned to this Z1, Z2 combination, so we have to load the stopping in.
+                 * EXCEPTION: if either Z1 or Z2 is "ANY_Z" we ignore this whole skipping thing and just always load
+                 * in everything. */
+                if (Z1 != JIBAL_ANY_Z || Z2 != JIBAL_ANY_Z) {
+                    skip = 0;
+                } else {
+                    skip = file->xpoints * ((Z1 - previous_Z1) * (file->Z2_max - file->Z2_min + 1) +
+                                            (Z2 - previous_Z2 - 1)); /* Not sure if correct, but it works. */
+                }
 #ifdef DEBUG
                 fprintf(stderr, "Skipping %i*(%i*%i+%i)=%i lines.\n", file->xpoints, Z1-previous_Z1, file->Z1_max-file->Z2_min+1, Z2-previous_Z2-1, skip);
                 actually_skipped=0;
@@ -424,7 +487,7 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
 
                 while (skip--) {
                     file->lineno++;
-                    if(!fgets(line, GSTO_MAX_LINE_LEN, file->fp))
+                    if(!fgets(line, GSTO_DATAFILES_MAX_LINE_LEN, file->fp))
                         break;
                     
                     if(*line == '#') {
@@ -440,7 +503,7 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
 #endif
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
                 for(i=0; i<file->xpoints; i++) {
-                    if(!fgets(line, GSTO_MAX_LINE_LEN, file->fp)) {
+                    if(!fgets(line, GSTO_DATAFILES_MAX_LINE_LEN, file->fp)) {
                         fprintf(stderr, "ERROR: File %s ended prematurely when reading Z1=%i Z2=%i stopping point=%i/%i"
                                         ".\n", file->filename, Z1, Z2, i+1, file->xpoints);
                         file->valid = FALSE;
@@ -502,9 +565,9 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
         return 0;
     }
     file->lineno = 0;
-    line = calloc(GSTO_MAX_LINE_LEN, sizeof(char));
+    line = calloc(GSTO_DATAFILES_MAX_LINE_LEN, sizeof(char));
     /* parse headers, stop when end of headers found */
-    while (fgets(line, GSTO_MAX_LINE_LEN, file->fp) != NULL && file->valid) {
+    while (fgets(line, GSTO_DATAFILES_MAX_LINE_LEN, file->fp) != NULL && file->valid) {
         file->lineno++;
         if(*line == '#') /* Comments are allowed */
             continue;
@@ -707,30 +770,46 @@ int jibal_gsto_print_files(jibal_element *elements, jibal_gsto *workspace) {
                     gsto_get_header_string(gsto_xunits, file->xunit));
 
         }
-        if(file->stounit == file->stounit_original) {
-            fprintf(stderr, "\tstopping unit=%s\n", gsto_get_header_string(gsto_sto_units, file->stounit_original));
-        } else {
-            fprintf(stderr, "\tstopping unit=%s (converted to %s)\n",
-                    gsto_get_header_string(gsto_sto_units, file->stounit_original),
-                    gsto_get_header_string(gsto_sto_units, file->stounit));
+        if(file->stounit != GSTO_STO_UNIT_NONE) {
+            if (file->stounit == file->stounit_original) {
+                fprintf(stderr, "\tstopping unit=%s\n", gsto_get_header_string(gsto_sto_units, file->stounit_original));
+            } else {
+                fprintf(stderr, "\tstopping unit=%s (converted to %s)\n",
+                        gsto_get_header_string(gsto_sto_units, file->stounit_original),
+                        gsto_get_header_string(gsto_sto_units, file->stounit));
+            }
+        }
+        if(file->straggunit != GSTO_STRAGG_UNIT_NONE) {
+            if (file->straggunit == file->straggunit_original) {
+                fprintf(stderr, "\tstraggling unit=%s\n", gsto_get_header_string(gsto_stragg_units,
+                        file->straggunit_original));
+            } else {
+                fprintf(stderr, "\tstraggling unit=%s (converted to %s)\n",
+                        gsto_get_header_string(gsto_stragg_units, file->straggunit_original),
+                        gsto_get_header_string(gsto_stragg_units, file->straggunit));
+            }
         }
         fprintf(stderr, "\tformat=%s\n", gsto_get_header_string(gsto_data_formats, file->data_format));
     }
     return 1;
 }
 
-int jibal_gsto_print_assignments(jibal_gsto *workspace) {
+int jibal_gsto_print_assignments(jibal_element *elements, jibal_gsto *workspace) {
     int Z1, Z2;
-    fprintf(stderr, "List of assigned electronic stopping files:\n=====\n");
+    fprintf(stderr, "\nList of assigned stopping and straggling files:\n");
     for (Z1=1; Z1 <= workspace->Z1_max; Z1++) {
         for (Z2=1; Z2 <= workspace->Z2_max; Z2++) {
-            gsto_file_t *file= jibal_gsto_get_assigned_file(workspace, GSTO_STO_ELE, Z1, Z2);
-            if(file) {
-                fprintf(stderr, "Stopping for Z1=%i in Z2=%i assigned to file %s.\n", Z1, Z2, file->name);
-            } else {
-#ifdef DEBUG
-                fprintf(stderr, "Stopping for Z1=%i in Z2=%i not assigned.\n", Z1, Z2);
-#endif
+            gsto_file_t *file_sto = jibal_gsto_get_assigned_file(workspace, GSTO_STO_ELE, Z1, Z2);
+            gsto_file_t *file_stg = jibal_gsto_get_assigned_file(workspace, GSTO_STO_STRAGG, Z1, Z2);
+            if(!file_sto && !file_stg)
+                continue; /* Nothing to do, nothing assigned */
+            fprintf(stderr, "  Z1=%i (%s), Z2=%i (%s): ", Z1, jibal_element_name(elements, Z1), Z2, jibal_element_name
+            (elements, Z2));
+            if(file_sto) {
+                fprintf(stderr, "Stopping file %s.", file_sto->name);
+            }
+            if(file_stg) {
+                fprintf(stderr, "%sStraggling file %s.", file_sto?" ":"", file_stg->name);
             }
         }        
     }
@@ -743,42 +822,42 @@ int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
     int success=0, i;
     for (i=0; i < workspace->n_files; i++) {
         file=&workspace->files[i];
-        if (file->Z1_min<=Z1 && file->Z1_max >= Z1 && file->Z2_min <= Z2 && file->Z2_max >= Z2) { /*File includes this Z1, Z2 combination*/
-            jibal_gsto_assign(workspace, Z1, Z2, file);
-            success=1;
-            break; /* Stop when the first file to include this combination is found */
+        if(jibal_gsto_has_combination(file, Z1, Z2)) {
+            if(!jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2)) {
+                jibal_gsto_assign(workspace, Z1, Z2, file);
+                success = 1;
+            }
         }
     }
     return success;
 }
 
-jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *stoppings_file_name) {
-    int i=0, n_files=0, n_errors=0;
-    char *line=calloc(GSTO_MAX_LINE_LEN, sizeof(char));
-    char *line_split;
-    char *columns[2];
-    char **col;
-    int lineno=0;
-    FILE *settings_file=NULL;
+jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *files_file_name) {
     jibal_gsto *workspace;
     workspace = gsto_allocate(Z_max, Z_max);
     workspace->stop_step = JIBAL_STEP_SIZE; /* TODO: set this from some configuration. Used only for layer energy
  * loss calculations */
     workspace->extrapolate = FALSE;
-    if(!stoppings_file_name) { /* If filename given (not NULL), attempt to load settings file */
-        stoppings_file_name=JIBAL_STOPPINGS_FILE;
+    if(!files_file_name) { /* If filename given (not NULL), attempt to load settings file */
+        files_file_name=JIBAL_FILES_FILE;
     }
-    settings_file=fopen(stoppings_file_name, "r");
-    if(!settings_file) {
-        fprintf(stderr, "Can not open file %s\n", stoppings_file_name);
-        return NULL;
+    jibal_gsto_read_settings_file(workspace, datadir, files_file_name);
+    return workspace;
+}
+
+int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *datadir, const char *filename) {
+    FILE *f=fopen(filename, "r");
+    if(!f) {
+        fprintf(stderr, "WARNING: Can not open file %s\n", filename);
+        return 0;
     }
-#ifdef DEBUG
-    fprintf(stderr, "Settings from %s\n", stoppings_file_name);
-#endif
-    while (fgets(line, GSTO_MAX_LINE_LEN, settings_file) != NULL) {
+    char *line=malloc(sizeof(char)*GSTO_METADATA_MAX_LINE_LEN);
+    char *line_split;
+    char *columns[2];
+    char **col;
+    int lineno=0, n_files=0, n_errors=0;
+    while (fgets(line, GSTO_METADATA_MAX_LINE_LEN, f) != NULL) {
         lineno++;
-        i++;
         if (line[0] == '#') /* Strip comments */
             continue;
         line_split = line; /* strsep will screw up line_split, reset for every new line */
@@ -791,36 +870,33 @@ jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *stopping
                     break;
         }
         char *name=columns[0];
-        char *filename=columns[1];
-        if(name && filename ) {
-            if (filename[0] != '/') {
-                filename = calloc(strlen(datadir) + strlen(filename) + 1, sizeof(char));
-                strcat(filename, datadir);
-                strcat(filename, columns[1]); /* Note, filename now starts with '/' so we don't need to add it */
+        char *file=columns[1];
+        if(name && file ) {
+            if (file[0] != '/') {
+                file = calloc(strlen(datadir) + strlen(file) + 1, sizeof(char));
+                strcat(file, datadir);
+                strcat(file, columns[1]); /* Note, filename now starts with '/' so we don't need to add it */
             }
-
-
-            if (gsto_add_file(workspace, name, filename)) {
+            if (gsto_add_file(workspace, name, file)) {
                 n_files++;
             } else {
-                fprintf(stderr, "WARNING: adding file %s failed.\n", filename);
+                fprintf(stderr, "WARNING: adding file %s failed.\n", file);
                 n_errors++;
             }
         } else {
-            fprintf(stderr, "WARNING: adding stopping file failed, since line %i in %s is malformed.\n", lineno, stoppings_file_name);
+            fprintf(stderr, "WARNING: adding stopping file failed, since line %i in %s is malformed.\n", lineno, file);
             n_errors++;
         }
-        if(filename != columns[1] && filename) { /* Free filename if it was allocated */
-            free(filename);
+        if(file != columns[1] && file) { /* Free filename if it was allocated */
+            free(file);
         }
     }
 #ifdef DEBUG
     fprintf(stderr, "GSTO: Read %i lines from settings file, added %i files, attempt to add %i files failed.\n", i, n_files, n_errors);
 #endif
-    fclose(settings_file);
-    return workspace;
+    fclose(f);
+    return n_files;
 }
-
 double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, double m2) {
     double a_u=0.8854*C_BOHR_RADIUS/(pow(Z1, 0.23)+pow(Z2, 0.23));
     double gamma = 4.0*m1*m2/pow(m1+m2, 2.0);
@@ -849,6 +925,7 @@ gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, gsto_stopping_t
         return workspace->stop_assignments[i];
     if(type == GSTO_STO_STRAGG)
         return workspace->stragg_assignments[i];
+    return NULL;
 }
 
 gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name) {
@@ -902,7 +979,7 @@ double *jibal_gsto_em_table(const gsto_file_t *file) { /* Note: for internal use
                 x = 0.0;
                 break;
             case GSTO_XSCALE_ARBITRARY:
-                fscanf(file->fp, "%lf\n", &x);
+                fscanf(file->fp, "%lf\n", &x); /* TODO: check conversion */
                 break;
         }
         table[i]=jibal_gsto_em_from_file_units(x, file);

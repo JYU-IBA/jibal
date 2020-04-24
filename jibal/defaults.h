@@ -38,7 +38,7 @@
 
 #define JIBAL_MASSES_FILE  "masses.dat"
 #define JIBAL_ABUNDANCES_FILE  "abundances.dat"
-#define JIBAL_STOPPINGS_FILE "stoppings.txt"
+#define JIBAL_FILES_FILE "files.txt"
 #define JIBAL_CONFIG_MAX_LINE_LEN 256
 
 #define JIBAL_MAX_Z 92

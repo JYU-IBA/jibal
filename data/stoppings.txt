@@ -1,4 +1,0 @@
-#List of stopping files. The filenames may be relative to data directory (share/jibal/) or absolute (start with /).
-#Short name is what we call it.
-#Short name<TAB>filename
-srim2013	srim2013.ele
