@@ -1176,10 +1176,10 @@ E_0, double factor) {
 double jibal_stop_ele(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {
     int i;
     double sum = 0.0;
-    double v=velocity(E, incident->mass);
+    double em=E/incident->mass;
     for (i = 0; i < target->n_elements; i++) {
         jibal_element *element = &target->elements[i];
-        sum += target->concs[i]*jibal_gsto_stop_v(workspace, incident->Z, element->Z, v);
+        sum += target->concs[i]*jibal_gsto_stop_em(workspace, incident->Z, element->Z, em);
     }
     return sum;
 }
