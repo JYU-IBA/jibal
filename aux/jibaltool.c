@@ -6,6 +6,7 @@
 #include <jibal_config.h>
 #include <inttypes.h>
 #include <jibal.h>
+#include <jibal_stop.h>
 
 
 void jibaltool_global_free(jibaltool_global *global) {

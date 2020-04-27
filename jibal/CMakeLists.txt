@@ -51,6 +51,7 @@ add_library(Jibal SHARED
         cross_section.c
         jibal.c
         stragg.c
+        stop.c
         win_compat.c
         )
 

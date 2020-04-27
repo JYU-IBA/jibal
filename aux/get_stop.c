@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <jibal.h>
+#include <jibal_stop.h>
 #include <stdlib.h>
 
 typedef struct {
