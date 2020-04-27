@@ -126,6 +126,10 @@ int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
         fprintf(stderr, "No such stopping file: %s\n", global->stopfile);
         return -1;
     }
+    if(file->type != GSTO_STO_ELE) {
+        fprintf(stderr, "File %s is not an electronic stopping file!\n", file->name);
+        return  -1;
+    }
     if(!jibal_gsto_assign_material(jibal->gsto, incident, target, file)) {
         fprintf(stderr, "Couldn't assign stopping to file %s. Maybe some Z1,Z2 combination is not in the file?\n",
                 file->name);
@@ -146,7 +150,7 @@ int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
     return 0;
 }
 
-int extract_stop(jibaltool_global *global, int argc, char **argv) {
+int extract(jibaltool_global *global, int argc, char **argv) {
     if (argc < 2 || !global->stopfile) {
         if(argc < 2) {
             fprintf(stderr, "ERROR: Too few arguments!\n");
@@ -155,10 +159,10 @@ int extract_stop(jibaltool_global *global, int argc, char **argv) {
             fprintf(stderr, "ERROR: No stopfile given!\n");
         }
 
-        fprintf(stderr, "Usage: jibaltool --stopfile=<stopfile> [--format=<format>] extract_stop incident target "
+        fprintf(stderr, "Usage: jibaltool --stopfile=<stopfile> [--format=<format>] extract incident target "
                         "[incident high] [target high]\n\n\tIncident and targets are elements (e.g. He or Si).\n\tYou "
                         "can give a range of incident elements too.\n\n\tExample: jibaltool --stopfile=srim2013 "
-                        "extract_stop He H He U\n");
+                        "extract He H He U\n");
         return -1;
     }
     jibal *jibal = &global->jibal;
@@ -284,7 +288,7 @@ int main(int argc, char **argv) {
     jibaltool_global global = {.Z=0, .outfilename=NULL, .stopfile=NULL, .format=NULL, .verbose=0};
     read_options(&global, &argc, &argv);
     static const struct command commands[] = {
-            {"extract_stop", &extract_stop, "Extract stopping (e.g. He in Si or a range) in GSTO"
+            {"extract", &extract, "Extract values (e.g. He in Si or a range) in GSTO"
                                             " compatible format."},
             {"extract_stop_material", &extract_stop_material, "Extract stopping from a single stopping"
                                                               " file for a given ion and material. (e.g. 4He in SiO2)"},

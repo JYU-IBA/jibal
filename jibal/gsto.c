@@ -354,8 +354,13 @@ Z1_min, int Z1_max, int Z2_min, int Z2_max) {
             jibal_gsto_fprint_header(file_out, GSTO_HEADER_Z2MAX, &Z2_max);
         }
     }
-    jibal_gsto_fprint_header_property(file_out, GSTO_HEADER_STOUNIT,
-            (format==GSTO_DF_ASCII)?GSTO_STO_UNIT_EV15CM2:GSTO_STO_UNIT_JM2);
+    if(file->type == GSTO_STO_ELE) {
+        jibal_gsto_fprint_header_property(file_out, GSTO_HEADER_STOUNIT,
+                                          (format == GSTO_DF_ASCII) ? GSTO_STO_UNIT_EV15CM2 : GSTO_STO_UNIT_JM2);
+    }
+    if(file->type == GSTO_STO_STRAGG) {
+        jibal_gsto_fprint_header(file_out, GSTO_HEADER_STRAGGUNIT, &file->straggunit);
+    }
     /* We convert numbers if we are outputting ASCII, but binary stays as internal binary (SI units) */
     if(file->xscale == GSTO_XSCALE_ARBITRARY) { /* Arbitrary scales are converted */
         jibal_gsto_fprint_header_property(file_out,GSTO_HEADER_XUNIT, GSTO_X_UNIT_KEV_U);
@@ -1088,8 +1093,8 @@ double jibal_gsto_scale_y_to_internal(const gsto_file_t *file, double y) {
     return y; /* We silently assume everything else is in our internal units. */
 }
 
-double jibal_gsto_stop_em(jibal_gsto *workspace, int Z1, int Z2, double em) {
-    gsto_file_t *file= jibal_gsto_get_assigned_file(workspace, GSTO_STO_ELE, Z1, Z2); /* TODO: stragg? */
+double jibal_gsto_get_em(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2, double em) {
+    gsto_file_t *file = jibal_gsto_get_assigned_file(workspace, type, Z1, Z2);
     if(!file) {
         return nan(NULL);
     }
@@ -1114,13 +1119,17 @@ double jibal_gsto_stop_em(jibal_gsto *workspace, int Z1, int Z2, double em) {
         }
         file->em_index_accel = lo;
     }
-    double sto;
-    sto=jibal_linear_interpolation(file->em[lo], file->em[lo+1], data[lo], data[lo+1], em);
-    return sto;
+    double out;
+    out=jibal_linear_interpolation(file->em[lo], file->em[lo+1], data[lo], data[lo+1], em);
+    return out;
+}
+
+double jibal_gsto_stop_em(jibal_gsto *workspace, int Z1, int Z2, double em) {
+    return jibal_gsto_get_em(workspace, GSTO_STO_ELE, Z1, Z2, em);
 }
 
 double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
-    return jibal_gsto_stop_em(workspace, Z1, Z2, energy_per_mass(v));
+    return jibal_gsto_get_em(workspace, GSTO_STO_ELE, Z1, Z2, energy_per_mass(v));
 }
 
 double jibal_stop(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {
@@ -1184,7 +1193,7 @@ double jibal_stop_ele(jibal_gsto *workspace, const jibal_isotope *incident, cons
     double em=E/incident->mass;
     for (i = 0; i < target->n_elements; i++) {
         jibal_element *element = &target->elements[i];
-        sum += target->concs[i]*jibal_gsto_stop_em(workspace, incident->Z, element->Z, em);
+        sum += target->concs[i]*jibal_gsto_get_em(workspace, GSTO_STO_ELE, incident->Z, element->Z, em);
     }
     return sum;
 }

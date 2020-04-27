@@ -248,9 +248,10 @@ double *jibal_gsto_em_table(const gsto_file_t *file);
 int jibal_gsto_velocity_to_index(const gsto_file_t *file, double v);
 double jibal_gsto_scale_y_to_internal(const gsto_file_t *file, double y); /* to SI units (stopping), ratio to Bohr
  * (straggling) */
-double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v);
-double jibal_gsto_stop_em(jibal_gsto *workspace, int Z1, int Z2, double Em);
+double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v); /* Kinda deprecated */
+double jibal_gsto_stop_em(jibal_gsto *workspace, int Z1, int Z2, double em); /* Kinda deprecated */
 double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, double m2);
+double jibal_gsto_get_em(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2, double em);
 
 void jibal_gsto_fprint_header_property(FILE *f, gsto_header_type h, int val);
 void jibal_gsto_fprint_header_int(FILE *f, gsto_header_type h, int i);
