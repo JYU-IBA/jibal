@@ -298,6 +298,7 @@ void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, void *val) { /* Value
             break;
         default:
             fprintf(stderr, "Unknown header type %c (%i)\n", type, type);
+            break;
     }
 }
 
@@ -356,7 +357,8 @@ Z1_min, int Z1_max, int Z2_min, int Z2_max) {
                                           (format == GSTO_DF_ASCII) ? GSTO_STO_UNIT_EV15CM2 : GSTO_STO_UNIT_JM2);
     }
     if(file->type == GSTO_STO_STRAGG) {
-        jibal_gsto_fprint_header(file_out, GSTO_HEADER_STRAGGUNIT, &file->straggunit);
+        jibal_gsto_fprint_header_property(file_out, GSTO_HEADER_STRAGGUNIT,
+                                          (format == GSTO_DF_ASCII) ? GSTO_STRAGG_UNIT_BOHR : GSTO_STRAGG_UNIT_J2M2);
     }
     /* We convert numbers if we are outputting ASCII, but binary stays as internal binary (SI units) */
     if(file->xscale == GSTO_XSCALE_ARBITRARY) { /* Arbitrary scales are converted */
@@ -390,11 +392,16 @@ Z1_min, int Z1_max, int Z2_min, int Z2_max) {
             if(format == GSTO_DF_ASCII) {
                 for (i = 0; i < file->xpoints; i++) {
                     double out = data[i];
-                    switch (file->type) {
-                        case GSTO_STO_ELE:
+                    switch (file->stounit) {
+                        case GSTO_STO_UNIT_EV15CM2:
                             out /=  C_EV_TFU; /* TODO: should output always be in these units? */
                             break;
-                        case GSTO_STO_STRAGG:
+                        default:
+                            break;
+                    }
+                    switch (file->straggunit) {
+                        case GSTO_STO_UNIT_JM2:
+                            out /= jibal_stragg_bohr(Z1, Z2);
                         default:
                             break;
                     }
@@ -722,7 +729,7 @@ void jibal_gsto_convert_file_to_SI(gsto_file_t *file) {
      *
      * Note that we only recalculate xmin and xmax, since other variables are internally in SI.
      *
-     * Stopping & straggling data is converted, if necessary and/or possible
+     * Stopping & straggling data is also converted, if necessary and/or possible
      *
      * xunit, stounit and straggunit will reflect the units after conversion
      *
