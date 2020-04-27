@@ -615,6 +615,7 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
                 file->xmax_original = file->xmax;
                 break;
             case GSTO_HEADER_Z1:
+               // element = jibal_element_find(workspace->elements, columns[1]);
                 file->Z1_min = strtol(columns[1], NULL, 10);
                 file->Z1_max = file->Z1_min;
                 break;
@@ -730,7 +731,7 @@ int jibal_gsto_load_all(jibal_gsto *workspace) { /* For every file, load combina
     return n_success;
 }
 
-int jibal_gsto_print_files(jibal_element *elements, jibal_gsto *workspace) {
+int jibal_gsto_print_files(jibal_gsto *workspace) {
     int i, Z1, Z2;
     int assignments;
     gsto_file_t *file;
@@ -756,16 +757,16 @@ int jibal_gsto_print_files(jibal_element *elements, jibal_gsto *workspace) {
             fprintf(stderr, "\t%i assignments,\n", assignments);
         }
         if(file->Z1_min == file->Z1_max) {
-            fprintf(stderr, "\tZ1 = %i (%s)\n", file->Z1_min, jibal_element_name(elements, file->Z1_min));
+            fprintf(stderr, "\tZ1 = %i (%s)\n", file->Z1_min, jibal_element_name(workspace->elements, file->Z1_min));
         } else {
-            fprintf(stderr, "\t%i (%s) <= Z1 <= %i (%s),\n", file->Z1_min, jibal_element_name(elements, file->Z1_min),
-                    file->Z1_max, jibal_element_name(elements, file->Z1_max));
+            fprintf(stderr, "\t%i (%s) <= Z1 <= %i (%s),\n", file->Z1_min, jibal_element_name(workspace->elements, file->Z1_min),
+                    file->Z1_max, jibal_element_name(workspace->elements, file->Z1_max));
         }
         if(file->Z2_min == file->Z2_max) {
-            fprintf(stderr, "\tZ2 = %i (%s)\n", file->Z2_min, jibal_element_name(elements, file->Z2_min));
+            fprintf(stderr, "\tZ2 = %i (%s)\n", file->Z2_min, jibal_element_name(workspace->elements, file->Z2_min));
         } else {
-            fprintf(stderr, "\t%i (%s) <= Z2 <= %i (%s),\n", file->Z2_min, jibal_element_name(elements, file->Z2_min),
-                    file->Z2_max, jibal_element_name(elements, file->Z2_max));
+            fprintf(stderr, "\t%i (%s) <= Z2 <= %i (%s),\n", file->Z2_min, jibal_element_name(workspace->elements, file->Z2_min),
+                    file->Z2_max, jibal_element_name(workspace->elements, file->Z2_max));
         }
         fprintf(stderr, "\tx-points=%i\n", file->xpoints);
         fprintf(stderr, "\tx-scale=%s\n", gsto_get_header_string(gsto_xscales, file->xscale));
@@ -800,7 +801,7 @@ int jibal_gsto_print_files(jibal_element *elements, jibal_gsto *workspace) {
     return 1;
 }
 
-int jibal_gsto_print_assignments(jibal_element *elements, jibal_gsto *workspace) {
+int jibal_gsto_print_assignments(jibal_gsto *workspace) {
     int Z1, Z2;
     fprintf(stderr, "\nList of assigned stopping and straggling files:\n");
     for (Z1=1; Z1 <= workspace->Z1_max; Z1++) {
@@ -809,8 +810,8 @@ int jibal_gsto_print_assignments(jibal_element *elements, jibal_gsto *workspace)
             gsto_file_t *file_stg = jibal_gsto_get_assigned_file(workspace, GSTO_STO_STRAGG, Z1, Z2);
             if(!file_sto && !file_stg)
                 continue; /* Nothing to do, nothing assigned */
-            fprintf(stderr, "  Z1=%i (%s), Z2=%i (%s): ", Z1, jibal_element_name(elements, Z1), Z2, jibal_element_name
-            (elements, Z2));
+            fprintf(stderr, "  Z1=%i (%s), Z2=%i (%s): ", Z1, jibal_element_name(workspace->elements, Z1),
+                    Z2, jibal_element_name(workspace->elements, Z2));
             if(file_sto) {
                 fprintf(stderr, "Stopping file %s.", file_sto->name);
             }
@@ -838,9 +839,13 @@ int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
     return success;
 }
 
-jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *files_file_name) {
+jibal_gsto *jibal_gsto_init(const jibal_element *elements, int Z_max, const char *datadir, const char *files_file_name) {
     jibal_gsto *workspace;
     workspace = gsto_allocate(Z_max, Z_max);
+    workspace->elements = elements;
+    if(jibal_elements_Zmax(elements) < Z_max) {
+        fprintf(stderr, "WARNING: Z_max=%i is too large, I don't know this many elements.\n", Z_max);
+    }
     workspace->stop_step = JIBAL_STEP_SIZE; /* TODO: set this from some configuration. Used only for layer energy
  * loss calculations */
     workspace->extrapolate = FALSE;

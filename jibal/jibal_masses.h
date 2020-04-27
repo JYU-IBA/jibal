@@ -62,6 +62,7 @@ jibal_isotope *jibal_isotopes_load(const char *filename);
 int jibal_abundances_load(jibal_isotope *isotopes, const char *filename);
 void jibal_isotopes_free(jibal_isotope *isotopes);
 jibal_element *jibal_elements_populate(const jibal_isotope *isotopes);
+int jibal_elements_Zmax(const jibal_element *elements);
 void jibal_elements_free(jibal_element *elements);
 jibal_element *jibal_element_find(jibal_element *elements, element_name name);
 int jibal_element_number_of_isotopes(jibal_element *element, double abundance_threshold);

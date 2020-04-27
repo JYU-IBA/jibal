@@ -22,6 +22,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <jibal_masses.h>
+#include <assert.h>
 #include "win_compat.h"
 #include "defaults.h"
 
@@ -128,10 +129,16 @@ void jibal_isotopes_free(jibal_isotope *isotopes) {
 jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
     if(!isotopes)
         return NULL;
-    jibal_element *elements=calloc(JIBAL_ELEMENTS+1, sizeof(jibal_element));
     const jibal_isotope *isotope;
+    int Z_max=0;
     for(isotope=isotopes; isotope->A != 0; isotope++) {
-        if(isotope->Z < 0 || isotope->Z > JIBAL_ELEMENTS) {
+        if(isotope->Z > Z_max) {
+            Z_max=isotope->Z;
+        }
+    }
+    jibal_element *elements=calloc(Z_max+2, sizeof(jibal_element)); /* +1 because 0..Z_MAX incl. and +1 because of null termination */
+    for(isotope=isotopes; isotope->A != 0; isotope++) { /* Count isotopes and set name of element */
+        if(isotope->Z < 0) {
             continue;
         }
         jibal_element *e=&elements[isotope->Z];
@@ -144,18 +151,17 @@ jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
         e->n_isotopes++;
     }
     int Z;
-    for(Z=0; Z <= JIBAL_ELEMENTS; Z++) {
+    for(Z=0; Z <= Z_max; Z++) {
         elements[Z].Z = Z;
         if(elements[Z].n_isotopes > 0) {
-            //elements[Z].isotopes=calloc(elements[Z].n_isotopes, sizeof(jibal_isotope));
             elements[Z].isotopes=calloc(elements[Z].n_isotopes, sizeof(jibal_isotope *));
         }
 #ifdef DEBUG
         fprintf(stderr, "Element %i, name %s, %i isotopes\n", Z, elements[Z].name, elements[Z].n_isotopes);
 #endif
     }
-    for(isotope=isotopes; isotope->A != 0; isotope++) {
-        if(isotope->Z < 0 || isotope->Z > JIBAL_ELEMENTS) {
+    for(isotope=isotopes; isotope->A != 0; isotope++) { /* Copy pointers to isotopes */
+        if(isotope->Z < 0) {
             continue;
         }
         jibal_element *e=&elements[isotope->Z];
@@ -166,7 +172,7 @@ jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
         fprintf(stderr, "Element %i isotope %i is A=%i\n", isotope->Z, i, isotope->A);
 #endif
     }
-    for(Z=0; Z <= JIBAL_ELEMENTS; Z++) {
+    for(Z=0; Z <= Z_max; Z++) {
         jibal_element *element = &elements[Z];
         int i;
         /* Note that we don't have a concentration table for "bare" elements. We can still calculate the average
@@ -175,15 +181,31 @@ jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
         for(i=0; i < element->n_isotopes; i++) {
             element->avg_mass += element->isotopes[i]->abundance*element->isotopes[i]->mass;
         }
+        if(*element->name == '\0') {
+            fprintf(stderr, "WARNING: Element %i does not have a name. Naming it element \"X\".\n", Z);
+            *element->name = 'X'; /* This is important.
+ * The last member, i.e. elements[Z_max+1] has an empty name due to the calloc above and can be used to stop a loop over
+ * all of the elements. */
+        }
     }
     return elements;
 }
 
+int jibal_elements_Zmax(const jibal_element *elements) {
+    const jibal_element *e;
+    int n=0;
+    for(e=elements+1; e->Z != 0; e++) {
+        n++;
+        assert(n == e->Z);
+    } /* Skipping elements[0], because elements[0].Z=0 */
+    return n;
+}
+
 void jibal_elements_free(jibal_element *elements) {
-    int Z;
-    for(Z=0; Z <= JIBAL_ELEMENTS; Z++) {
-        if(elements[Z].n_isotopes > 0 && elements[Z].isotopes) {
-            free(elements[Z].isotopes);
+    jibal_element *e;
+    for(e=elements; e->name[0] != '\0'; e++) {
+        if(e->n_isotopes > 0 && e->isotopes) {
+            free(e->isotopes);
         }
     }
     free(elements);
@@ -207,12 +229,17 @@ jibal_element *jibal_element_find(jibal_element *elements, element_name name) {
     if(*name == '\0')
         return NULL;
     for(Z=0; isdigit(*n);  Z = Z*10+*(n++)-'0');
-    if(Z >= 0 && Z <= JIBAL_ELEMENTS && !*n) {
+
+    int Z_max = jibal_elements_Zmax(elements);
+
+    if(Z >= 0 && Z <= Z_max && !*n) {
+        assert(Z == elements[Z].Z); /* TODO: could be removed */
         return &elements[Z];
     }
-    for(Z=0; Z <= JIBAL_ELEMENTS; Z++) {
-        if(strncmp(elements[Z].name, name, sizeof(element_name))==0) {
-            return &elements[Z];
+    jibal_element *e;
+    for(e=elements; e->name[0] != '\0'; e++) {
+        if(strncmp(e->name, name, sizeof(element_name))==0) {
+            return e;
         }
     }
     return NULL;
@@ -364,11 +391,11 @@ jibal_isotope *jibal_isotope_find(jibal_isotope *isotopes, const char *name, int
 const char *jibal_element_name(const jibal_element *elements, int Z) {
     if(Z == JIBAL_ANY_Z)
         return "Any";
-    if(Z < 0 || Z > JIBAL_ELEMENTS)
-        return "Err";
-    const jibal_element *e=&elements[Z];
-    if(Z == e->Z)
-        return e->name;
-    else
-        return "Err";
+    const jibal_element *e;
+    for(e=elements; e->name[0] != '\0'; e++) {
+        if(e->Z == Z) {
+            return e->name;
+        }
+    }
+    return "Err";
 }

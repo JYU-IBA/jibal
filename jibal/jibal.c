@@ -30,11 +30,14 @@ jibal jibal_init(const char *config_filename) {
         return jibal;
     }
     jibal.elements=jibal_elements_populate(jibal.isotopes);
+#ifdef DEBUG
+    fprintf(stderr, "The Z_max of elements array is %i\n", jibal_elements_Zmax(jibal.elements));
+#endif
     if(!jibal.elements) {
         jibal.error = JIBAL_ERROR_ELEMENTS;
         return jibal;
     }
-    jibal.gsto=jibal_gsto_init(jibal.config.Z_max, jibal.config.datadir, jibal.config.files_file);
+    jibal.gsto=jibal_gsto_init(jibal.elements, jibal.config.Z_max, jibal.config.datadir, jibal.config.files_file);
     if(!jibal.gsto) {
         fprintf(stderr, "Could not initialize GSTO.\n");
         jibal.error = JIBAL_ERROR_GSTO;

@@ -219,7 +219,7 @@ int extract_stop(jibaltool_global *global, int argc, char **argv) {
 }
 
 int print_gstofiles(jibaltool_global *global, int argc, char **argv) {
-    jibal_gsto_print_files(global->jibal.elements, global->jibal.gsto);
+    jibal_gsto_print_files(global->jibal.gsto);
     return 0;
 }
 

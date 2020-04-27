@@ -144,7 +144,7 @@ typedef struct {
     int valid;
     int lineno; /* Keep track of how many lines read */
     /* file contains stopping for Z1 = Z1_min .. Z1_max inclusive in Z2 = Z2_min .. Z2_max inclusive i.e. (Z1_max-Z1_min+1)*(Z2_max-Z2_min+1) combinations */
-    int Z1_min; 
+    int Z1_min;
     int Z2_min;
     int Z1_max;
     int Z2_max;
@@ -177,6 +177,7 @@ typedef struct {
 } gsto_file_t;
 
 typedef struct {
+    const jibal_element *elements;
     int Z1_max;
     int Z2_max;
     int n_files;
@@ -197,9 +198,9 @@ typedef struct {
 
 
 
-jibal_gsto *jibal_gsto_init(int Z_max, const char *datadir, const char *files_file_name);
+jibal_gsto *jibal_gsto_init(const jibal_element *elements, int Z_max, const char *datadir, const char *files_file_name);
 int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *datadir, const char *filename);
-int jibal_gsto_add_file(jibal_gsto *workspace, const char *name, const char *filename);
+int jibal_gsto_add_file(jibal_gsto *workspace, jibal_element *elements, const char *name, const char *filename);
 int jibal_gsto_has_combination(gsto_file_t *file, int Z1, int Z2);
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file);
 void jibal_gsto_assign_clear_all(jibal_gsto *workspace);
@@ -208,8 +209,8 @@ int jibal_gsto_assign_material(jibal_gsto *workspace, const jibal_isotope *incid
         gsto_file_t *file);
 int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2);
 int jibal_gsto_auto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target);
-int jibal_gsto_print_files(jibal_element *elements, jibal_gsto *workspace);
-int jibal_gsto_print_assignments(jibal_element *elements, jibal_gsto *workspace);
+int jibal_gsto_print_files(jibal_gsto *workspace);
+int jibal_gsto_print_assignments(jibal_gsto *workspace);
 const char *jibal_gsto_file_source(gsto_file_t *file);
 void jibal_gsto_file_free(gsto_file_t *file);
 void jibal_gsto_free(jibal_gsto *workspace);
