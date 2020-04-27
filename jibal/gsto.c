@@ -8,6 +8,7 @@
 #include <jibal_gsto.h>
 #include <defaults.h>
 #include "win_compat.h"
+#include "jibal_stragg.h"
 
 
 int gsto_header_n(const gsto_header *header) {
@@ -181,10 +182,6 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
                 if(n != file->xpoints) {
                     file->valid=FALSE;
                     return 0;
-                }
-                int i;
-                for(i=0; i<file->xpoints; i++) {
-                    data[i] = jibal_gsto_scale_y_to_internal(file, data[i]);
                 }
             } else {
                 if(fseek(file->fp, sizeof(double)*file->xpoints, SEEK_CUR)) {
@@ -423,7 +420,7 @@ int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2) {
 
 int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2) {
     if(file->Z1_min == JIBAL_ANY_Z) {
-        if(file->Z1_min == JIBAL_ANY_Z) {
+        if(file->Z2_min == JIBAL_ANY_Z) {
             return 0; /* Only one index is possible Z1=any, Z2=any */
         } else {
             assert(Z2 <= file->Z2_max);
@@ -520,7 +517,7 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
 #ifdef DEBUG
                         fprintf(stderr, "Loaded stopping [%i][%i][%i] from line %i.\n", Z1, Z2, i, file->lineno);
 #endif
-                        data[i] = jibal_gsto_scale_y_to_internal(file, strtod(line, NULL));
+                        data[i] = strtod(line, NULL);
                     }
                 }
                 previous_Z1=Z1;
@@ -650,7 +647,7 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
         if(n_errors >= 10) { /* This prevents us from flooding the output with error messages if the headers are not
  * properly terminated */
             fprintf(stderr, "WARNING: too many errors, considering the file invalid.\n");
-            file->valid=FALSE;
+            file->valid = FALSE;
             break;
         }
     } /* End of headers */
@@ -658,8 +655,13 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
     if(file->type != GSTO_STO_ELE && file->type != GSTO_STO_STRAGG) {
         fprintf(stderr, "WARNING: GSTO files of type %s are not supported. Missing/wrong type header in file %s?\n",
                 gsto_get_header_string(gsto_stopping_types, file->type), file->name);
-        file->valid=FALSE;
+        file->valid = FALSE;
     }
+    if((file->straggunit && file->stounit) || (!file->stounit && !file->straggunit)) {
+        fprintf(stderr, "WARNING: You can must specify exactly one stopping or straggling unit. Issue with file %s.\n", file->name);
+        file->valid = FALSE;
+    }
+
     jibal_gsto_file_calculate_ncombs(file);
     if(headers_only || file->valid == FALSE) {
         fclose(file->fp);
@@ -679,23 +681,27 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
         fclose(file->fp);
         return file->valid;
     }
+    switch (file->data_format) {
+        case GSTO_DF_DOUBLE:
+            jibal_gsto_load_binary_file(workspace, file);
+            break;
+        case GSTO_DF_ASCII:
+        default:
+            jibal_gsto_load_ascii_file(workspace, file);
+            break;
+    }
+    fclose(file->fp);
+#ifndef GSTO_DONT_CONVERT_TO_SI
+    jibal_gsto_convert_file_to_SI(file);
+#endif
+    jibal_gsto_calculate_speedups(file);
+    return 1;
+}
+
+void jibal_gsto_calculate_speedups(gsto_file_t *file) {
     file->xmin_speedup = 0.0;
     file->xdiv = 0.0;
     file->em_index_accel = 0;
-#ifndef GSTO_DONT_CONVERT_TO_SI
-    /* We convert energy per mass units to SI, this will possibly reduce conversions later. Note that we only need
-     * recalculate xmin and xmax, since other variables are internally in SI. */
-    if(file->xunit == GSTO_X_UNIT_MEV_U) {
-        file->xmin *= C_MEV/C_U;
-        file->xmax *= C_MEV/C_U;
-        file->xunit = GSTO_X_UNIT_J_KG;
-    } else if(file->xunit == GSTO_X_UNIT_KEV_U) {
-        file->xmin *= C_KEV/C_U;
-        file->xmax *= C_KEV/C_U;
-        file->xunit = GSTO_X_UNIT_J_KG;
-    }
-#endif
-
     switch (file->xscale) {
         case GSTO_XSCALE_LINEAR:
             file->xmin_speedup = file->xmin;
@@ -707,22 +713,63 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
             break;
         case GSTO_XSCALE_ARBITRARY:
         default:
+            break;
+    }
+}
 
-            break;
+void jibal_gsto_convert_file_to_SI(gsto_file_t *file) {
+    /* We convert energy per mass units to SI, this will possibly reduce conversions later.
+     *
+     * Note that we only recalculate xmin and xmax, since other variables are internally in SI.
+     *
+     * Stopping & straggling data is converted, if necessary and/or possible
+     *
+     * xunit, stounit and straggunit will reflect the units after conversion
+     *
+     * */
+    if(file->xunit == GSTO_X_UNIT_MEV_U) {
+        file->xmin *= C_MEV/C_U;
+        file->xmax *= C_MEV/C_U;
+        file->xunit = GSTO_X_UNIT_J_KG;
+    } else if(file->xunit == GSTO_X_UNIT_KEV_U) {
+        file->xmin *= C_KEV/C_U;
+        file->xmax *= C_KEV/C_U;
+        file->xunit = GSTO_X_UNIT_J_KG;
     }
-    switch (file->data_format) {
-        case GSTO_DF_DOUBLE:
-            jibal_gsto_load_binary_file(workspace, file);
-            file->stounit = GSTO_STO_UNIT_JM2;
-            break;
-        case GSTO_DF_ASCII:
-        default:
-            jibal_gsto_load_ascii_file(workspace, file);
-            file->stounit = GSTO_STO_UNIT_JM2;
-            break;
+
+    if(file->stounit == GSTO_STO_UNIT_EV15CM2) {
+        int i_comb;
+        for (i_comb = 0; i_comb < file->n_comb; i_comb++) {
+            double *data = file->data[i_comb];
+            if (data) {
+                int i;
+                for (i = 0; i < file->xpoints; i++) {
+                    data[i] *= C_EV_TFU;
+                }
+            }
+        }
+        file->stounit = GSTO_STO_UNIT_JM2;
     }
-    fclose(file->fp);
-    return 1;
+
+    if(file->straggunit == GSTO_STRAGG_UNIT_BOHR && file->Z1_min != JIBAL_ANY_Z && file->Z2_min != JIBAL_ANY_Z) {
+        /* We can't convert if Z1 and Z2 and ambiguous. Also the following algorithm doesn't check for overlaps and would
+         * convert some data twice. */
+        int Z1, Z2;
+        for (Z1=file->Z1_min; Z1 <= file->Z1_max; Z1++) {
+            for (Z2 = file->Z2_min; Z2 <= file->Z2_max; Z2++) {
+                int i_comb=jibal_gsto_file_get_data_index(file, Z1, Z2);
+                double *data = file->data[i_comb];
+                if (data) {
+                    int i;
+                    for (i = 0; i < file->xpoints; i++) {
+                        data[i] *= jibal_stragg_bohr(Z1, Z2);
+                    }
+                }
+            }
+        }
+        file->straggunit = GSTO_STRAGG_UNIT_J2M2;
+    }
+
 }
 
 int jibal_gsto_load_all(jibal_gsto *workspace) { /* For every file, load combinations from file */
@@ -730,26 +777,38 @@ int jibal_gsto_load_all(jibal_gsto *workspace) { /* For every file, load combina
     int n_success=0;
     for(i=0; i < workspace->n_files; i++) {
         gsto_file_t *file = &workspace->files[i];
+        int assignments = jibal_gsto_file_count_assignments(workspace, file);
+        if(!assignments)
+            continue;
         n_success += jibal_gsto_load(workspace, FALSE, file);
     }
     return n_success;
 }
 
-int jibal_gsto_print_files(jibal_gsto *workspace) {
-    int i, Z1, Z2;
+int jibal_gsto_file_count_assignments(jibal_gsto *workspace, gsto_file_t *file) {
+    int Z1, Z2;
+    int assignments=0;
+    for (Z1=1; Z1 <= workspace->Z1_max; Z1++) {
+        for (Z2=1; Z2 <= workspace->Z2_max; Z2++) {
+            if(jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2) == file) {
+                assignments++;
+            }
+        }
+    }
+    return assignments;
+}
+
+int jibal_gsto_print_files(jibal_gsto *workspace, int used_only) {
+    int i;
     int assignments;
     gsto_file_t *file;
-    fprintf(stderr, "List of available GSTO files:\n");
+    fprintf(stderr, "List of %s GSTO files:\n", used_only?"used":"available");
     
     for(i=0; i < workspace->n_files; i++) {
-        assignments=0;
         file=&workspace->files[i];
-        for (Z1=1; Z1 <= workspace->Z1_max; Z1++) {
-            for (Z2=1; Z2 <= workspace->Z2_max; Z2++) {
-                if(jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2) == file) { /* OK */
-                    assignments++;
-                }
-            }        
+        assignments=jibal_gsto_file_count_assignments(workspace, file);
+        if(used_only && !assignments) {
+            continue;
         }
         fprintf(stderr, "%i: %s,\n", i+1, file->name);
         fprintf(stderr, "\ttype: %s\n", gsto_get_header_string(gsto_stopping_types, file->type));
@@ -1073,26 +1132,6 @@ fprintf(stderr, "lo=%i, residual=%e m/s (%.2lf%% of bin)\n", lo, v-file->vel[lo]
     return lo;
 }
 
-double jibal_gsto_scale_y_to_internal(const gsto_file_t *file, double y) {
-    switch (file->stounit) {
-        case GSTO_STO_UNIT_EV15CM2:
-            return y*C_EV_TFU;
-        case GSTO_STO_UNIT_JM2:
-            return y; /* The SI unit, used internally */
-        case GSTO_STO_UNIT_NONE:
-        default:
-            break;
-    }
-    switch (file->straggunit) {
-        case GSTO_STRAGG_UNIT_BOHR:
-            return y; /* Default internal unit */
-        case GSTO_STRAGG_UNIT_NONE:
-        default:
-            break;
-    }
-    return y; /* We silently assume everything else is in our internal units. */
-}
-
 double jibal_gsto_get_em(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2, double em) {
     gsto_file_t *file = jibal_gsto_get_assigned_file(workspace, type, Z1, Z2);
     if(!file) {
@@ -1121,6 +1160,14 @@ double jibal_gsto_get_em(jibal_gsto *workspace, gsto_stopping_type type, int Z1,
     }
     double out;
     out=jibal_linear_interpolation(file->em[lo], file->em[lo+1], data[lo], data[lo+1], em);
+    if(file->straggunit == GSTO_STRAGG_UNIT_BOHR) {
+        assert(type == GSTO_STO_STRAGG);
+        out *= jibal_stragg_bohr(Z1, Z2);
+    }
+    if(file->stounit == GSTO_STO_UNIT_EV15CM2) {
+        assert(type == GSTO_STO_ELE);
+        out *= C_EV_TFU;
+    }
     return out;
 }
 

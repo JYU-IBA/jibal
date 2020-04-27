@@ -224,7 +224,7 @@ int extract(jibaltool_global *global, int argc, char **argv) {
 }
 
 int print_gstofiles(jibaltool_global *global, int argc, char **argv) {
-    jibal_gsto_print_files(global->jibal.gsto);
+    jibal_gsto_print_files(global->jibal.gsto, FALSE);
     return 0;
 }
 

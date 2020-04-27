@@ -76,6 +76,7 @@ int main(int argc, char **argv) {
         return -1;
     jibal_gsto_load_all(jibal.gsto);
     jibal_gsto_print_assignments(jibal.gsto);
+    jibal_gsto_print_files(jibal.gsto, TRUE);
     double E;
     if(argc >= 4) {
         E=jibal_get_val(jibal.units, UNIT_TYPE_ENERGY, argv[3]);

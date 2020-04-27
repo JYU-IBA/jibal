@@ -7,9 +7,10 @@ double jibal_stragg(jibal_gsto *workspace, const jibal_isotope *incident, const 
     int i;
     double sum=0.0;
     double em = E/incident->mass;
+    int Z1=incident->Z;
     for (i = 0; i < target->n_elements; i++) {
-        jibal_element *element = &target->elements[i];
-        sum += target->concs[i]*jibal_stragg_bohr(incident->Z, element->Z)*jibal_gsto_get_em(workspace, GSTO_STO_STRAGG, incident->Z, element->Z, em);
+        int Z2 = target->elements[i].Z;
+        sum += target->concs[i]*jibal_gsto_get_em(workspace, GSTO_STO_STRAGG, Z1, Z2, em);
     }
     return sum;
 }

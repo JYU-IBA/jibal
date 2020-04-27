@@ -50,7 +50,7 @@ typedef enum {
 } gsto_straggunit;
 
 static const gsto_header gsto_stragg_units[] = {
-        {GSTO_STR_NONE, GSTO_STO_UNIT_NONE},
+        {GSTO_STR_NONE, GSTO_STRAGG_UNIT_NONE},
         {"bohr", GSTO_STRAGG_UNIT_BOHR},
         {"J2m2", GSTO_STRAGG_UNIT_J2M2},
         {NULL, 0}
@@ -166,8 +166,8 @@ typedef struct {
     gsto_xunit xunit_original; /* As it was read. */
     gsto_stounit stounit; /* Stopping unit */
     gsto_stounit stounit_original;
-    gsto_stounit straggunit; /* Straggling unit */
-    gsto_stounit straggunit_original;
+    gsto_straggunit straggunit; /* Straggling unit */
+    gsto_straggunit straggunit_original;
     gsto_stopping_type type; /* does this file contain nuclear, electronic or total stopping? TODO: only electronic
  * makes sense, remove others */
     gsto_data_format data_format; /* What does the data look like (after headers) */
@@ -211,7 +211,8 @@ int jibal_gsto_assign_material(jibal_gsto *workspace, const jibal_isotope *incid
         gsto_file_t *file);
 int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2);
 int jibal_gsto_auto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target);
-int jibal_gsto_print_files(jibal_gsto *workspace);
+int  jibal_gsto_file_count_assignments(jibal_gsto *workspace, gsto_file_t *file);
+int jibal_gsto_print_files(jibal_gsto *workspace, int used_only);
 int jibal_gsto_print_assignments(jibal_gsto *workspace);
 const char *jibal_gsto_file_source(gsto_file_t *file);
 void jibal_gsto_file_free(gsto_file_t *file);
@@ -242,8 +243,8 @@ int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2);
 double jibal_gsto_em_from_file_units(double x, const gsto_file_t *file);
 double *jibal_gsto_em_table(const gsto_file_t *file);
 int jibal_gsto_velocity_to_index(const gsto_file_t *file, double v);
-double jibal_gsto_scale_y_to_internal(const gsto_file_t *file, double y); /* to SI units (stopping), ratio to Bohr
- * (straggling) */
+void jibal_gsto_calculate_speedups(gsto_file_t *file);
+void jibal_gsto_convert_file_to_SI(gsto_file_t *file);
 double jibal_gsto_get_em(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2, double em);
 
 void jibal_gsto_fprint_header_property(FILE *f, gsto_header_type h, int val);
