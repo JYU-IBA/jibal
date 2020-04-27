@@ -45,12 +45,14 @@ static const gsto_header gsto_sto_units[] = {
 
 typedef enum {
     GSTO_STRAGG_UNIT_NONE=0,
-    GSTO_STRAGG_UNIT_BOHR=1
+    GSTO_STRAGG_UNIT_BOHR=1,
+    GSTO_STRAGG_UNIT_J2M2, /* J^2 m^2, the SI unit for energy loss straggling variance (omega squared) */
 } gsto_straggunit;
 
 static const gsto_header gsto_stragg_units[] = {
         {GSTO_STR_NONE, GSTO_STO_UNIT_NONE},
         {"bohr", GSTO_STRAGG_UNIT_BOHR},
+        {"J2m2", GSTO_STRAGG_UNIT_J2M2},
         {NULL, 0}
 };
 
@@ -76,7 +78,7 @@ typedef enum {
 
 static const gsto_header gsto_xscales[] = {
         {GSTO_STR_NONE, GSTO_XSCALE_NONE},
-        {"linear", GSTO_XSCALE_LINEAR},
+        {"lin", GSTO_XSCALE_LINEAR},
         {"log10", GSTO_XSCALE_LOG10},
         {"arb", GSTO_XSCALE_ARBITRARY},
         {NULL, 0}

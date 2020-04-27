@@ -422,8 +422,8 @@ int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2) {
 }
 
 int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2) {
-    if(Z1 == JIBAL_ANY_Z) {
-        if(Z2 == JIBAL_ANY_Z) {
+    if(file->Z1_min == JIBAL_ANY_Z) {
+        if(file->Z1_min == JIBAL_ANY_Z) {
             return 0; /* Only one index is possible Z1=any, Z2=any */
         } else {
             assert(Z2 <= file->Z2_max);
@@ -431,14 +431,14 @@ int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2) {
             return Z2-file->Z2_min;
         }
     }
-    if(Z2 == JIBAL_ANY_Z) {
+    if(file->Z2_min == JIBAL_ANY_Z) {
         assert(Z1 <= file->Z1_max);
         assert(Z1 >= file->Z1_min);
         return Z1-file->Z1_min;
     }
     assert(Z1 >= file->Z1_min);
     assert(Z2 >= file->Z2_min);
-    assert(Z1 <= file->Z2_max);
+    assert(Z1 <= file->Z1_max);
     assert(Z2 <= file->Z2_max);
     int z1=(Z1 - file->Z1_min);
     int z2=(Z2 - file->Z2_min);
@@ -474,12 +474,11 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
 
     for (Z1 = file->Z1_min; Z1 <= file->Z1_max && Z1 <= workspace->Z1_max; Z1++) {
         for (Z2 = file->Z2_min; Z2 <= file->Z2_max && Z2 <= workspace->Z2_max; Z2++) {
-            if (file == jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2)
-            || Z1 != JIBAL_ANY_Z || Z2 != JIBAL_ANY_Z) {
+            if (file == jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2) || Z1 == JIBAL_ANY_Z || Z2 == JIBAL_ANY_Z) {
                 /* This file is assigned to this Z1, Z2 combination, so we have to load the stopping in.
                  * EXCEPTION: if either Z1 or Z2 is "ANY_Z" we ignore this whole skipping thing and just always load
                  * in everything. */
-                if (Z1 != JIBAL_ANY_Z || Z2 != JIBAL_ANY_Z) {
+                if (Z1 == JIBAL_ANY_Z || Z2 == JIBAL_ANY_Z) {
                     skip = 0;
                 } else {
                     skip = file->xpoints * ((Z1 - previous_Z1) * (file->Z2_max - file->Z2_min + 1) +
@@ -823,6 +822,7 @@ int jibal_gsto_print_assignments(jibal_gsto *workspace) {
             if(file_stg) {
                 fprintf(stderr, "%sStraggling file %s.", file_sto?" ":"", file_stg->name);
             }
+            fprintf(stderr, "\n");
         }        
     }
     fprintf(stderr, "\n\n");

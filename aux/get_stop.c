@@ -20,6 +20,7 @@
 #include <jibal.h>
 #include <jibal_stop.h>
 #include <stdlib.h>
+#include <jibal_stragg.h>
 
 typedef struct {
     jibal_isotope *incident;
@@ -40,7 +41,8 @@ void print_stopping_range(jibal *jibal, experiment *exp, double E_low, double E_
         E=E_low + i*E_step;
         double S_ele=jibal_stop_ele(jibal->gsto, exp->incident, exp->target->material, E);
         double S_nuc=jibal_stop_nuc(exp->incident, exp->target->material, E);
-        fprintf(stdout, "%e %e %e\n", E/C_KEV, S_ele/C_EV_TFU, S_nuc/C_EV_TFU);
+        double S_stragg=jibal_stragg(jibal->gsto, exp->incident, exp->target->material, E);
+        fprintf(stdout, "%e %e %e %e\n", E/C_KEV, S_ele/C_EV_TFU, S_nuc/C_EV_TFU, sqrt(S_stragg*C_TFU)/C_EV);
 
     }
 }
@@ -84,9 +86,11 @@ int main(int argc, char **argv) {
         fprintf(stdout, "E = %g keV\n", E/C_KEV);
         exp.target->thickness=jibal_get_val(jibal.units, UNIT_TYPE_LAYER_THICKNESS, argv[4]);
         fprintf(stdout, "thickness = %g tfu (1e15 at./cm2)\n", exp.target->thickness/C_TFU);
-        double E_out= jibal_layer_energy_loss(jibal.gsto, exp.incident, exp.target, E, -1.0);
+        double S=0.0;
+        double E_out= jibal_layer_energy_loss_with_straggling(jibal.gsto, exp.incident, exp.target, E, -1.0, &S);
         fprintf(stdout, "E_out = %g keV\n", E_out/C_KEV);
         fprintf(stdout, "delta E = %g keV\n", (E_out-E)/C_KEV);
+        fprintf(stdout, "Straggling = %g keV (FWHM)\n", C_FWHM*sqrt(S)/C_KEV);
     } else if(argc == 6) {
         double E_low, E_step, E_high;
         E_low=E;

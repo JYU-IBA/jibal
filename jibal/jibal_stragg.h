@@ -21,7 +21,7 @@
 
 double jibal_stragg(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E);
 double jibal_stragg_bohr(int Z1, int Z2);
-double jibal_layer_stragg(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_layer *layer, double
-E_0, double factor);
+double jibal_layer_stragg(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_layer *layer, double E_0, double factor);
+double jibal_layer_energy_loss_with_straggling(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_layer *layer, double E_0, double factor, double *S);
 
 #endif // _JIBAL_STRAGG_H_
