@@ -221,7 +221,7 @@ jibal_element *jibal_element_new(const element_name name, int Z, int n_isotopes)
     return e;
 }
 
-jibal_element *jibal_element_find(jibal_element *elements, element_name name) {
+const jibal_element * jibal_element_find(const jibal_element *elements, element_name name) {
     /* Element name is typically something like "Si", but if the name looks like a number (only digits 0-9) and is in
      * the valid range, we assume it is the proton number. */
     int Z;
@@ -236,7 +236,7 @@ jibal_element *jibal_element_find(jibal_element *elements, element_name name) {
         assert(Z == elements[Z].Z); /* TODO: could be removed */
         return &elements[Z];
     }
-    jibal_element *e;
+    const jibal_element *e;
     for(e=elements; e->name[0] != '\0'; e++) {
         if(strncmp(e->name, name, sizeof(element_name))==0) {
             return e;
@@ -245,7 +245,7 @@ jibal_element *jibal_element_find(jibal_element *elements, element_name name) {
     return NULL;
 }
 
-int jibal_element_number_of_isotopes(jibal_element *element, double abundance_threshold) {
+int jibal_element_number_of_isotopes(const jibal_element *element, double abundance_threshold) {
     if(!element)
         return 0;
     int i, n=0;
@@ -260,7 +260,7 @@ int jibal_element_number_of_isotopes(jibal_element *element, double abundance_th
     return n;
 }
 
-jibal_element *jibal_element_copy(jibal_element *element, int A) {
+jibal_element *jibal_element_copy(const jibal_element *element, int A) {
     if(!element || A < -1) {
         return NULL;
     }

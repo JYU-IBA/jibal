@@ -41,6 +41,7 @@ typedef struct {
     char *abundances_file;
     char *files_file;
     char *stragglings_file;
+    char *assignments_file;
     int Z_max;
     int extrapolate; /* this is boolean, see JIBAL_CONFIG_VAR_BOOL */
 } jibal_config; /* Some internal configuration (environment etc) */

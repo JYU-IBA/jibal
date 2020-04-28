@@ -80,6 +80,7 @@ jibal_gsto *gsto_allocate(int Z1_max, int Z2_max) {
     workspace->n_comb=Z1_max*Z2_max; /* From 1..Z1_max inclusive and from 1..Z2_max inclusive */
     workspace->stop_assignments = calloc(workspace->n_comb, sizeof(gsto_file_t *));
     workspace->stragg_assignments = calloc(workspace->n_comb, sizeof(gsto_file_t *));
+    workspace->overrides = NULL;
     return workspace;
 }
 
@@ -118,9 +119,12 @@ void jibal_gsto_free(jibal_gsto *workspace) {
     }
     free(workspace->stop_assignments);
     free(workspace->stragg_assignments);
+    if(workspace->overrides) {
+        free(workspace->overrides);
+    }
 }
 
-int jibal_gsto_has_combination(gsto_file_t *file, int Z1, int Z2) {
+int jibal_gsto_file_has_combination(gsto_file_t *file, int Z1, int Z2) {
     if(file->Z1_min == JIBAL_ANY_Z && file->Z2_min == JIBAL_ANY_Z) {
         return 1;
     }
@@ -137,7 +141,7 @@ int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file) 
     if(Z1 > workspace->Z1_max || Z2 > workspace->Z2_max) {
         return 0; /* Z1 or Z2 out of range of our workspace */
     }
-    if(!jibal_gsto_has_combination(file, Z1, Z2)) {
+    if(!jibal_gsto_file_has_combination(file, Z1, Z2)) {
         return 0;
     }
     int i=jibal_gsto_table_get_index(workspace, Z1, Z2);
@@ -898,9 +902,17 @@ int jibal_gsto_print_assignments(jibal_gsto *workspace) {
 int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
     gsto_file_t *file;
     int success=0, i;
+    if(workspace->overrides) {
+        gsto_assignment *a;
+        for (a = workspace->overrides; a->file != NULL; a++) {
+            if(a->Z1 == Z1 && a->Z2 == Z2) {
+                jibal_gsto_assign(workspace, Z1, Z2, a->file);
+            }
+        }
+    }
     for (i=0; i < workspace->n_files; i++) {
         file=&workspace->files[i];
-        if(jibal_gsto_has_combination(file, Z1, Z2)) {
+        if(jibal_gsto_file_has_combination(file, Z1, Z2)) {
             if(!jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2)) {
                 jibal_gsto_assign(workspace, Z1, Z2, file);
                 success = 1;
@@ -910,7 +922,8 @@ int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
     return success;
 }
 
-jibal_gsto *jibal_gsto_init(const jibal_element *elements, int Z_max, const char *datadir, const char *files_file_name) {
+jibal_gsto *jibal_gsto_init(const jibal_element *elements, int Z_max, const char *datadir, const char *files_file_name,
+                            const char *assignments_file_name) {
     jibal_gsto *workspace;
     workspace = gsto_allocate(Z_max, Z_max);
     workspace->elements = elements;
@@ -924,6 +937,7 @@ jibal_gsto *jibal_gsto_init(const jibal_element *elements, int Z_max, const char
         files_file_name=JIBAL_FILES_FILE;
     }
     jibal_gsto_read_settings_file(workspace, datadir, files_file_name);
+    workspace->overrides = jibal_gsto_read_assignments_file(workspace, datadir, assignments_file_name);
     return workspace;
 }
 
@@ -979,6 +993,62 @@ int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *datadir, co
     fclose(f);
     return n_files;
 }
+
+gsto_assignment *jibal_gsto_read_assignments_file(jibal_gsto *workspace, const char *datadir, const char *filename) {
+    FILE *f = fopen(filename, "r");
+    if (!f) {
+        fprintf(stderr, "WARNING: Can not open file %s. Create an empty file to suppress this warning.\n", filename);
+        return NULL;
+    }
+    char *line = malloc(sizeof(char) * GSTO_METADATA_MAX_LINE_LEN);
+    char *line_split;
+    char *columns[3];
+    char **col;
+    int lineno = 0, n_possible = 0, n_actual = 0;
+    while (fgets(line, GSTO_METADATA_MAX_LINE_LEN, f) != NULL) { if (line[0] != '#') { n_possible++; }}
+    if (n_possible == 0) {
+        return NULL;
+    }
+    rewind(f);
+    gsto_assignment *a = calloc(n_possible, sizeof(gsto_assignment));
+    while (fgets(line, GSTO_METADATA_MAX_LINE_LEN, f) != NULL) {
+        lineno++;
+        if (line[0] == '#') /* Strip comments */
+            continue;
+        line_split = line; /* strsep will screw up line_split, reset for every new line */
+        /* We read in two columns (hard coded), first is the name and the second is the filename. */
+        for (col = columns; col < &columns[3]; col++) { *col = NULL; }
+        for (col = columns; (*col = strsep(&line_split, ",\t\r\n")) != NULL;) {
+            if (**col != '\0')
+                if (++col >= &columns[3])
+                    break;
+        }
+        const jibal_element *incident = jibal_element_find(workspace->elements, columns[0]);
+        if (!incident) {
+            fprintf(stderr, "WARNING: No such element: %s in file %s", columns[0], filename);
+            continue;
+        }
+        const jibal_element *target = jibal_element_find(workspace->elements, columns[1]);
+        if (!target) {
+            fprintf(stderr, "WARNING: No such element: %s in file %s", columns[1], filename);
+            continue;
+        }
+        gsto_file_t *file = jibal_gsto_get_file(workspace, columns[2]);
+        if (!file) {
+            fprintf(stderr, "WARNING: No such GSTO file: %s in file %s", columns[2], filename);
+            continue;
+        }
+        gsto_assignment *ass = &a[n_actual];
+        ass->Z1 = incident->Z;
+        ass->Z2 = target->Z;
+        ass->file = file;
+        n_actual++;
+    }
+    free(line);
+    return a; /* Remember to free this */
+}
+
+
 double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, double m2) {
     double a_u=0.8854*C_BOHR_RADIUS/(pow(Z1, 0.23)+pow(Z2, 0.23));
     double gamma = 4.0*m1*m2/pow(m1+m2, 2.0);

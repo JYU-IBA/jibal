@@ -37,7 +37,7 @@ jibal jibal_init(const char *config_filename) {
         jibal.error = JIBAL_ERROR_ELEMENTS;
         return jibal;
     }
-    jibal.gsto=jibal_gsto_init(jibal.elements, jibal.config.Z_max, jibal.config.datadir, jibal.config.files_file);
+    jibal.gsto= jibal_gsto_init(jibal.elements, jibal.config.Z_max, jibal.config.datadir, jibal.config.files_file, jibal.config.assignments_file);
     if(!jibal.gsto) {
         fprintf(stderr, "Could not initialize GSTO.\n");
         jibal.error = JIBAL_ERROR_GSTO;
@@ -106,6 +106,7 @@ jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure 
             {JIBAL_CONFIG_VAR_STRING, "masses_file", &config->masses_file},
             {JIBAL_CONFIG_VAR_STRING, "abundances_file", &config->abundances_file},
             {JIBAL_CONFIG_VAR_STRING, "files_file", &config->files_file},
+            {JIBAL_CONFIG_VAR_STRING, "assignments_file", &config->assignments_file},
             {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
             {JIBAL_CONFIG_VAR_BOOL, "extrapolate", &config->extrapolate},
             {0, 0, NULL}
@@ -302,6 +303,11 @@ jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
     if(!config.files_file) {
         asprintf(&config.files_file, "%s/%s", config.datadir, JIBAL_FILES_FILE);
     }
+
+    if(!config.assignments_file) {
+        asprintf(&config.assignments_file, "%s/%s", config.datadir, JIBAL_ASSIGNMENTS_FILE);
+    }
+
     return config; /* Note: configuration is not validated in any way! */
 }
 
@@ -333,6 +339,9 @@ void jibal_config_free(jibal_config *config) {
         free(config->masses_file);
     if(config->abundances_file)
         free(config->abundances_file);
-
+    if(config->files_file)
+        free(config->files_file);
+    if(config->assignments_file)
+        free(config->assignments_file);
     /* Note, not freeing jibal_config itself! */
 }

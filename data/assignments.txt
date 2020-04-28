@@ -1,0 +1,6 @@
+#Override default assignments
+#Z1,Z2,file
+#Z1 and Z2 can be either Z numbers or names (e.g. He)
+#Examples (remove #):
+#He,Si,srim
+#2,14,srim

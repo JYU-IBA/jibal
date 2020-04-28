@@ -167,14 +167,14 @@ int extract(jibaltool_global *global, int argc, char **argv) {
         return -1;
     }
     jibal *jibal = &global->jibal;
-    jibal_element *incident=jibal_element_find(jibal->elements, argv[0]);; /* e.g. He */
+    const jibal_element *incident=jibal_element_find(jibal->elements, argv[0]);; /* e.g. He */
     if(!incident)  {
             fprintf(stderr, "%s is not a valid element\n", argv[0]);
             return -1;
     }
     int Z1_low=incident->Z;
     int Z1_high=Z1_low;
-    jibal_element *target = jibal_element_find(jibal->elements, argv[1]);
+    const jibal_element *target = jibal_element_find(jibal->elements, argv[1]);
     if(!target) {
         fprintf(stderr, "No such element: %s\n", argv[1]);
         return -1;
@@ -234,7 +234,7 @@ int print_isotopes(jibaltool_global *global, int argc, char **argv) {
     int Z=JIBAL_ANY_Z;
     double threshold=0.0;
     if(argc >= 1) {
-        jibal_element *e=jibal_element_find(global->jibal.elements, argv[0]);
+        const jibal_element *e=jibal_element_find(global->jibal.elements, argv[0]);
         if(e)
             Z=e->Z;
     }

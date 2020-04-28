@@ -179,6 +179,12 @@ typedef struct {
 } gsto_file_t;
 
 typedef struct {
+    int Z1;
+    int Z2;
+    gsto_file_t *file;
+} gsto_assignment;
+
+typedef struct {
     const jibal_element *elements;
     int Z1_max;
     int Z2_max;
@@ -188,6 +194,7 @@ typedef struct {
     gsto_file_t **stop_assignments; /* array of n_comb gsto_file_t pointers. For each Z1 and Z2 combination there can
  * be a file assigned. Access with functions. */
     gsto_file_t **stragg_assignments;
+    gsto_assignment *overrides;
     double stop_step; /* as stopping cross section */
     int extrapolate; /* boolean */
 } jibal_gsto;
@@ -200,10 +207,12 @@ typedef struct {
 
 
 
-jibal_gsto *jibal_gsto_init(const jibal_element *elements, int Z_max, const char *datadir, const char *files_file_name);
+jibal_gsto *jibal_gsto_init(const jibal_element *elements, int Z_max, const char *datadir, const char *files_file_name,
+                            const char *assignments_file_name);
 int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *datadir, const char *filename);
+gsto_assignment *jibal_gsto_read_assignments_file(jibal_gsto *workspace, const char *datadir, const char *filename);
 int jibal_gsto_add_file(jibal_gsto *workspace, jibal_element *elements, const char *name, const char *filename);
-int jibal_gsto_has_combination(gsto_file_t *file, int Z1, int Z2);
+int jibal_gsto_file_has_combination(gsto_file_t *file, int Z1, int Z2);
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file);
 void jibal_gsto_assign_clear_all(jibal_gsto *workspace);
 int jibal_gsto_assign_range(jibal_gsto *workspace, int Z1_min, int Z1_max, int Z2_min, int Z2_max, gsto_file_t *file);
@@ -228,9 +237,7 @@ int jibal_gsto_load_all(jibal_gsto *workspace);
 jibal_gsto *jibal_gsto_allocate(int Z1_max, int Z2_max);
 int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file);
 int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file);
-void jibal_gsto_fprint_file(FILE *file_out, jibal_gsto *workspace, gsto_file_t *file, gsto_data_format format, int
-Z1_min, int Z1_max,
-        int Z2_min, int Z2_max);
+void jibal_gsto_fprint_file(FILE *file_out, jibal_gsto *workspace, gsto_file_t *file, gsto_data_format format, int Z1_min, int Z1_max, int Z2_min, int Z2_max);
 
 int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2);
 const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2);
