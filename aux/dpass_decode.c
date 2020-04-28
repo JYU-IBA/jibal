@@ -4,6 +4,8 @@
 #include <math.h>
 #include <inttypes.h>
 
+#include <jibal_gsto.h>
+
 #define MAX_LINE_LEN 80
 
 #define Z_MAX 92 /* This is the output Z_MAX. It doesn't have to be exactly the same as the Z_MAX of the database file, but expect warnings if it is too small and empty data (zeros) if it is too large. */
@@ -148,19 +150,19 @@ int main(int argc, char **argv) {
     int Z1, Z2, i;
     double E_min=f.E[0];
     double E_max=f.E[f.n_points-1];
-    fprintf(file_out, "type=electronic\n");
-    fprintf(file_out, "source=DPASS\n"); /* TODO: version? */
-    fprintf(file_out, "z1-min=%i\n", 1);
-    fprintf(file_out, "z1-max=%i\n", Z_MAX);
-    fprintf(file_out, "z2-min=%i\n", 1);
-    fprintf(file_out, "z2-max=%i\n", Z_MAX);
-    fprintf(file_out, "sto-unit=eV/(1e15 atoms/cm2)\n");
-    fprintf(file_out, "x-unit=MeV/u\n");
-    fprintf(file_out, "format=ascii\n"); /* TODO: since the data are saved as doubles, why not save the binary data? */
-    fprintf(file_out, "x-min=%e\n", E_min);
-    fprintf(file_out, "x-max=%e\n", E_max);
-    fprintf(file_out, "x-points=%i\n", f.n_points);
-    fprintf(file_out, "x-scale=log10\n");
+    jibal_gsto_fprint_header_property(file_out, GSTO_HEADER_TYPE, GSTO_STO_ELE);
+    jibal_gsto_fprint_header_string(file_out, GSTO_HEADER_SOURCE, "DPASS"); /* TODO: version? */
+    jibal_gsto_fprint_header_int(file_out, GSTO_HEADER_Z1MIN, 1);
+    jibal_gsto_fprint_header_int(file_out, GSTO_HEADER_Z1MAX, Z_MAX);
+    jibal_gsto_fprint_header_int(file_out, GSTO_HEADER_Z2MIN, 1);
+    jibal_gsto_fprint_header_int(file_out, GSTO_HEADER_Z2MAX, Z_MAX);
+    jibal_gsto_fprint_header_property(file_out, GSTO_HEADER_STOUNIT, GSTO_STO_UNIT_EV15CM2);
+    jibal_gsto_fprint_header_property(file_out, GSTO_HEADER_XUNIT, GSTO_X_UNIT_MEV_U);
+    jibal_gsto_fprint_header_property(file_out, GSTO_HEADER_FORMAT, GSTO_DF_ASCII);
+    jibal_gsto_fprint_header(file_out, GSTO_HEADER_XMIN, &E_min);
+    jibal_gsto_fprint_header(file_out, GSTO_HEADER_XMAX, &E_max);
+    jibal_gsto_fprint_header_property(file_out, GSTO_HEADER_XSCALE, GSTO_XSCALE_LOG10);
+    jibal_gsto_fprint_header(file_out, GSTO_HEADER_XPOINTS, &f.n_points);
     fprintf(file_out, "\n");
     for(i=0; i < f.n_points; i++) {
         double E_read=f.E[i];

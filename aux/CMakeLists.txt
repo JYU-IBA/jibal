@@ -5,7 +5,7 @@ add_executable(srim_gen_stop srim_gen_stop.c)
 add_executable(dpass_decode dpass_decode.c)
 target_link_libraries(get_stop Jibal m)
 target_link_libraries(get_kin Jibal m)
-target_link_libraries(dpass_decode m)
+target_link_libraries(dpass_decode Jibal m)
 target_include_directories(jibaltool PRIVATE
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/jibal>)
 target_link_libraries(jibaltool Jibal m)

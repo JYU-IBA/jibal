@@ -813,6 +813,10 @@ int jibal_gsto_print_files(jibal_gsto *workspace, int used_only) {
     int i;
     int assignments;
     gsto_file_t *file;
+    if(workspace->n_files == 0) {
+        fprintf(stderr, "There are no stopping or straggling files installed. Maybe check your configuration or download some data?\n");
+        return 1;
+    }
     fprintf(stderr, "List of %s GSTO files:\n", used_only?"used":"available");
     
     for(i=0; i < workspace->n_files; i++) {
