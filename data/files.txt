@@ -8,7 +8,7 @@
 #Lines have a maximum length of 1024 characters.
 #You probably already figured out how comments work.
 #
-#Don't put extra spaces there. Also you can use a tab character aka. '\t' to separate the values.
+#You can also use a tab character aka. '\t' to separate the values.
 #Short name,filename
-srim2013,srim2013.ele
-chu,chu.stg
+#srim2013,srim2013.ele
+#yang,yang.stg
