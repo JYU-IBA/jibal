@@ -6,6 +6,10 @@ Library that provides stopping forces, straggling models, cross sections and var
 
 See [installation instructions](INSTALL.md)
 
+## Datafiles
+
+The library is pretty useless without data files. You can obtain some [elsewhere](http://users.jyu.fi/~jaakjuli/jibal/data/).
+
 ## Usage of bundled tools
 
 ### Get_stop
