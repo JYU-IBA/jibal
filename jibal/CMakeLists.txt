@@ -1,4 +1,4 @@
-find_package(PkgConfig) #Not used at the moment, but just to be sure
+#find_package(PkgConfig)
 
 include(FindGSL) #GSL is a special snowflake.
 if(NOT GSL_FOUND)
