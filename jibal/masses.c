@@ -272,10 +272,10 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A) {
     fprintf(stderr, "Trying to figure out based on A=%i how many of the %i isotopes to include.\n", A, element->n_isotopes);
 #endif
     switch (A) {
-        case -1:
+        case JIBAL_ALL_ISOTOPES:
             n=element->n_isotopes;
             break;
-        case 0:
+        case JIBAL_NAT_ISOTOPES:
             n=jibal_element_number_of_isotopes(element, ABUNDANCE_THRESHOLD);
             break;
         default: /* Single isotope */
@@ -289,12 +289,12 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A) {
     int i,j=0;
     for(i=0; i < element->n_isotopes; i++) {
         switch(A) {
-            case -1: /* All isotopes */
+            case JIBAL_ALL_ISOTOPES: /* All isotopes */
                 e->isotopes[i] = element->isotopes[i];
                 e->concs[i] = element->isotopes[i]->abundance;
                 j++;
                 break;
-            case 0: /* Natural isotopes (above threshold) */
+            case JIBAL_NAT_ISOTOPES: /* Natural isotopes (above threshold) */
                 if(element->isotopes[i]->abundance >= ABUNDANCE_THRESHOLD && j < n) {
                     e->isotopes[j] = element->isotopes[i];
                     e->concs[j] = element->isotopes[i]->abundance;

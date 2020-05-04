@@ -147,12 +147,14 @@ int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file) 
     int i=jibal_gsto_table_get_index(workspace, Z1, Z2);
     assert(i >= 0 && i <= workspace->n_comb);
     if(file->type == GSTO_STO_ELE) {
-        workspace->stop_assignments[jibal_gsto_table_get_index(workspace, Z1, Z2)] = file;
+        workspace->stop_assignments[i] = file;
+        return 1;
     }
     if(file->type == GSTO_STO_STRAGG) {
-        workspace->stragg_assignments[jibal_gsto_table_get_index(workspace, Z1, Z2)] = file;
+        workspace->stragg_assignments[i] = file;
+        return 1;
     }
-    return 1; /* Success */
+    return 0;
 }
 
 void jibal_gsto_assign_clear_all(jibal_gsto *workspace) {
@@ -910,7 +912,11 @@ int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
         gsto_assignment *a;
         for (a = workspace->overrides; a->file != NULL; a++) {
             if(a->Z1 == Z1 && a->Z2 == Z2) {
-                jibal_gsto_assign(workspace, Z1, Z2, a->file);
+                if(jibal_gsto_assign(workspace, Z1, Z2, a->file)) {
+                    success=1;
+                } else {
+                    fprintf(stderr, "Warning: could not assign Z1=%i, Z2=%i to file %s\n", Z1, Z2, a->file->name);
+                }
             }
         }
     }
@@ -918,8 +924,11 @@ int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
         file=&workspace->files[i];
         if(jibal_gsto_file_has_combination(file, Z1, Z2)) {
             if(!jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2)) {
-                jibal_gsto_assign(workspace, Z1, Z2, file);
-                success = 1;
+                if(jibal_gsto_assign(workspace, Z1, Z2, file)) {
+                    success = 1;
+                }
+            } else {
+                success=1; /* I guess success by someone else (previous call?) is success too. */
             }
         }
     }

@@ -37,6 +37,9 @@
 #define JIBAL_ANY_Z (-1) /* Z number that has a special meaning (Z is anything!). This is used when we want to have
  * 1D arrays in stead of 2D arrays */
 
+#define JIBAL_NAT_ISOTOPES 0 /* Special meaning of A=0, natural (abundance > 0.0) isotopes. Useful for natural elements. */
+#define JIBAL_ALL_ISOTOPES -1  /* Special meaning of A=-1, all known isotopes */
+
 typedef char isotope_name[8]; /* These should be null terminated */
 typedef char element_name[4];
 
