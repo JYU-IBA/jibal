@@ -1,5 +1,8 @@
 add_executable(get_stop get_stop.c)
 add_executable(get_kin get_kin.c)
+if(WIN32)
+    find_package(getopt)
+endif()
 add_executable(jibaltool jibaltool.c)
 add_executable(srim_gen_stop srim_gen_stop.c)
 add_executable(dpass_decode dpass_decode.c)

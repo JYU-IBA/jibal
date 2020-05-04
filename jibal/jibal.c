@@ -1,7 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef WIN32
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 #include <ctype.h>
 #include <jibal.h>
 #include <defaults.h>
