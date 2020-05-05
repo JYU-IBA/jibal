@@ -1,8 +1,8 @@
-#include <stdlib.h>
 #if defined(__GNUC__) && ! defined(_GNU_SOURCE)
 #define _GNU_SOURCE // Needed for asprintf (from stdio.h) on GNU/Linux
 #endif
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #ifdef WIN32
 #include <io.h>
