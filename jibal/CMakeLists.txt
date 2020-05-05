@@ -104,7 +104,7 @@ include(CMakePackageConfigHelpers)
 # config file from a template, includes exports
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
         "${CMAKE_CURRENT_BINARY_DIR}/JibalConfig.cmake"
-        INSTALL_DESTINATION "lib/cmake/Jibal"
+        INSTALL_DESTINATION "lib/Jibal/cmake"
         NO_SET_AND_CHECK_MACRO
         NO_CHECK_REQUIRED_COMPONENTS_MACRO
         )
@@ -115,20 +115,19 @@ write_basic_package_version_file(
         VERSION "${jibal_VERSION_MAJOR}.${jibal_VERSION_MINOR}"
         COMPATIBILITY AnyNewerVersion
 )
-
-# install the configuration file to binary directory too so "installing" the library is not necessary
-install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/JibalConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/JibalConfigVersion.cmake
-        #DESTINATION lib/cmake/Jibal
-        DESTINATION ${LIB_INSTALL_DIR}/Jibal/cmake
-        )
-
 # install the targets to binary directory
 export(EXPORT JibalTargets
         FILE "${CMAKE_CURRENT_BINARY_DIR}/JibalTargets.cmake"
         )
-
+# install the configuration file to binary directory too so "installing" the library is not necessary
+install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/JibalConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/JibalConfigVersion.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/JibalTargets.cmake
+        #DESTINATION lib/cmake/Jibal
+        DESTINATION lib/Jibal/cmake
+        COMPONENT headers
+        )
 # cpack configuration
 # applications are in "tools" directory
 set(CPACK_COMPONENTS_ALL applications libraries headers data)
