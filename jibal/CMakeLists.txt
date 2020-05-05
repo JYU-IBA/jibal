@@ -39,7 +39,7 @@ list(REMOVE_ITEM DATAFILES "${CMAKE_SOURCE_DIR}/data/.gitignore")
 FILE(GLOB PUBLIC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/jibal*.h")
 set(PUBLIC_HEADERS "${PUBLIC_HEADERS};${CMAKE_CURRENT_BINARY_DIR}/jibal_config.h;")
 
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 add_library(Jibal SHARED
         gsto.c
@@ -73,9 +73,9 @@ set_property(TARGET Jibal APPEND PROPERTY
         COMPATIBLE_INTERFACE_STRING Jibal_MAJOR_VERSION)
 
 install(TARGETS Jibal EXPORT JibalTargets
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        COMPONENT libraries)
+        RUNTIME DESTINATION bin COMPONENT libraries #This includes the DLL on Windows
+        LIBRARY DESTINATION lib COMPONENT libraries
+        ARCHIVE DESTINATION lib COMPONENT libraries)
 # install headers, note there's a subdirectory
 install(FILES ${PUBLIC_HEADERS}
         DESTINATION include/${PROJECT_NAME}
@@ -133,7 +133,7 @@ install(FILES
 set(CPACK_COMPONENTS_ALL applications libraries headers data)
 include(InstallRequiredSystemLibraries)
 set(CPACK_SOURCE_GENERATOR "TGZ")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
 set(CPACK_PACKAGE_VERSION "${jibal_VERSION_MAJOR}.${jibal_VERSION_MINOR}.${jibal_VERSION_PATCH}")
 set(CPACK_PACKAGE_VERSION_MAJOR "${jibal_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${jibal_VERSION_MINOR}")
@@ -169,7 +169,9 @@ set(CPACK_COMPONENT_HEADERS_DEPENDS libraries)
 set(CPACK_COMPONENT_HEADERS_GROUP "Development")
 
 if(WIN32)
+    include(InstallRequiredSystemLibraries)
     set(CPACK_GENERATOR WIX)
     set(CPACK_WIX_CMAKE_PACKAGE_REGISTRY ON)
+    set(CPACK_WIX_UPGRADE_GUID 51FB2949-D386-4C24-B8F4-41B46A34B233)
 endif()
 include(CPack)
