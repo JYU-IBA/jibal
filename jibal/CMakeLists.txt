@@ -89,10 +89,10 @@ install(FILES ${DATAFILES}
 )
 
 # install exports
-install(EXPORT JibalTargets
-        FILE JibalTargets.cmake
-        DESTINATION lib/cmake/Jibal
-        )
+#install(EXPORT JibalTargets
+#        FILE JibalTargets.cmake
+#        DESTINATION lib/cmake/Jibal
+#        )
 
 
 # install pkg-config file
@@ -119,7 +119,9 @@ write_basic_package_version_file(
 # install the configuration file to binary directory too so "installing" the library is not necessary
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/JibalConfig.cmake
-        DESTINATION lib/cmake/Jibal
+        ${CMAKE_CURRENT_BINARY_DIR}/JibalConfigVersion.cmake
+        #DESTINATION lib/cmake/Jibal
+        DESTINATION ${LIB_INSTALL_DIR}/Jibal/cmake
         )
 
 # install the targets to binary directory
@@ -147,4 +149,28 @@ set(CPACK_SOURCE_IGNORE_FILES
         "^${CMAKE_SOURCE_DIR}/cmake-build-.*/"
         "^${CMAKE_SOURCE_DIR}/gui/build-.*/"
         )
+set(CPACK_COMPONENT_APPLICATIONS_DISPLAY_NAME "Jibal tools")
+set(CPACK_COMPONENT_APPLICATIONS_DESCRIPTION "Tools to extract and use data from Jibal")
+set(CPACK_COMPONENT_APPLICATIONS_GROUP "Runtime")
+set(CPACK_COMPONENT_APPLICATIONS_DEPENDS data libraries)
+set(CPACK_COMPONENT_GROUP_RUNTIME_DESCRIPTION "Tools and data to access some IBA relevant data.")
+
+set(CPACK_COMPONENT_DATA_DISPLAY_NAME "Data files")
+set(CPACK_COMPONENT_DATA_DESCRIPTION "Bundled files, e.g. atomic data")
+set(CPACK_COMPONENT_DATA_GROUP "Runtime")
+
+set(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Libraries")
+set(CPACK_COMPONENT_LIBRARIES_DESCRIPTION "Libraries used to build programs with Jibal")
+set(CPACK_COMPONENT_LIBRARIES_GROUP "Development")
+set(CPACK_COMPONENT_GROUP_DEVELOPMENT_DESCRIPTION "Things you need to make your own programs or use other programs using Jibal.")
+
+set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "C Headers")
+set(CPACK_COMPONENT_HEADERS_DESCRIPTION "C header files for Jibal")
+set(CPACK_COMPONENT_HEADERS_DEPENDS libraries)
+set(CPACK_COMPONENT_HEADERS_GROUP "Development")
+
+if(WIN32)
+    set(CPACK_GENERATOR WIX)
+    set(CPACK_WIX_CMAKE_PACKAGE_REGISTRY ON)
+endif()
 include(CPack)
