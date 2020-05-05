@@ -32,4 +32,7 @@ target_link_libraries(srim_gen_stop
     PRIVATE Jibal
     "$<$<BOOL:${UNIX}>:m>"
 )
-install(TARGETS get_stop get_kin jibaltool srim_gen_stop dpass_decode RUNTIME DESTINATION bin)
+install(TARGETS get_stop get_kin jibaltool srim_gen_stop dpass_decode
+        RUNTIME
+        DESTINATION bin
+        COMPONENT applications)

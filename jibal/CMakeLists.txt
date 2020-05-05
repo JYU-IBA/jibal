@@ -75,20 +75,17 @@ set_property(TARGET Jibal APPEND PROPERTY
 install(TARGETS Jibal EXPORT JibalTargets
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION bin
-        INCLUDES DESTINATION include
-        )
-
+        COMPONENT libraries)
 # install headers, note there's a subdirectory
-install(
-        FILES ${PUBLIC_HEADERS}
+install(FILES ${PUBLIC_HEADERS}
         DESTINATION include/${PROJECT_NAME}
+        COMPONENT headers
 )
 
 # install bundled data
-install(
-        FILES ${DATAFILES}
+install(FILES ${DATAFILES}
         DESTINATION share/${PROJECT_NAME}
+        COMPONENT data
 )
 
 # install exports
@@ -131,6 +128,8 @@ export(EXPORT JibalTargets
         )
 
 # cpack configuration
+# applications are in "tools" directory
+set(CPACK_COMPONENTS_ALL applications libraries headers data)
 include(InstallRequiredSystemLibraries)
 set(CPACK_SOURCE_GENERATOR "TGZ")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
