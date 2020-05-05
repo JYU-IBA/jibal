@@ -3,6 +3,7 @@
 #include <string.h>
 #ifdef WIN32
 #include <io.h>
+#define R_OK 4
 #else
 #include <unistd.h>
 #endif

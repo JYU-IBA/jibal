@@ -9,7 +9,11 @@
 #include <string.h>
 #include <inttypes.h>
 #include <math.h>
+#ifdef WIN32
+#include <direct.h> // We need _chdir from here
+#else
 #include <unistd.h>
+#endif
 #include <errno.h>
 #include <jibal_units.h>
 #include <jibal_phys.h>
@@ -233,7 +237,9 @@ int main (int argc, char **argv) {
                 exit(0);
             }
         }
+#ifndef WIN32 /* We are too lazy to sleep on Windows */
         sleep(1);
+#endif
     }
     fprintf(stderr, "\n");
     return 1;
