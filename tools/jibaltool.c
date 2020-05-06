@@ -60,7 +60,7 @@ void read_options(jibaltool_global *global, int *argc, char ***argv) {
     };
     while (1) {
         int option_index = 0;
-        char c = getopt_long(*argc, *argv, "hv::Vz:s:", long_options, &option_index);
+        char c = getopt_long(*argc, *argv, "c:hz:o:vVs:", long_options, &option_index);
         if (c == -1)
             break;
         switch (c) {

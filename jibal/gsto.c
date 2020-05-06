@@ -572,7 +572,7 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
     if (!file) {
         return 0;
     }
-    file->fp = fopen(file->filename, "r");
+    file->fp = fopen(file->filename, "rb");
     if (!file->fp) {
         fprintf(stderr, "Could not open file \"%s\".\n", file->filename);
         file->valid = FALSE;

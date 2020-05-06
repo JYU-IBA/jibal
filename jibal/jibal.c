@@ -162,7 +162,7 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
     if(!filename) {
         return -2;
     }
-    FILE *f=fopen(filename, "r");
+    FILE *f=fopen(filename, "rb");
     if(!f) {
         fprintf(stderr, WARNING_STRING "Could not read configuration file \"%s\"\n", filename);
         return -1;
@@ -187,7 +187,7 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
         char *line_var=line;
         size_t eq_pos=strcspn(line, "="); /* Finds equality sign */
         if(line[eq_pos] == '\0' || eq_pos == 0) {
-            fprintf(stderr,  WARNING_STRING "Malformed configuration file line %i: \"%s\"\n", lineno, line);
+            fprintf(stderr,  WARNING_STRING "Malformed configuration file %s line %i: \"%s\"\n", filename, lineno, line_orig);
             continue;
         }
         line[eq_pos]='\0'; /* Separate argument name from value by replacing the first '=' with a null */
