@@ -22,7 +22,7 @@ jibal jibal_init(const char *config_filename) {
         jibal.error = JIBAL_ERROR_UNITS;
         return jibal;
     }
-    jibal.config=jibal_config_init(jibal.units, config_filename);
+    jibal.config= jibal_config_init(jibal.units, config_filename, TRUE);
     if(jibal.config.error) {
         jibal.error = JIBAL_ERROR_CONFIG;
         return jibal;
@@ -238,59 +238,119 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
     return 0;
 }
 
-jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
+char *jibal_config_user_dir() {
+    char *out;
+    const char *dir;
+#ifdef WIN32
+    dir = getenv("AppData");
+#else
+    dir = getenv("HOME");
+#endif
+    if(!dir)
+        return NULL;
+#ifdef WIN32
+    asprintf(&out, "%s/%s/", dir, "jibal");
+#else
+    asprintf(&out, "%s/%s/", dir, ".jibal");
+#endif
+    return out; /* Remember to free when done, memory allocated by asprintf*/
+}
+
+jibal_config jibal_config_defaults() {
     jibal_config config = {.Z_max = JIBAL_MAX_Z, .extrapolate = FALSE, .error = 0};
-    const char *c;
-    const char *config_dir;
-    const char *config_subdir;
+    return config;
+}
+
+void jibal_config_finalize(jibal_config *config) {
+    const char *c=getenv("JIBAL_DATADIR");
+    if(c) {
+        if(config->datadir)
+            free(config->datadir);
+        config->datadir=strdup(c); /* Environmental variable overrides config. */
+    }
+    if(!config->datadir) {
+        config->datadir=strdup(JIBAL_DATADIR); /* Directory set by CMake is our last hope */
+    }
+    if(!config->masses_file) {
+        asprintf(&config->masses_file, "%s/%s", config->datadir, JIBAL_MASSES_FILE);
+    }
+    if(!config->abundances_file) {
+        asprintf(&config->abundances_file, "%s/%s", config->datadir, JIBAL_ABUNDANCES_FILE);
+    }
+    if(!config->files_file) {
+        asprintf(&config->files_file, "%s/%s", config->datadir, JIBAL_FILES_FILE);
+    }
+
+    if(!config->assignments_file) {
+        asprintf(&config->assignments_file, "%s/%s", config->datadir, JIBAL_ASSIGNMENTS_FILE);
+    }
+}
+
+jibal_config jibal_config_init(const jibal_units *units, const char *filename, int seek) {
+    jibal_config config = jibal_config_defaults();
     unsigned int attempt=1;
     /* Lets look for a configuration file!
-     * 1. It is given to us explicitly, or we look for JIBAL_CONFIG_FILE (= jibal.conf) in the following places:
-     * 2. Environmental variable (JIBAL_CONFIG_DIR)
-     * 2. Under home (~/.jibal/)
-     * 3. Prefix (set at compile time, e.g. /usr/local/etc/jibal/)
-     * 4. Platform specific place (UNIX: /etc, WINDOWS: TODO)
+     * 0. It is given to us explicitly, or we look for JIBAL_CONFIG_FILE (= jibal.conf) in the following places:
+     * 1. Environmental variable (JIBAL_CONFIG_DIR)
+     * 2. Current working directory
+     * 3. Under home (~/.jibal/) or %AppData%/jibal (usually something like C:\Users\Jaakko\AppData\Roaming\jibal)
+     * 4. Prefix (set at compile time, e.g. /usr/local/etc/jibal/),
+     * 5. Platform specific place (UNIX: /etc) on Windows we look one directory up, (useful if the program is in bin directory)
      *
      * After this the configuration file (only one!) is read and uninitialized values are set to defaults.
      * It is possible to read another file using jibal_config_file_read()
      * */
     if(filename) {
         config.error=jibal_config_file_read(units, &config, filename);
-    } else {
+    } else if(seek) {
         char *filename_attempt=NULL;
         while (!filename_attempt && attempt) { /* Loop until somebody sets attempt = 0 (no success) or filename candidate is
  * found */
-            config_dir = NULL;
-            config_subdir = NULL;
+            char *dir;
             switch (attempt) {
                 case 1:
-                    config_dir = getenv("JIBAL_CONFIG_DIR");
+                    dir = getenv("JIBAL_CONFIG_DIR");
+                    if(dir) {
+                        asprintf(&filename_attempt, "%s/%s", dir, JIBAL_CONFIG_FILE);
+                    }
                     break;
                 case 2:
-#ifdef WIN32
-                    config_dir = getenv("AppData");
-                    config_subdir = "/jibal/";
-#else
-                    config_dir = getenv("HOME");
-                    config_subdir = "/.jibal/";
-#endif
+                    filename_attempt = strdup(JIBAL_CONFIG_FILE);
                     break;
                 case 3:
-                    config_dir = JIBAL_INSTALL_PREFIX; /* TODO: Installers might put everything in a different directory */
-                    config_subdir = "etc/jibal/";
+                    dir = jibal_config_user_dir();
+                    if(dir) {
+                        asprintf(&filename_attempt, "%s/%s", dir, JIBAL_CONFIG_FILE);
+                    }
                     break;
                 case 4:
-                    config_dir = "/etc/jibal/"; // TODO: WINDOWS?
+                    asprintf(&filename_attempt, "%s/etc/jibal/%s", JIBAL_INSTALL_PREFIX, JIBAL_CONFIG_FILE);
+                    /* TODO: Installers might put everything in a different directory */
+                    break;
+                case 5:
+#ifdef WIN32
+                    asprintf(&filename_attempt, "../%s", JIBAL_CONFIG_FILE);
+#else
+                    asprintf(&filename_attempt, "/etc/jibal/%s", JIBAL_CONFIG_FILE);
+#endif
                     break;
                 default:
                     attempt = 0;
-                    config_dir = NULL;
                     break;
             }
             if (attempt == 0) {/* We ran out of places to look for */
                 break;
             }
-            filename_attempt = make_path_and_check_if_exists(config_dir, config_subdir, JIBAL_CONFIG_FILE);
+            //filename_attempt = make_path_and_check_if_exists(config_dir, config_subdir, JIBAL_CONFIG_FILE);
+            if(filename_attempt) {
+#ifdef DEBUG
+                fprintf(stderr, "Config attempt %i file %s\n", attempt, filename_attempt);
+#endif
+                if (access(filename_attempt, R_OK) != 0) { /* Not found, bad candidate */
+                    free(filename_attempt);
+                    filename_attempt = NULL;
+                }
+            }
             attempt++;
         }
         if(filename_attempt) {
@@ -298,29 +358,7 @@ jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
             free(filename_attempt);
         }
     }
-    c=getenv("JIBAL_DATADIR");
-    if(c) {
-        if(config.datadir)
-            free(config.datadir);
-        config.datadir=strdup(c); /* Environmental variable overrides config. */
-    }
-    if(!config.datadir) {
-        config.datadir=strdup(JIBAL_DATADIR); /* Directory set by CMake is our last hope */
-    }
-    if(!config.masses_file) {
-        asprintf(&config.masses_file, "%s/%s", config.datadir, JIBAL_MASSES_FILE);
-    }
-    if(!config.abundances_file) {
-        asprintf(&config.abundances_file, "%s/%s", config.datadir, JIBAL_ABUNDANCES_FILE);
-    }
-    if(!config.files_file) {
-        asprintf(&config.files_file, "%s/%s", config.datadir, JIBAL_FILES_FILE);
-    }
-
-    if(!config.assignments_file) {
-        asprintf(&config.assignments_file, "%s/%s", config.datadir, JIBAL_ASSIGNMENTS_FILE);
-    }
-
+    jibal_config_finalize(&config);
     return config; /* Note: configuration is not validated in any way! */
 }
 

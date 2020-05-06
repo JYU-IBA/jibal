@@ -285,6 +285,25 @@ void print_commands(FILE *f, const struct command *commands) {
     }
 }
 
+int bootstrap(jibaltool_global *global, int argc, char **argv) {
+    char *dir=jibal_config_user_dir();
+    if(!dir) {
+        fprintf(stderr, "User configuration path can not be created. There is something odd in your platform.\n");
+        exit(EXIT_FAILURE);
+    }
+    jibal_config config = jibal_config_defaults();
+    config.masses_file = strdup(global->jibal.config.masses_file);
+    config.abundances_file = strdup(global->jibal.config.abundances_file);
+    config.datadir = strdup(dir);
+    jibal_config_finalize(&config);
+    fprintf(stdout, "User configuration will be created in %s\n", dir);
+    FILE *out=jibaltool_open_output(global); /* TODO: wrong place */
+    jibal_config_file_write(&config, out);
+    jibaltool_close_output(out);
+    free(dir);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     jibaltool_global global = {.Z=0, .outfilename=NULL, .stopfile=NULL, .format=NULL, .verbose=0};
     read_options(&global, &argc, &argv);
@@ -297,6 +316,7 @@ int main(int argc, char **argv) {
             {"isotopes", &print_isotopes, "Print a list of isotopes."},
             {"elements", &print_elements, "Print a list of elements."},
             {"config", &print_config, "Print current configuration (config file)."},
+            {"bootstrap", &bootstrap, "Set up user configuration and download data files interactively."},
             {NULL, NULL, NULL}
     };
     if(argc < 1) {
