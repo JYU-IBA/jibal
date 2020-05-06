@@ -73,7 +73,7 @@ set_property(TARGET Jibal APPEND PROPERTY
         COMPATIBLE_INTERFACE_STRING Jibal_MAJOR_VERSION)
 
 install(TARGETS Jibal EXPORT JibalTargets
-        RUNTIME DESTINATION bin COMPONENT libraries #This includes the DLL on Windows
+        RUNTIME DESTINATION bin COMPONENT runtime #This includes the DLL on Windows
         LIBRARY DESTINATION lib COMPONENT libraries
         ARCHIVE DESTINATION lib COMPONENT libraries)
 # install headers, note there's a subdirectory
@@ -130,7 +130,9 @@ install(FILES
         )
 # cpack configuration
 # applications are in "tools" directory
-set(CPACK_COMPONENTS_ALL applications libraries headers data)
+set(CPACK_COMPONENTS_ALL applications runtime libraries headers data)
+set(CMAKE_INSTALL_DEBUG_LIBRARIES TRUE)
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_COMPONENT "runtime")
 include(InstallRequiredSystemLibraries)
 set(CPACK_SOURCE_GENERATOR "TGZ")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
@@ -148,28 +150,31 @@ set(CPACK_SOURCE_IGNORE_FILES
         "^${CMAKE_SOURCE_DIR}/cmake-build-.*/"
         "^${CMAKE_SOURCE_DIR}/gui/build-.*/"
         )
-set(CPACK_COMPONENT_APPLICATIONS_DISPLAY_NAME "Jibal tools")
+set(CPACK_COMPONENT_APPLICATIONS_DISPLAY_NAME "Jibal applications")
 set(CPACK_COMPONENT_APPLICATIONS_DESCRIPTION "Tools to extract and use data from Jibal")
-set(CPACK_COMPONENT_APPLICATIONS_GROUP "Runtime")
-set(CPACK_COMPONENT_APPLICATIONS_DEPENDS data libraries)
-set(CPACK_COMPONENT_GROUP_RUNTIME_DESCRIPTION "Tools and data to access some IBA relevant data.")
+#set(CPACK_COMPONENT_APPLICATIONS_GROUP "Runtime")
+set(CPACK_COMPONENT_APPLICATIONS_DEPENDS data libraries runtime)
+#set(CPACK_COMPONENT_GROUP_RUNTIME_DESCRIPTION "Tools and data to access some IBA relevant data.")
+
+set(CPACK_COMPONENT_RUNTIME_DISPLAY_NAME "Runtime files")
+set(CPACK_COMPONENT_RUNTIME_DESCRIPTION "Files, e.g. DLLs, necessary to run Jibal applications")
 
 set(CPACK_COMPONENT_DATA_DISPLAY_NAME "Data files")
 set(CPACK_COMPONENT_DATA_DESCRIPTION "Bundled files, e.g. atomic data")
-set(CPACK_COMPONENT_DATA_GROUP "Runtime")
+#set(CPACK_COMPONENT_DATA_GROUP "Runtime")
 
 set(CPACK_COMPONENT_LIBRARIES_DISPLAY_NAME "Libraries")
 set(CPACK_COMPONENT_LIBRARIES_DESCRIPTION "Libraries used to build programs with Jibal")
-set(CPACK_COMPONENT_LIBRARIES_GROUP "Development")
-set(CPACK_COMPONENT_GROUP_DEVELOPMENT_DESCRIPTION "Things you need to make your own programs or use other programs using Jibal.")
+#set(CPACK_COMPONENT_LIBRARIES_GROUP "Development")
+#set(CPACK_COMPONENT_GROUP_DEVELOPMENT_DESCRIPTION "Things you need to make your own programs or use other programs using Jibal.")
 
 set(CPACK_COMPONENT_HEADERS_DISPLAY_NAME "C Headers")
 set(CPACK_COMPONENT_HEADERS_DESCRIPTION "C header files for Jibal")
 set(CPACK_COMPONENT_HEADERS_DEPENDS libraries)
-set(CPACK_COMPONENT_HEADERS_GROUP "Development")
+#set(CPACK_COMPONENT_HEADERS_GROUP "Development")
 
 if(WIN32)
-    include(InstallRequiredSystemLibraries)
+#    include(InstallRequiredSystemLibraries)
     set(CPACK_GENERATOR WIX)
     set(CPACK_WIX_CMAKE_PACKAGE_REGISTRY ON)
     set(CPACK_WIX_UPGRADE_GUID 51FB2949-D386-4C24-B8F4-41B46A34B233)

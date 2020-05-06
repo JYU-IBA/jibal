@@ -19,6 +19,7 @@ char *strsep(char **stringp, const char *delim) {
 #ifdef _MSC_VER
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #define vscprintf _vscprintf
 int vasprintf(char **strp, const char *format, va_list ap)
