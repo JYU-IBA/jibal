@@ -150,6 +150,7 @@ set(CPACK_SOURCE_IGNORE_FILES
         "^${CMAKE_SOURCE_DIR}/cmake-build-.*/"
         "^${CMAKE_SOURCE_DIR}/gui/build-.*/"
         )
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "Jibal")
 set(CPACK_COMPONENT_APPLICATIONS_DISPLAY_NAME "Jibal applications")
 set(CPACK_COMPONENT_APPLICATIONS_DESCRIPTION "Tools to extract and use data from Jibal")
 #set(CPACK_COMPONENT_APPLICATIONS_GROUP "Runtime")
