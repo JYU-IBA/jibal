@@ -7,7 +7,10 @@
 #include <inttypes.h>
 #include <jibal.h>
 #include <jibal_stop.h>
-
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 void jibaltool_global_free(jibaltool_global *global) {
     if(global->outfilename) {
@@ -285,22 +288,63 @@ void print_commands(FILE *f, const struct command *commands) {
     }
 }
 
-int bootstrap(jibaltool_global *global, int argc, char **argv) {
-    char *dir=jibal_config_user_dir();
-    if(!dir) {
+#ifdef WIN32
+/*
+LSTATUS RegGetValueA(
+  HKEY    hkey,
+  LPCSTR  lpSubKey,
+  LPCSTR  lpValue,
+  DWORD   dwFlags,
+  LPDWORD pdwType,
+  PVOID   pvData,
+  LPDWORD pcbData
+);*/
+char *get_registry_string(const char *subkey, const char *value) {
+    DWORD buf_size=256;
+    char *buf = NULL;
+    LSTATUS status = ERROR_SUCCESS;
+    do {
+        buf=realloc(buf, sizeof(char)*buf_size);
+        if(!buf) {
+            return NULL;
+        }
+        RegGetValueA(HKEY_LOCAL_MACHINE, subkey, value, RRF_RT_REG_SZ, NULL, buf, &buf_size);
+        fprintf(stderr, "Status is %i and got buf_size is %i\n", status, buf_size);
+    } while(status==ERROR_MORE_DATA);
+    if(status == ERROR_SUCCESS) {
+        return buf;
+    } else {
+        free(buf);
+        return NULL;
+    }
+}
+#endif /* WIN32 */
+
+int bootstrap_config(jibaltool_global *global, int argc, char **argv) {
+    char *user_dir=jibal_config_user_dir();
+    if(!user_dir) {
         fprintf(stderr, "User configuration path can not be created. There is something odd in your platform.\n");
         exit(EXIT_FAILURE);
     }
     jibal_config config = jibal_config_defaults();
+    global->jibal.units=jibal_units_default();
+    global->jibal.config=jibal_config_init(global->jibal.units, NULL, FALSE); /* Initialize config without any configuration files */
     config.masses_file = strdup(global->jibal.config.masses_file);
     config.abundances_file = strdup(global->jibal.config.abundances_file);
-    config.datadir = strdup(dir);
+    config.datadir = strdup(user_dir); /* TODO: try to guess and then ask verification from user */
     jibal_config_finalize(&config);
-    fprintf(stdout, "User configuration will be created in %s\n", dir);
+    fprintf(stdout, "User configuration will be created in %s\n", user_dir);
+#ifdef WIN32
+    char *install_root_from_registry = get_registry_string("SOFTWARE\\JYU\\Jibal", "RootDirectory");
+    if(install_root_from_registry) {
+        fprintf(stdout, "Root from registry: %s\n", install_root_from_registry);
+        free(install_root_from_registry);
+    }
+#endif
     FILE *out=jibaltool_open_output(global); /* TODO: wrong place */
     jibal_config_file_write(&config, out);
     jibaltool_close_output(out);
-    free(dir);
+    free(user_dir);
     return 0;
 }
 
@@ -316,7 +360,7 @@ int main(int argc, char **argv) {
             {"isotopes", &print_isotopes, "Print a list of isotopes."},
             {"elements", &print_elements, "Print a list of elements."},
             {"config", &print_config, "Print current configuration (config file)."},
-            {"bootstrap", &bootstrap, "Set up user configuration and download data files interactively."},
+            {"bootstrap", &bootstrap_config, "Set up user configuration and download data files interactively."},
             {NULL, NULL, NULL}
     };
     if(argc < 1) {
@@ -325,17 +369,20 @@ int main(int argc, char **argv) {
         print_commands(stderr, commands);
         return EXIT_FAILURE;
     }
-    global.jibal = jibal_init(global.config_filename);
-    if(global.jibal.error) {
-        fprintf(stderr, "Initializing JIBAL failed with error code: %i (%s)\n", global.jibal.error,
-                jibal_error_string(global.jibal.error));
-        return EXIT_FAILURE;
-    }
+
     const struct command *c;
     int found=0;
     for(c=commands; c->f != NULL; c++) {
         if(strcmp(c->name, argv[0])==0) {
             found=1;
+            if(c->f != &bootstrap_config) {
+                global.jibal = jibal_init(global.config_filename);
+                if(global.jibal.error) {
+                    fprintf(stderr, "Initializing JIBAL failed with error code: %i (%s)\n", global.jibal.error,
+                    jibal_error_string(global.jibal.error));
+                    return EXIT_FAILURE;
+                }
+            }
             c->f(&global, argc-1, argv+1);
             break;
         }
