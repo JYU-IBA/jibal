@@ -42,13 +42,14 @@
     - Other tools, e.g. GitHub Desktop can be used too
     - Allow the installer to add git to PATH for convenience
 4. Install [vcpkg](https://github.com/microsoft/vcpkg)
-    - Clone using git, bootstrap as instructed, place e.g. in C:\vcpkg
-    - Set environment variable *VCPKG_DEFAULT_TRIPLET=x64-windows* using Windows Control Panel to build 64-bit packages by default or specify the triplet manually, as below
-    - Install these libraries: *gsl*, *getopt*
+    - Clone using git, bootstrap as instructed, place e.g. in *C:\vcpkg*
+    - Set environment variable *VCPKG_DEFAULT_TRIPLET=x64-windows*  and *VCPKG_ROOT=C:\vcpkg* using Windows Control Panel to build 64-bit packages by default
+    - Install these libraries: *gsl*, *getopt*, specifying x64-windows is not necessary if you did the step above
     
             vcpkg.exe install gsl:x64-windows getopt:x64-windows
     
     - Alternatively use *x86-windows* to compile 32-bit libraries. This is not recommended.
+    - 
 5. Clone Jibal repository
 6. Build
     - Set up your MSVC environment by running the vcvars64.bat (or opening the *x64 Native Tools Command Prompt for VS2019*)
@@ -56,16 +57,15 @@
     
           mkdir build
           cd build
-          cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE ../
+          cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ../
           
     - We use the *-G* option to select the MSVC compiler version. It's not strictly necessary. Use *Visual Studio 15 2017* for  MSVC 2017. Older versions are not supported.
-    - We use the *-DCMAKE_TOOLCHAIN_FILE*, as instructed by vcpkg, so that libraries installed with vcpkg are detected by CMake
     - We use the CMake feature to export all symbols in the library (default behaviour on Linux/MacOS/BSD)
     - Run the following to build the library
     
           msbuild BUILD_ALL.vcxproj
           
-    - You can make an installer, it requires [NSIS](https://nsis.sourceforge.io/), run the following:
+    - You can make an installer, it requires [WiX](https://wixtoolset.org/), run the following:
          
           msbuild PACKAGE.vcxproj
         
