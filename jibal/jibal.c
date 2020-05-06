@@ -267,11 +267,16 @@ jibal_config jibal_config_init(const jibal_units *units, const char *filename) {
                     config_dir = getenv("JIBAL_CONFIG_DIR");
                     break;
                 case 2:
+#ifdef WIN32
+                    config_dir = getenv("AppData");
+                    config_subdir = "/jibal/";
+#else
                     config_dir = getenv("HOME");
                     config_subdir = "/.jibal/";
+#endif
                     break;
                 case 3:
-                    config_dir = JIBAL_INSTALL_PREFIX;
+                    config_dir = JIBAL_INSTALL_PREFIX; /* TODO: Installers might put everything in a different directory */
                     config_subdir = "etc/jibal/";
                     break;
                 case 4:
