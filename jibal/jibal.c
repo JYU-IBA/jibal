@@ -250,8 +250,13 @@ void jibal_config_finalize(jibal_config *config) { /* Fill in missing defaults b
     if(!config->userdatadir) {
         config->userdatadir=jibal_config_user_dir();
     }
+#ifdef WIN32
     if(!config->datadir) {
-        /* TODO: search from /usr or /usr/local or registry on Windows */
+        config->datadir=jibal_registry_string_get("RootDirectory");
+        /* TODO: check if exists */
+    }
+#endif
+    if(!config->datadir) {
         config->datadir=strdup(JIBAL_DATADIR); /* Directory set by CMake is our last hope */
     }
     const char *dirs[] = {config->userdatadir, config->datadir, NULL};
@@ -266,7 +271,6 @@ void jibal_config_finalize(jibal_config *config) { /* Fill in missing defaults b
         if(!config->abundances_file) {
             config->abundances_file = make_path_and_check_if_exists(*dir, JIBAL_ABUNDANCES_FILE);
         }
-
         if(!config->assignments_file) {
             config->assignments_file = make_path_and_check_if_exists(*dir, JIBAL_ASSIGNMENTS_FILE);
         }
