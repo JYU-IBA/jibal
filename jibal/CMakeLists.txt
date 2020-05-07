@@ -53,6 +53,7 @@ add_library(Jibal SHARED
         jibal.c
         stragg.c
         stop.c
+        registry.c
         win_compat.c
         )
 

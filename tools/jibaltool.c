@@ -8,8 +8,7 @@
 #include <jibal.h>
 #include <jibal_stop.h>
 #ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <jibal_registry.h>
 #endif
 
 void jibaltool_global_free(jibaltool_global *global) {
@@ -288,38 +287,6 @@ void print_commands(FILE *f, const struct command *commands) {
     }
 }
 
-#ifdef WIN32
-/*
-LSTATUS RegGetValueA(
-  HKEY    hkey,
-  LPCSTR  lpSubKey,
-  LPCSTR  lpValue,
-  DWORD   dwFlags,
-  LPDWORD pdwType,
-  PVOID   pvData,
-  LPDWORD pcbData
-);*/
-char *get_registry_string(const char *subkey, const char *value) {
-    DWORD buf_size=256;
-    char *buf = NULL;
-    LSTATUS status = ERROR_SUCCESS;
-    do {
-        buf=realloc(buf, sizeof(char)*buf_size);
-        if(!buf) {
-            return NULL;
-        }
-        RegGetValueA(HKEY_LOCAL_MACHINE, subkey, value, RRF_RT_REG_SZ, NULL, buf, &buf_size);
-        fprintf(stderr, "Status is %i and got buf_size is %i\n", status, buf_size);
-    } while(status==ERROR_MORE_DATA);
-    if(status == ERROR_SUCCESS) {
-        return buf;
-    } else {
-        free(buf);
-        return NULL;
-    }
-}
-#endif /* WIN32 */
-
 int bootstrap_config(jibaltool_global *global, int argc, char **argv) {
     char *user_dir=jibal_config_user_dir();
     if(!user_dir) {
@@ -335,7 +302,7 @@ int bootstrap_config(jibaltool_global *global, int argc, char **argv) {
     jibal_config_finalize(&config);
     fprintf(stdout, "User configuration will be created in %s\n", user_dir);
 #ifdef WIN32
-    char *install_root_from_registry = get_registry_string("SOFTWARE\\JYU\\Jibal", "RootDirectory");
+    char *install_root_from_registry = jibal_registry_string_get("RootDirectory");
     if(install_root_from_registry) {
         fprintf(stdout, "Root from registry: %s\n", install_root_from_registry);
         free(install_root_from_registry);
