@@ -7,7 +7,11 @@
 #include <jibal_phys.h>
 #include <jibal_gsto.h>
 #include <defaults.h>
+#ifdef WIN32
 #include "win_compat.h"
+#else
+#include <libgen.h>
+#endif
 #include "jibal_stragg.h"
 
 

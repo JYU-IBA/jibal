@@ -22,12 +22,12 @@ jibal jibal_init(const char *config_filename) {
         jibal.error = JIBAL_ERROR_UNITS;
         return jibal;
     }
-    jibal.config= jibal_config_init(jibal.units, config_filename, TRUE);
+    jibal.config = jibal_config_init(jibal.units, config_filename, TRUE);
     if(jibal.config.error) {
         jibal.error = JIBAL_ERROR_CONFIG;
         return jibal;
     }
-    jibal.isotopes=jibal_isotopes_load(jibal.config.masses_file);
+    jibal.isotopes = jibal_isotopes_load(jibal.config.masses_file);
     if(!jibal.isotopes) {
         fprintf(stderr, "Could not load isotope table from file %s.\n", jibal.config.masses_file);
         jibal.error = JIBAL_ERROR_MASSES;
@@ -68,35 +68,15 @@ void jibal_free(jibal *jibal) {
     /* Note, not freeing jibal itself! */
 }
 
-char *make_path_and_check_if_exists(const char *directory, const char *subdirectory, const char *file) {
-    /* TODO: move somewhere and rename
-     * TODO: va_list and arbitrary directories?
-     * The subdirectory can be NULL. Return the constructed path (which can be later freed) on success, NULL
-     * otherwise. *
-     */
+char *make_path_and_check_if_exists(const char *directory, const char *file) {
+    /* Return the constructed path (which can be later freed) on success, NULL otherwise. */
     char *filename;
     if(!directory || !file) {
         return NULL;
     }
-    if(subdirectory) {
-        if(asprintf(&filename, "%s/%s/%s", directory, subdirectory, file) < 0) {
-            return NULL;
-        }
-    } else {
-        if(asprintf(&filename, "%s/%s", directory, file) < 0) {
-            return NULL;
-        }
+    if(asprintf(&filename, "%s/%s", directory, file) < 0) {
+        return NULL;
     }
-#if 0
-    size_t i=strlen(directory);
-    while(i--) {
-        if(directory.datadir[i] == '/') {
-            directory.datadir[i] = '\0';
-        } else {
-            break;
-        }
-    }
-#endif
     if(access(filename, R_OK) != 0)  { /* File doesn't exist */
 #ifdef DEBUG
         fprintf(stderr, "File \"%s\" doesn't exist.\n", filename);
@@ -111,6 +91,7 @@ jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure 
  * when config files are read and written. Default values should be handled elsewhere. */
     const jibal_config_var vars[]={
             {JIBAL_CONFIG_VAR_STRING, "datadir", &config->datadir},
+            {JIBAL_CONFIG_VAR_STRING, "userdatadir", &config->userdatadir},
             {JIBAL_CONFIG_VAR_STRING, "masses_file", &config->masses_file},
             {JIBAL_CONFIG_VAR_STRING, "abundances_file", &config->abundances_file},
             {JIBAL_CONFIG_VAR_STRING, "files_file", &config->files_file},
@@ -258,31 +239,38 @@ char *jibal_config_user_dir() {
 
 jibal_config jibal_config_defaults() {
     jibal_config config = {.Z_max = JIBAL_MAX_Z, .extrapolate = FALSE, .error = 0};
+    const char *c=getenv("JIBAL_DATADIR");
+    if(c) {
+        config.datadir=strdup(c);
+    }
     return config;
 }
 
-void jibal_config_finalize(jibal_config *config) {
-    const char *c=getenv("JIBAL_DATADIR");
-    if(c) {
-        if(config->datadir)
-            free(config->datadir);
-        config->datadir=strdup(c); /* Environmental variable overrides config. */
+void jibal_config_finalize(jibal_config *config) { /* Fill in missing defaults based on config so far */
+    if(!config->userdatadir) {
+        config->userdatadir=jibal_config_user_dir();
     }
     if(!config->datadir) {
+        /* TODO: search from /usr or /usr/local or registry on Windows */
         config->datadir=strdup(JIBAL_DATADIR); /* Directory set by CMake is our last hope */
     }
-    if(!config->masses_file) {
-        asprintf(&config->masses_file, "%s/%s", config->datadir, JIBAL_MASSES_FILE);
-    }
-    if(!config->abundances_file) {
-        asprintf(&config->abundances_file, "%s/%s", config->datadir, JIBAL_ABUNDANCES_FILE);
-    }
-    if(!config->files_file) {
-        asprintf(&config->files_file, "%s/%s", config->datadir, JIBAL_FILES_FILE);
-    }
+    const char *dirs[] = {config->userdatadir, config->datadir, NULL};
+    const char **dir;
+    for(dir=dirs; *dir != NULL; dir++) {
+        fprintf(stderr, "Trying dir %s\n", *dir);
+        if(!config->masses_file) {
+            config->masses_file = make_path_and_check_if_exists(*dir, JIBAL_MASSES_FILE);
+        }
+        if(!config->files_file) {
+            config->files_file = make_path_and_check_if_exists(*dir, JIBAL_FILES_FILE);
+        }
+        if(!config->abundances_file) {
+            config->abundances_file = make_path_and_check_if_exists(*dir, JIBAL_ABUNDANCES_FILE);
+        }
 
-    if(!config->assignments_file) {
-        asprintf(&config->assignments_file, "%s/%s", config->datadir, JIBAL_ASSIGNMENTS_FILE);
+        if(!config->assignments_file) {
+            config->assignments_file = make_path_and_check_if_exists(*dir, JIBAL_ASSIGNMENTS_FILE);
+        }
     }
 }
 
@@ -386,6 +374,8 @@ const char *jibal_error_string(jibal_error err) {
 void jibal_config_free(jibal_config *config) {
     if(config->datadir)
         free(config->datadir);
+    if(config->userdatadir)
+        free(config->userdatadir);
     if(config->masses_file)
         free(config->masses_file);
     if(config->abundances_file)

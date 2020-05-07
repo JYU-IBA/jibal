@@ -36,11 +36,11 @@ typedef enum {
 
 typedef struct {
     int error;
-    char *datadir;
+    char *datadir; /* e.g. /usr/local/share/jibal or C:\Program Files\Jibal\share\jibal */
+    char *userdatadir; /* e.g. ~/.jibal/ or %AppData/Jibal */
     char *masses_file;
     char *abundances_file;
     char *files_file;
-    char *stragglings_file;
     char *assignments_file;
     int Z_max;
     int extrapolate; /* this is boolean, see JIBAL_CONFIG_VAR_BOOL */
