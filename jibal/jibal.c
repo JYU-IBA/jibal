@@ -257,7 +257,6 @@ void jibal_config_finalize(jibal_config *config) { /* Fill in missing defaults b
     const char *dirs[] = {config->userdatadir, config->datadir, NULL};
     const char **dir;
     for(dir=dirs; *dir != NULL; dir++) {
-        fprintf(stderr, "Trying dir %s\n", *dir);
         if(!config->masses_file) {
             config->masses_file = make_path_and_check_if_exists(*dir, JIBAL_MASSES_FILE);
         }

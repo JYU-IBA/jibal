@@ -209,8 +209,8 @@ typedef struct {
 
 jibal_gsto *jibal_gsto_init(const jibal_element *elements, int Z_max, const char *datadir, const char *files_file_name,
                             const char *assignments_file_name);
-int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *datadir, const char *filename);
-gsto_assignment *jibal_gsto_read_assignments_file(jibal_gsto *workspace, const char *datadir, const char *filename);
+int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *filename);
+gsto_assignment *jibal_gsto_read_assignments_file(jibal_gsto *workspace, const char *filename);
 int jibal_gsto_add_file(jibal_gsto *workspace, jibal_element *elements, const char *name, const char *filename);
 int jibal_gsto_file_has_combination(gsto_file_t *file, int Z1, int Z2);
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file);

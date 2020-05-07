@@ -953,12 +953,12 @@ jibal_gsto *jibal_gsto_init(const jibal_element *elements, int Z_max, const char
     if(!files_file_name) { /* If filename given (not NULL), attempt to load settings file */
         files_file_name=JIBAL_FILES_FILE;
     }
-    jibal_gsto_read_settings_file(workspace, datadir, files_file_name);
-    workspace->overrides = jibal_gsto_read_assignments_file(workspace, datadir, assignments_file_name);
+    jibal_gsto_read_settings_file(workspace, files_file_name);
+    workspace->overrides = jibal_gsto_read_assignments_file(workspace, assignments_file_name);
     return workspace;
 }
 
-int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *datadir, const char *filename) {
+int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *filename) {
     FILE *f=fopen(filename, "r");
     if(!f) {
         fprintf(stderr, "WARNING: Can not open file %s\n", filename);
@@ -985,9 +985,14 @@ int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *datadir, co
         char *name=columns[0];
         char *file=columns[1];
         if(name && file ) {
-            if (file[0] != '/') {
-                file = calloc(strlen(datadir) + strlen(file) + 1, sizeof(char));
+            if (file[0] != '/') { /* Relative path. TODO: windows? */
+                char *datadir=strdup(filename); /* dirname below may modify the string, therefore strdup */
+                char *tmp=strdup(dirname(datadir)); /* dirname might return pointer to somewhere in "datadir" or static memory, therefore another strdup */
+                free(datadir); /* This might contain something mutilated by dirname, lets free it */
+                datadir=tmp;
+                file = calloc(strlen(datadir) + 1 + strlen(file) + 1, sizeof(char));
                 strcat(file, datadir);
+                strcat(file, "/");
                 strcat(file, columns[1]); /* Note, filename now starts with '/' so we don't need to add it */
             }
             if (gsto_add_file(workspace, name, file)) {
@@ -1011,7 +1016,7 @@ int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *datadir, co
     return n_files;
 }
 
-gsto_assignment *jibal_gsto_read_assignments_file(jibal_gsto *workspace, const char *datadir, const char *filename) {
+gsto_assignment *jibal_gsto_read_assignments_file(jibal_gsto *workspace, const char *filename) {
     FILE *f = fopen(filename, "r");
     if (!f) {
         fprintf(stderr, "WARNING: Can not open file %s. Create an empty file to suppress this warning.\n", filename);

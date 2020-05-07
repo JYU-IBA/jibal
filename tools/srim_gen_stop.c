@@ -117,7 +117,7 @@ int parse_output(char *filename, FILE *stopping_output_file, int xsteps) {
     
         double energy=strtod(fix_exponential_notation(columns[0]), NULL);
         double S_elec=strtod(fix_exponential_notation(columns[1]), NULL);
-        if(S_elec == 0.0) {
+        if(S_elec == 0.0 || energy == 0.0) {
             fprintf(stderr, "Problems.\n");
             return 0;
         }
