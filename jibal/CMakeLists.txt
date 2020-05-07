@@ -4,6 +4,11 @@ include(FindGSL) #GSL is a special snowflake.
 if(NOT GSL_FOUND)
     message(FATAL_ERROR "GSL not found")
 endif()
+
+if(WIN32)
+    set(PLATFORM_DEPS ${PLATFORM_DEPS} Pathcch.lib)
+endif()
+
 include(CheckSymbolExists)
 set(CMAKE_REQUIRED_LIBRARIES "m")
 
@@ -18,10 +23,10 @@ endif()
 
 option(DEVELOPER_MODE_ENABLE "Enable developer mode" OFF)
 if(DEVELOPER_MODE_ENABLE)
-    set(JIBAL_DATADIR "${PROJECT_SOURCE_DIR}/data")
+    set(JIBAL_DATADIR "data") #relative to install prefix
     set(JIBAL_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}")
 else()
-    set(JIBAL_DATADIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/")
+    set(JIBAL_DATADIR "share/${PROJECT_NAME}") #relative to install prefix
     set(JIBAL_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 endif()
 configure_file(jibal_config.h.in jibal_config.h @ONLY)
@@ -57,8 +62,7 @@ add_library(Jibal SHARED
         win_compat.c
         )
 
-
-target_link_libraries(Jibal GSL::gsl) #GSL is found by FindGSL.
+target_link_libraries(Jibal GSL::gsl ${PLATFORM_DEPS})
 
 target_include_directories(Jibal
         INTERFACE
@@ -88,13 +92,6 @@ install(FILES ${DATAFILES}
         DESTINATION share/${PROJECT_NAME}
         COMPONENT data
 )
-
-# install exports
-#install(EXPORT JibalTargets
-#        FILE JibalTargets.cmake
-#        DESTINATION lib/cmake/Jibal
-#        )
-
 
 # install pkg-config file
 install(FILES ${CMAKE_BINARY_DIR}/jibal.pc

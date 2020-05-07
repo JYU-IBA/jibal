@@ -16,6 +16,9 @@ char *strsep(char **stringp, const char *delim) {
 }
 
 #include <stdlib.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <pathcch.h>
 char *dirname(char *path) {
     size_t s = strlen(path)+1;
     size_t convertedChars = 0;
@@ -26,7 +29,7 @@ char *dirname(char *path) {
     HRESULT result = PathCchRemoveFileSpec(pszPath, convertedChars); /* remove trailing file name or directory */
     if(result != S_OK)
         return NULL;
-    size_t s_out = 2*(wcslen(pszPAth)+1);
+    size_t s_out = 2*(wcslen(pszPath)+1);
     char *path_out = malloc(s_out);
     wcstombs_s(&convertedChars, path_out, s_out, pszPath, _TRUNCATE);
     free(pszPath);

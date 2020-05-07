@@ -293,13 +293,13 @@ int bootstrap_config(jibaltool_global *global, int argc, char **argv) {
         fprintf(stderr, "User configuration path can not be created. There is something odd in your platform.\n");
         exit(EXIT_FAILURE);
     }
-    jibal_config config = jibal_config_defaults();
+    //jibal_config config = jibal_config_defaults();
     global->jibal.units=jibal_units_default();
     global->jibal.config=jibal_config_init(global->jibal.units, NULL, FALSE); /* Initialize config without any configuration files */
-    config.masses_file = strdup(global->jibal.config.masses_file);
-    config.abundances_file = strdup(global->jibal.config.abundances_file);
-    config.datadir = strdup(user_dir); /* TODO: try to guess and then ask verification from user */
-    jibal_config_finalize(&config);
+    //config.masses_file = strdup(global->jibal.config.masses_file);
+    //config.abundances_file = strdup(global->jibal.config.abundances_file);
+    //config.datadir = strdup(user_dir); /* TODO: try to guess and then ask verification from user */
+    //jibal_config_finalize(&global->jibal.config);
     fprintf(stdout, "User configuration will be created in %s\n", user_dir);
 #ifdef WIN32
     char *install_root_from_registry = jibal_registry_string_get("RootDirectory");
@@ -309,7 +309,7 @@ int bootstrap_config(jibaltool_global *global, int argc, char **argv) {
     }
 #endif
     FILE *out=jibaltool_open_output(global); /* TODO: wrong place */
-    jibal_config_file_write(&config, out);
+    jibal_config_file_write(&global->jibal.config, out);
     jibaltool_close_output(out);
     free(user_dir);
     return 0;

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef WIN32
+#include <jibal_registry.h>
 #include <io.h>
 #define R_OK 4
 #else
@@ -77,6 +78,9 @@ char *make_path_and_check_if_exists(const char *directory, const char *file) {
     if(asprintf(&filename, "%s/%s", directory, file) < 0) {
         return NULL;
     }
+    filename=jibal_path_cleanup(filename);
+    if(!filename)
+        return NULL;
     if(access(filename, R_OK) != 0)  { /* File doesn't exist */
 #ifdef DEBUG
         fprintf(stderr, "File \"%s\" doesn't exist.\n", filename);
@@ -135,6 +139,48 @@ int jibal_config_file_write(jibal_config *config, FILE *f) {
     free(vars);
     fclose(f);
     return 0;
+}
+
+int jibal_path_is_absolute(const char *path) { /* TRUE if it looks absolute, FALSE if it doesn't. Can give false negatives, but is unlikely to give false positives. Just a guess really. */
+    if(path)
+        return FALSE;
+#ifdef WIN32
+    if(path[0] == '\\') /* An absolute path from the root of the current drive, e.g. \Program Files\ is ok. UNC paths and other stuff starting with \\ is always absolute too. */
+        return TRUE;
+    if(strlen(path) < 3) /* Absolute paths can't really be this short, can they? Lets assume so. */
+        return FALSE;
+    if(isupper(path[0]) && path[1] == ':' && (path[2] == '/' || path[2] == '\\')) /* Looks like "C:\" or even "C:/" is okay for me */
+        return TRUE;
+    return FALSE; /* Doesn't look absolute, must be something else */
+#else
+    return (path[0]=='/');
+#endif
+}
+
+char *jibal_path_cleanup(char *path) { /* In place removal of repeated back or forward slashes. */
+    const char *src = path;
+    char *dst = path;
+    if(!path)
+        return NULL;
+    if(*src == '/' || *src == '\\') { /* Allow repeated '//' or '\\' in the beginning by skipping over the first character */
+        src++;
+        dst++;
+    }
+    while ((*dst = *src) != '\0') {
+        do {
+            src++;
+        } while ((*dst == '/' || *dst == '\\')  && (*src == '/' || *src == '\\'));
+      dst++;
+    }
+#ifdef WIN32
+    if(strlen(path) > 2) {
+        for(dst = path+(jibal_path_is_absolute(path)?2:0); *dst != '\0'; dst++) { /* Skip initial 2 characters for absolute paths, just to be sure UNC paths starting with e.g. "\\" will not be converted to "//". */
+            if(*dst == '/') /* Replace forwards slashes with backlashes */
+                *dst = '\\';
+        }
+    }
+#endif
+    return path;
 }
 
 int jibal_config_file_read(const jibal_units *units, jibal_config *config, const char *filename) { /* Memory leaks in
@@ -253,11 +299,20 @@ void jibal_config_finalize(jibal_config *config) { /* Fill in missing defaults b
 #ifdef WIN32
     if(!config->datadir) {
         config->datadir=jibal_registry_string_get("RootDirectory");
+        config->datadir=realloc(config->datadir, strlen(config->datadir)+1+strlen(JIBAL_DATADIR)+1+1);
+        if(!config->datadir) {
+            fprintf(stderr, "Allocation issues with config->datadir.\n");
+            return;
+        }
+        config->datadir=strcat(config->datadir, "/");
+        config->datadir=strcat(config->datadir, JIBAL_DATADIR);
+        config->datadir=strcat(config->datadir, "/");
+        config->datadir=jibal_path_cleanup(config->datadir);
         /* TODO: check if exists */
     }
 #endif
     if(!config->datadir) {
-        config->datadir=strdup(JIBAL_DATADIR); /* Directory set by CMake is our last hope */
+        config->datadir=strdup(JIBAL_DATADIR_FULL); /* Directory set by CMake is our last hope */
     }
     const char *dirs[] = {config->userdatadir, config->datadir, NULL};
     const char **dir;
@@ -332,7 +387,6 @@ jibal_config jibal_config_init(const jibal_units *units, const char *filename, i
             if (attempt == 0) {/* We ran out of places to look for */
                 break;
             }
-            //filename_attempt = make_path_and_check_if_exists(config_dir, config_subdir, JIBAL_CONFIG_FILE);
             if(filename_attempt) {
 #ifdef DEBUG
                 fprintf(stderr, "Config attempt %i file %s\n", attempt, filename_attempt);

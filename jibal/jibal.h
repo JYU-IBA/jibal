@@ -80,6 +80,8 @@ jibal_config jibal_config_init(const jibal_units *units, const char *filename, i
 void jibal_config_finalize(jibal_config *config);
 int jibal_config_file_read(const jibal_units *units, jibal_config *config, const char *filename);
 int jibal_config_file_write(jibal_config *config, FILE *file);
+int jibal_path_is_absolute(const char *path);
+char *jibal_path_cleanup(char *path);
 const char *jibal_error_string(jibal_error err);
 void jibal_config_free();
 
