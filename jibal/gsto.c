@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
+#include <jibal.h>
 #include <jibal_units.h>
 #include <jibal_phys.h>
 #include <jibal_gsto.h>
@@ -53,6 +54,12 @@ const char *gsto_get_header_string(const gsto_header *header, int val) {
 
 int gsto_add_file(jibal_gsto *workspace, const char *name, const char *filename) {
     int success=0;
+    if(!filename || !name) {
+        fprintf(stderr, "Tried to add a file %s from %s. I need both a name and a filename.\n",
+                name?name:"without a name",
+                filename?filename:"unspecified location");
+        return 0;
+    }
 #ifdef DEBUG
     fprintf(stderr, "Adding file %s (%s).\n", name, filename);
 #endif
@@ -985,7 +992,7 @@ int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *filename) {
         char *name=columns[0];
         char *file=columns[1];
         if(name && file ) {
-            if (file[0] != '/') { /* Relative path. TODO: windows? */
+            if(!jibal_path_is_absolute(file)) {
                 char *datadir=strdup(filename); /* dirname below may modify the string, therefore strdup */
                 char *tmp=strdup(dirname(datadir)); /* dirname might return pointer to somewhere in "datadir" or static memory, therefore another strdup */
                 free(datadir); /* This might contain something mutilated by dirname, lets free it */
@@ -993,9 +1000,10 @@ int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *filename) {
                 file = calloc(strlen(datadir) + 1 + strlen(file) + 1, sizeof(char));
                 strcat(file, datadir);
                 strcat(file, "/");
-                strcat(file, columns[1]); /* Note, filename now starts with '/' so we don't need to add it */
+                strcat(file, columns[1]);
+                file = jibal_path_cleanup(file);
             }
-            if (gsto_add_file(workspace, name, file)) {
+            if(gsto_add_file(workspace, name, file)) {
                 n_files++;
             } else {
                 fprintf(stderr, "WARNING: adding file %s failed.\n", file);

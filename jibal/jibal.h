@@ -75,9 +75,11 @@ typedef struct {
 jibal jibal_init(const char *config_filename);
 void jibal_free(jibal *jibal);
 char *jibal_config_user_dir();
+char *jibal_config_user_config_filename();
 jibal_config jibal_config_defaults();
 jibal_config jibal_config_init(const jibal_units *units, const char *filename, int seek);
 void jibal_config_finalize(jibal_config *config);
+char *jibal_config_filename_seek();
 int jibal_config_file_read(const jibal_units *units, jibal_config *config, const char *filename);
 int jibal_config_file_write(jibal_config *config, FILE *file);
 int jibal_path_is_absolute(const char *path);

@@ -7,6 +7,8 @@
 #ifdef WIN32
 #include <jibal_registry.h>
 #include <io.h>
+#define F_OK 0
+#define W_OK 2
 #define R_OK 4
 #else
 #include <unistd.h>
@@ -137,7 +139,6 @@ int jibal_config_file_write(jibal_config *config, FILE *f) {
         }
     }
     free(vars);
-    fclose(f);
     return 0;
 }
 
@@ -283,6 +284,17 @@ char *jibal_config_user_dir() {
     return out; /* Remember to free when done, memory allocated by asprintf*/
 }
 
+char *jibal_config_user_config_filename() {
+    char *filename;
+    char *dir = jibal_config_user_dir();
+    dir = jibal_config_user_dir();
+    if(!dir)
+        return NULL;
+    asprintf(&filename, "%s/%s", dir, JIBAL_CONFIG_FILE);
+    free(dir);
+    return jibal_path_cleanup(filename);
+}
+
 jibal_config jibal_config_defaults() {
     jibal_config config = {.Z_max = JIBAL_MAX_Z, .extrapolate = FALSE, .error = 0};
     const char *c=getenv("JIBAL_DATADIR");
@@ -312,7 +324,7 @@ void jibal_config_finalize(jibal_config *config) { /* Fill in missing defaults b
     }
 #endif
     if(!config->datadir) {
-        config->datadir=strdup(JIBAL_DATADIR_FULL); /* Directory set by CMake is our last hope */
+        config->datadir=strdup(JIBAL_DATADIR_FULL); /* Directory set by CMake is normal if "make install" has been used. */
     }
     const char *dirs[] = {config->userdatadir, config->datadir, NULL};
     const char **dir;
@@ -332,79 +344,88 @@ void jibal_config_finalize(jibal_config *config) { /* Fill in missing defaults b
     }
 }
 
-jibal_config jibal_config_init(const jibal_units *units, const char *filename, int seek) {
-    jibal_config config = jibal_config_defaults();
+char *jibal_config_filename_seek() {
     unsigned int attempt=1;
     /* Lets look for a configuration file!
-     * 0. It is given to us explicitly, or we look for JIBAL_CONFIG_FILE (= jibal.conf) in the following places:
      * 1. Environmental variable (JIBAL_CONFIG_DIR)
      * 2. Current working directory
      * 3. Under home (~/.jibal/) or %AppData%/jibal (usually something like C:\Users\Jaakko\AppData\Roaming\jibal)
      * 4. Prefix (set at compile time, e.g. /usr/local/etc/jibal/),
      * 5. Platform specific place (UNIX: /etc) on Windows we look one directory up, (useful if the program is in bin directory)
      *
-     * After this the configuration file (only one!) is read and uninitialized values are set to defaults.
-     * It is possible to read another file using jibal_config_file_read()
+     * On first success (file exist) a full path to the file is returned. The memory is allocated so you have to free it.
+     *
+     * Returns NULL on failure to find any files.
+     *
      * */
-    if(filename) {
-        config.error=jibal_config_file_read(units, &config, filename);
-    } else if(seek) {
-        char *filename_attempt=NULL;
-        while (!filename_attempt && attempt) { /* Loop until somebody sets attempt = 0 (no success) or filename candidate is
+    char *filename=NULL;
+    while (!filename && attempt) { /* Loop until somebody sets attempt = 0 (no success) or filename candidate is
  * found */
-            char *dir;
-            switch (attempt) {
-                case 1:
-                    dir = getenv("JIBAL_CONFIG_DIR");
-                    if(dir) {
-                        asprintf(&filename_attempt, "%s/%s", dir, JIBAL_CONFIG_FILE);
-                    }
-                    break;
-                case 2:
-                    filename_attempt = strdup(JIBAL_CONFIG_FILE);
-                    break;
-                case 3:
-                    dir = jibal_config_user_dir();
-                    if(dir) {
-                        asprintf(&filename_attempt, "%s/%s", dir, JIBAL_CONFIG_FILE);
-                    }
-                    break;
-                case 4:
-                    asprintf(&filename_attempt, "%s/etc/jibal/%s", JIBAL_INSTALL_PREFIX, JIBAL_CONFIG_FILE);
-                    /* TODO: Installers might put everything in a different directory */
-                    break;
-                case 5:
-#ifdef WIN32
-                    asprintf(&filename_attempt, "../%s", JIBAL_CONFIG_FILE);
-#else
-                    asprintf(&filename_attempt, "/etc/jibal/%s", JIBAL_CONFIG_FILE);
-#endif
-                    break;
-                default:
-                    attempt = 0;
-                    break;
-            }
-            if (attempt == 0) {/* We ran out of places to look for */
-                break;
-            }
-            if(filename_attempt) {
-#ifdef DEBUG
-                fprintf(stderr, "Config attempt %i file %s\n", attempt, filename_attempt);
-#endif
-                if (access(filename_attempt, R_OK) != 0) { /* Not found, bad candidate */
-                    free(filename_attempt);
-                    filename_attempt = NULL;
+        char *dir;
+        switch (attempt) {
+            case 1:
+                dir = getenv("JIBAL_CONFIG_DIR");
+                if(dir) {
+                    asprintf(&filename, "%s/%s", dir, JIBAL_CONFIG_FILE);
                 }
+                break;
+            case 2:
+                filename = strdup(JIBAL_CONFIG_FILE);
+                break;
+            case 3:
+                filename = jibal_config_user_config_filename();
+                break;
+            case 4:
+                asprintf(&filename, "%s/etc/jibal/%s", JIBAL_INSTALL_PREFIX, JIBAL_CONFIG_FILE);
+                /* TODO: Installers might put everything in a different directory */
+                break;
+            case 5:
+#ifdef WIN32
+                asprintf(&filename, "../%s", JIBAL_CONFIG_FILE);
+#else
+                asprintf(&filename, "/etc/jibal/%s", JIBAL_CONFIG_FILE);
+#endif
+                break;
+            default:
+                attempt = 0;
+                break;
+        }
+        if (attempt == 0) {/* We ran out of places to look for */
+            break;
+        }
+        if(filename) {
+#ifdef DEBUG
+            fprintf(stderr, "Config attempt %i file %s\n", attempt, filename);
+#endif
+            if (access(filename, R_OK) != 0) { /* Not found, bad candidate, but let's continue */
+                free(filename);
+                filename = NULL;
             }
-            attempt++;
         }
-        if(filename_attempt) {
-            config.error = jibal_config_file_read(units, &config, filename_attempt);
-            free(filename_attempt);
-        }
+        attempt++;
+    }
+    if(filename) {
+#ifdef DEBUG
+        fprintf(stderr, "Returning final candidate %s\n", filename);
+#endif
+        return jibal_path_cleanup(filename);
+    }
+    return NULL;
+}
+
+jibal_config jibal_config_init(const jibal_units *units, const char *filename, int seek) {
+    jibal_config config = jibal_config_defaults();
+    char *f=NULL;
+    if(filename) {
+        f=jibal_path_cleanup(strdup(filename)); /* No memory leak here, trust me */
+    } else if(seek) {
+        f=jibal_config_filename_seek();
+    }
+    if(f) {
+        config.error = jibal_config_file_read(units, &config, f);
     }
     jibal_config_finalize(&config);
-    return config; /* Note: configuration is not validated in any way! */
+    return config; /* Note: configuration is not validated. We only set config.error if we TRIED to read a configuration file but failed.  */
 }
 
 const char *jibal_error_string(jibal_error err) {

@@ -3,10 +3,13 @@
 #include <getopt.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <jibal_config.h>
 #include <inttypes.h>
 #include <jibal.h>
 #include <jibal_stop.h>
+#include <defaults.h>
+
 #ifdef WIN32
 #include <jibal_registry.h>
 #endif
@@ -287,32 +290,161 @@ void print_commands(FILE *f, const struct command *commands) {
     }
 }
 
+char read_user_response(const char *question) {
+    char *line=NULL;
+    size_t line_size=0;
+    ssize_t linelen;
+    char r=0;
+    const char *template = "%s [yes/no]: ";
+    const char *snarky_comebacks[]={"Please answer either yes or no.",
+                                    "Yes or no. Or actually you can say exit too.",
+                                    "Could you make up your mind. \"yes\", \"no\" or \"exit\". Easy.",
+                                    "Let me spell you your options: Y E S or N O.",
+                                    "There are two options. Yes or no. And exit. There are three options: yes, no and exit. Did you expect a Spanish Inquisition?",
+                                    "NOBODY EXPECTS THE SPANISH INQUISITION (ha ha, same joke again)",
+                                    "Oh come on! ENGLISH! YES OR NO. Well, don't shout or I won't listen to you.",
+                                    "I've just about had it with you. Last warning.",
+                                    "No, really.",
+                                    "Fine! That's it.",
+                                    NULL};
+    int comeback=0;
+    if(question) {
+        fprintf(stderr, template, question);
+    }
+    while((linelen=getline(&line, &line_size, stdin)) > 0) {
+        line[strcspn(line, "\r\n")] = 0; /* Strip newlines */
+        if(strcmp(line, "yes") == 0) {
+            r = 'y';
+        }
+        if(strcmp(line, "maybe") == 0) {
+            fprintf(stderr, "I take that as a yes.\n");
+            r = 'y';
+        }
+        if(strcmp(line, "no") == 0) {
+            r = 'n';
+        }
+        if(strcmp(line, "exit") == 0) {
+            r = 'x';
+        }
+        if(strcmp(line, "quit") == 0) {
+            r = 'x';
+        }
+        if(strcmp(line, "abort") == 0) {
+            r = 'x';
+        }
+        if(r != 0)
+            break;
+        if(strlen(line) == 1) {
+            fprintf(stderr, "Single letter response? What are you, an animal?\n");
+        } else if(isupper(line[0])) {
+            fprintf(stderr, "Please no upper case. I don't like capital letters.\n");
+        } else {
+            int i=((comeback%2==0)?0:comeback/2);
+            fprintf(stderr, "%s\n", snarky_comebacks[i]);
+            comeback++;
+            if(!snarky_comebacks[i+1]) { /* Nothing clever left to say, exit */
+                exit(EXIT_FAILURE);
+            }
+        }
+        if(question) {
+            fprintf(stderr, template, question);
+        } else {
+            fprintf(stderr, "[yes/no]: ");
+        }
+
+    }
+    fprintf(stderr, "\n");
+    free(line);
+    switch (r) {
+        case 'x':
+            exit(EXIT_SUCCESS);
+        case 0:
+            exit(EXIT_FAILURE);
+        default:
+            return r;
+    }
+}
+
 int bootstrap_config(jibaltool_global *global, int argc, char **argv) {
-    char *user_dir=jibal_config_user_dir();
-    if(!user_dir) {
-        fprintf(stderr, "User configuration path can not be created. There is something odd in your platform.\n");
+    char r = 0;
+    fprintf(stderr, "Welcome to Jibal user configuration bootstrap procedure, I will be your guide.\n\n");
+    fprintf(stderr, "The rules are simple: I ask the questions and you answer.\n");
+    fprintf(stderr, "The questions will be mostly yes/no questions. Let's start with a simple one.\n");
+    r = read_user_response("Do you understand the rules?");
+    if(r != 'y') {
+        fprintf(stderr, "I see. But you DID answer, so...\n");
+        r = read_user_response("Do you want to continue?");
+        if(r != 'y') {
+            fprintf(stderr, "Ok, maybe next time.\n");
+            return EXIT_SUCCESS;
+        }
+    }
+    fprintf(stderr, "That's nice. I am going to show you something. Don't panic.\n");
+    r = read_user_response("Continue?");
+    if(r != 'y') {
+        fprintf(stderr, "I told you not to panic.\n");
+        return EXIT_SUCCESS;
+    }
+    global->jibal.units=jibal_units_default();
+    if(!global->jibal.units) {
+        fprintf(stderr, "Bootstrapping failed because of issues with units. This is unheard of.\n");
         exit(EXIT_FAILURE);
     }
-    //jibal_config config = jibal_config_defaults();
-    global->jibal.units=jibal_units_default();
-    global->jibal.config=jibal_config_init(global->jibal.units, NULL, FALSE); /* Initialize config without any configuration files */
-    //config.masses_file = strdup(global->jibal.config.masses_file);
-    //config.abundances_file = strdup(global->jibal.config.abundances_file);
-    //config.datadir = strdup(user_dir); /* TODO: try to guess and then ask verification from user */
-    //jibal_config_finalize(&global->jibal.config);
-    fprintf(stdout, "User configuration will be created in %s\n", user_dir);
-#ifdef WIN32
-    char *install_root_from_registry = jibal_registry_string_get("RootDirectory");
-    if(install_root_from_registry) {
-        fprintf(stdout, "Root from registry: %s\n", install_root_from_registry);
-        free(install_root_from_registry);
+    jibal_config config = jibal_config_init(global->jibal.units, NULL, FALSE); /* Initialize config without any configuration files */
+    if(config.error) {
+        fprintf(stderr, "Can't initialize configuration.\n");
+        exit(EXIT_FAILURE);
     }
-#endif
-    FILE *out=jibaltool_open_output(global); /* TODO: wrong place */
-    jibal_config_file_write(&global->jibal.config, out);
-    jibaltool_close_output(out);
+    char *user_dir = jibal_config_user_dir();
+    if(!user_dir) {
+        fprintf(stderr, "I can't figure out which directory to put data on your platform.\n");
+        exit(EXIT_FAILURE);
+    }
+    char *user_configfile = jibal_config_user_config_filename();
+    if(!user_configfile) {
+        fprintf(stderr, "I can't figure out where to put a configuration file on your platform.\n");
+        exit(EXIT_FAILURE);
+    }
+    fprintf(stderr, "A blank configuration would look like this (with my best guesses):\n\n");
+    jibal_config_file_write(&config, stderr);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "I could write it to %s, where Jibal could find it.\n", user_configfile);
+
+    if(access(user_configfile, F_OK) == -1) { /* Doesn't exist, good */
+        r = read_user_response("Do you want me to write this file?");
+    } else {
+        if(access(user_configfile, W_OK) == 0) {
+            r = read_user_response("\nWARNING! VAROITUS! WARNUNG! VARNING!\nThe file exists!\nDo you want me to overwrite this file?");
+        } else {
+            fprintf(stderr, "\nThe file exists but is not writable. Can't do shit. :( :( Sorry.\n");
+            r = 0;
+        }
+    }
+    if(r == 'y') {
+        FILE *config_out = fopen(user_configfile, "w");
+        if(!config_out) {
+            fprintf(stderr, "Doesn't matter what you say. I can't write to that damn file. Strange.\n");
+        } else {
+            fprintf(stderr, "You are a brave soul. Writing.\n");
+            jibal_config_file_write(&config, config_out);
+            fprintf(stderr, "Writing complete.\n");
+            fclose(config_out);
+        }
+    } else {
+        fprintf(stderr, "Ok, I didn't do anything, I swear! :) :)\n");
+    }
     free(user_dir);
-    return 0;
+    free(user_configfile);
+    jibal_units_free(global->jibal.units);
+    fprintf(stderr, "Bootstrap complete. That's it.\n");
+    r = read_user_response("Do you want to do it again?");
+    if(r == 'y') {
+        fprintf(stderr, "YESSS! Oh boy it will be much more fun the next round!\n\n\n");
+        return bootstrap_config(global, argc, argv);
+    } else {
+        fprintf(stderr, "I can see why, it's not really that much fun. Come back again later! I'll be here for you if you need me.\n");
+        exit(EXIT_SUCCESS);
+    }
 }
 
 int main(int argc, char **argv) {
