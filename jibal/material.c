@@ -32,7 +32,7 @@ const char *parse_element(const char *start, const char **end_ptr, int *A_out, c
         a++;
         for (; islower(*a); a++); /* Advance until we run out of lower case elements */
         size_t name_size=a-elem_start;
-        char *elem=calloc(name_size, sizeof(char));
+        char *elem=calloc(name_size+1, sizeof(char));
         strncpy(elem, elem_start, a - elem_start);
 #ifdef DEBUG
         fprintf(stderr, "Element = \"%s\"\n", elem);
@@ -76,6 +76,9 @@ jibal_material *jibal_material_create(jibal_element *elements, const char *formu
     int A;
     double conc;
     int i_element=0;
+#ifdef DEBUG
+    fprintf(stderr, "Parsing material formula: \"%s\"\n", formula);
+#endif
     for(a=formula; a < line_end; material->n_elements++) { /* Count the number of elements */
         if(!parse_element(a, &b, &A, &name, &conc)) {
             break;
