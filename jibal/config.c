@@ -2,8 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <jibal_config.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #ifdef WIN32
+#include <win_compat.h>
 #include <jibal_registry.h>
 #include <io.h>
 #define F_OK 0
@@ -11,8 +14,11 @@
 #define R_OK 4
 #else
 #include <unistd.h>
+#include <libgen.h>
 #endif
+#include <jibal_config.h>
 #include <defaults.h>
+
 
 char *make_path_and_check_if_exists(const char *directory, const char *file) {
     /* Return the constructed path (which can be later freed) on success, NULL otherwise. */
@@ -39,12 +45,12 @@ char *make_path_and_check_if_exists(const char *directory, const char *file) {
 jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure that defines config options. Used
  * when config files are read and written. Default values should be handled elsewhere. */
     const jibal_config_var vars[]={
-            {JIBAL_CONFIG_VAR_STRING, "datadir", &config->datadir},
-            {JIBAL_CONFIG_VAR_STRING, "userdatadir", &config->userdatadir},
-            {JIBAL_CONFIG_VAR_STRING, "masses_file", &config->masses_file},
-            {JIBAL_CONFIG_VAR_STRING, "abundances_file", &config->abundances_file},
-            {JIBAL_CONFIG_VAR_STRING, "files_file", &config->files_file},
-            {JIBAL_CONFIG_VAR_STRING, "assignments_file", &config->assignments_file},
+            {JIBAL_CONFIG_VAR_PATH, "datadir", &config->datadir},
+            {JIBAL_CONFIG_VAR_PATH, "userdatadir", &config->userdatadir},
+            {JIBAL_CONFIG_VAR_PATH, "masses_file", &config->masses_file},
+            {JIBAL_CONFIG_VAR_PATH, "abundances_file", &config->abundances_file},
+            {JIBAL_CONFIG_VAR_PATH, "files_file", &config->files_file},
+            {JIBAL_CONFIG_VAR_PATH, "assignments_file", &config->assignments_file},
             {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
             {JIBAL_CONFIG_VAR_BOOL, "extrapolate", &config->extrapolate},
             {0, 0, NULL}
@@ -64,6 +70,7 @@ int jibal_config_file_write(jibal_config *config, FILE *f) {
         switch(var->type) {
             case JIBAL_CONFIG_VAR_NONE:
                 break;
+            case JIBAL_CONFIG_VAR_PATH:
             case JIBAL_CONFIG_VAR_STRING:
                 fprintf(f, "%s = %s\n", var->name, *((char**)var->variable));
                 break;
@@ -86,7 +93,7 @@ int jibal_config_file_write(jibal_config *config, FILE *f) {
 }
 
 int jibal_path_is_absolute(const char *path) { /* TRUE if it looks absolute, FALSE if it doesn't. Can give false negatives, but is unlikely to give false positives. Just a guess really. */
-    if(path)
+    if(!path)
         return FALSE;
 #ifdef WIN32
     if(path[0] == '\\') /* An absolute path from the root of the current drive, e.g. \Program Files\ is ok. UNC paths and other stuff starting with \\ is always absolute too. */
@@ -182,6 +189,22 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
                     }
                     *((char **)var->variable)=strdup(line_val);
                     break;
+                case JIBAL_CONFIG_VAR_PATH:
+                    if(*((char **)var->variable)) { /*  Our void * is actually char ** */
+                        free(*((char **)var->variable));
+                    }
+                    if(jibal_path_is_absolute(line_val)) {
+                        *((char **)var->variable)=strdup(line_val);
+                    } else {
+                        char *tmp=strdup(filename); /* Get a char we can mutilate */
+                        char *tmp2=dirname(tmp);
+                        char *out;
+                        asprintf(&out, "%s/%s", tmp2, line_val);
+                        jibal_path_cleanup(out);
+                        *((char **)var->variable)=out;
+                        free(tmp);
+                    }
+                    break;
                 case JIBAL_CONFIG_VAR_BOOL:
                     *((int *)var->variable)=!strcmp(line_val, "true"); /* exactly "true" is 1, everything else is 0 */
                     break;
@@ -227,10 +250,34 @@ char *jibal_config_user_dir() {
     return out; /* Remember to free when done, memory allocated by asprintf*/
 }
 
+int jibal_config_user_dir_mkdir_if_necessary() {
+    /* Returns 0 if jibal_config_user_dir() directory exists or if it could be created. */
+    /* Limitation: can only make directories one level deep at least on Windows, so if the parent directory doesn't
+     * exists, is fails. */
+    char *path = jibal_config_user_dir();
+    if(!path)
+        return -1;
+    int retval=0;  /* Success */
+    if(access(path, F_OK) == 0) {/* Something exists */
+        struct stat status;
+        stat(path, &status );
+        if((status.st_mode & S_IFDIR) == 0) {
+            fprintf(stderr, "There is something in %s, but it is not a directory.\n", path);
+            retval = -2;
+        }
+    } else { /* Nothing exits, create! */
+        int status = mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+        if(status != 0) {
+            fprintf(stderr, "Making directory %s failed, got error %i.\n", path, status);
+            retval = -3;
+        }
+    }
+    return retval;
+}
+
 char *jibal_config_user_config_filename() {
     char *filename;
     char *dir = jibal_config_user_dir();
-    dir = jibal_config_user_dir();
     if(!dir)
         return NULL;
     asprintf(&filename, "%s/%s", dir, JIBAL_CONFIG_FILE);

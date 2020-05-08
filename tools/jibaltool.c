@@ -229,7 +229,9 @@ int extract(jibaltool_global *global, int argc, char **argv) {
 }
 
 int print_gstofiles(jibaltool_global *global, int argc, char **argv) {
-    jibal_gsto_print_files(global->jibal.gsto, FALSE);
+    if(jibal_gsto_print_files(global->jibal.gsto, FALSE) != 0) {
+        fprintf(stderr, "Current configuration for files is in %s\n", global->jibal.config.files_file);
+    }
     return 0;
 }
 
@@ -365,6 +367,44 @@ char read_user_response(const char *question) {
     }
 }
 
+int bootstrap_write_user_config(jibal_config *config) {
+    int retval=0;
+    if(jibal_config_user_dir_mkdir_if_necessary() != 0) {
+        char *user_dir=jibal_config_user_dir();
+        fprintf(stderr, "Directory %s doesn't exist and can not be created. Try creating it manually. Now.\n", user_dir);
+        free(user_dir);
+        while(read_user_response("Are you ready to continue?") != 'y') {}; /* Infinite loop */
+    }
+    char *user_configfile=jibal_config_user_config_filename();
+    FILE *config_out = fopen(user_configfile, "w");
+    if(!config_out) {
+        fprintf(stderr, "I can't write to that damn file.\n");
+        retval = -1;
+    } else {
+        fprintf(stderr, "You are a brave soul. Writing.\n");
+        jibal_config_file_write(config, config_out);
+        fprintf(stderr, "Writing complete.\n");
+        fclose(config_out);
+    }
+    return retval;
+}
+
+void bootstrap_make_blanks(const char *user_dir, const char *filename) { /* Silently creates empty files if they don't
+ * exist, filename is relative to user_dir */
+    char *path;
+    asprintf(&path, "%s/%s", user_dir, filename);
+    if(!path)
+        return;
+    path = jibal_path_cleanup(path);
+    if(access(path, F_OK) == -1) { /* Doesn't exist */
+        FILE *f=fopen(path, "w");
+        if(f) {
+            fclose(f);
+        }
+    }
+    free(path);
+}
+
 int bootstrap_config(jibaltool_global *global, int argc, char **argv) {
     char r = 0;
     fprintf(stderr, "Welcome to Jibal user configuration bootstrap procedure, I will be your guide.\n\n");
@@ -395,14 +435,23 @@ int bootstrap_config(jibaltool_global *global, int argc, char **argv) {
         fprintf(stderr, "I can't figure out where to put a configuration file on your platform.\n");
         exit(EXIT_FAILURE);
     }
-    fprintf(stderr, "A blank configuration would look like this (with my best guesses):\n\n");
+
+    if(config.files_file)
+        free(config.files_file);
+    if(config.assignments_file)
+        free(config.assignments_file);
+    config.files_file=strdup(JIBAL_FILES_FILE); /* Just default names, not so important. We want relative paths to user_dir! */
+    config.assignments_file=strdup(JIBAL_ASSIGNMENTS_FILE);
+
+    fprintf(stderr, "A blank user configuration would look like this (with my best guesses):\n\n");
+    fprintf(stderr, "======================================================================\n");
     jibal_config_file_write(&config, stderr);
-    fprintf(stderr, "\n");
-    fprintf(stderr, "I could write it to %s, where Jibal could find it.\n", user_configfile);
+    fprintf(stderr, "======================================================================\n");
+    fprintf(stderr, "\nI could write it to %s, where Jibal could find it.\n", user_configfile);
 
     if(access(user_configfile, F_OK) == -1) { /* Doesn't exist, good */
         r = read_user_response("Do you want me to write this file?");
-    } else {
+    } else { /* Exists */
         if(access(user_configfile, W_OK) == 0) {
             r = read_user_response("\nWARNING! VAROITUS! WARNUNG! VARNING!\nThe file exists!\nDo you want me to overwrite this file?");
         } else {
@@ -411,16 +460,11 @@ int bootstrap_config(jibaltool_global *global, int argc, char **argv) {
         }
     }
     if(r == 'y') {
-        FILE *config_out = fopen(user_configfile, "w");
-        if(!config_out) {
-            fprintf(stderr, "Doesn't matter what you say. I can't write to that damn file. Strange.\n");
-        } else {
-            fprintf(stderr, "You are a brave soul. Writing.\n");
-            jibal_config_file_write(&config, config_out);
-            fprintf(stderr, "Writing complete.\n");
-            fclose(config_out);
+        if(bootstrap_write_user_config(&config) == 0) { /* Success */
+            bootstrap_make_blanks(user_dir, config.files_file);
+            bootstrap_make_blanks(user_dir, config.assignments_file);
         }
-    } else {
+    } else if (r != 0) {
         fprintf(stderr, "Ok, I didn't do anything, I swear! :) :)\n");
     }
     free(user_dir);
@@ -441,15 +485,16 @@ int main(int argc, char **argv) {
     jibaltool_global global = {.Z=0, .outfilename=NULL, .stopfile=NULL, .format=NULL, .verbose=0};
     read_options(&global, &argc, &argv);
     static const struct command commands[] = {
-            {"extract", &extract, "Extract values (e.g. He in Si or a range) in GSTO"
-                                            " compatible format."},
-            {"extract_stop_material", &extract_stop_material, "Extract stopping from a single stopping"
-                                                              " file for a given ion and material. (e.g. 4He in SiO2)"},
+            {"extract", &extract,
+             "Extract values (e.g. He in Si or a range) in GSTO compatible format."},
+            {"extract_stop_material", &extract_stop_material,
+             "Extract stopping from a single stopping file for a given ion and material. (e.g. 4He in SiO2)"},
             {"files", &print_gstofiles, "Print available GSTO files."},
             {"isotopes", &print_isotopes, "Print a list of isotopes."},
             {"elements", &print_elements, "Print a list of elements."},
             {"config", &print_config, "Print current configuration (config file)."},
-            {"bootstrap", &bootstrap_config, "Set up user configuration and download data files interactively."},
+            {"bootstrap", &bootstrap_config,
+             "Set up user configuration and download data files interactively."},
             {NULL, NULL, NULL}
     };
     if(argc < 1) {

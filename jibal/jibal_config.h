@@ -18,11 +18,12 @@ typedef struct {
 
 typedef enum {
     JIBAL_CONFIG_VAR_NONE = 0,
-    JIBAL_CONFIG_VAR_STRING = 1,
-    JIBAL_CONFIG_VAR_BOOL = 2, /* Internally an int */
-    JIBAL_CONFIG_VAR_INT = 3, /* 32-bit signed int (aka int) */
-    JIBAL_CONFIG_VAR_DOUBLE = 4,
-    JIBAL_CONFIG_VAR_UNIT = 5 /* Number with a unit. Store number after SI conversion. */
+    JIBAL_CONFIG_VAR_STRING = 1, /* C string, aka. NUL terminated char * */
+    JIBAL_CONFIG_VAR_PATH = 2, /* Internally same as above, but we assume relative paths are relative to the config file */
+    JIBAL_CONFIG_VAR_BOOL = 3, /* Internally an int */
+    JIBAL_CONFIG_VAR_INT = 4, /* 32-bit signed int (aka int) */
+    JIBAL_CONFIG_VAR_DOUBLE = 5,
+    JIBAL_CONFIG_VAR_UNIT = 6 /* Number with a unit. Store number after SI conversion. */
 } jibal_config_var_type;
 
 typedef struct {
@@ -32,6 +33,7 @@ typedef struct {
 } jibal_config_var;
 
 char *jibal_config_user_dir();
+int jibal_config_user_dir_mkdir_if_necessary();
 char *jibal_config_user_config_filename();
 jibal_config jibal_config_defaults();
 jibal_config jibal_config_init(const jibal_units *units, const char *filename, int seek);

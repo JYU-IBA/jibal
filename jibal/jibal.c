@@ -55,7 +55,8 @@ jibal jibal_init(const char *config_filename) {
         jibal.error = JIBAL_ERROR_ELEMENTS;
         return jibal;
     }
-    jibal.gsto= jibal_gsto_init(jibal.elements, jibal.config.Z_max, jibal.config.datadir, jibal.config.files_file, jibal.config.assignments_file);
+    jibal.gsto= jibal_gsto_init(jibal.elements, jibal.config.Z_max, jibal.config.files_file,
+                                jibal.config.assignments_file);
     if(!jibal.gsto) {
         fprintf(stderr, "Could not initialize GSTO.\n");
         jibal.error = JIBAL_ERROR_GSTO;

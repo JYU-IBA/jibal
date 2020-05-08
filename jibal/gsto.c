@@ -828,7 +828,7 @@ int jibal_gsto_print_files(jibal_gsto *workspace, int used_only) {
     gsto_file_t *file;
     if(workspace->n_files == 0) {
         fprintf(stderr, "There are no stopping or straggling files installed. Maybe check your configuration or download some data?\n");
-        return 1;
+        return -1;
     }
     fprintf(stderr, "List of %s GSTO files:\n", used_only?"used":"available");
     
@@ -889,7 +889,7 @@ int jibal_gsto_print_files(jibal_gsto *workspace, int used_only) {
         }
         fprintf(stderr, "\tformat=%s\n", gsto_get_header_string(gsto_data_formats, file->data_format));
     }
-    return 1;
+    return 0;
 }
 
 int jibal_gsto_print_assignments(jibal_gsto *workspace) {
@@ -946,7 +946,7 @@ int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
     return success;
 }
 
-jibal_gsto *jibal_gsto_init(const jibal_element *elements, int Z_max, const char *datadir, const char *files_file_name,
+jibal_gsto *jibal_gsto_init(const jibal_element *elements, int Z_max, const char *files_file_name,
                             const char *assignments_file_name) {
     jibal_gsto *workspace;
     workspace = gsto_allocate(Z_max, Z_max);
