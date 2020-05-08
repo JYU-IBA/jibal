@@ -410,14 +410,16 @@ Z1_min, int Z1_max, int Z2_min, int Z2_max) {
                 for (i = 0; i < file->xpoints; i++) {
                     double out = data[i];
                     switch (file->stounit) {
-                        case GSTO_STO_UNIT_EV15CM2:
+                        case GSTO_STO_UNIT_JM2:
                             out /=  C_EV_TFU; /* TODO: should output always be in these units? */
+                            break;
+                        case GSTO_STO_UNIT_EV15CM2:
                             break;
                         default:
                             break;
                     }
                     switch (file->straggunit) {
-                        case GSTO_STO_UNIT_JM2:
+                        case GSTO_STRAGG_UNIT_J2M2:
                             out /= jibal_stragg_bohr(Z1, Z2);
                         default:
                             break;
