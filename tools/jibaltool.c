@@ -370,19 +370,9 @@ int bootstrap_config(jibaltool_global *global, int argc, char **argv) {
     fprintf(stderr, "Welcome to Jibal user configuration bootstrap procedure, I will be your guide.\n\n");
     fprintf(stderr, "The rules are simple: I ask the questions and you answer.\n");
     fprintf(stderr, "The questions will be mostly yes/no questions. Let's start with a simple one.\n");
-    r = read_user_response("Do you understand the rules?");
+    r = read_user_response("Do you want to continue?");
     if(r != 'y') {
-        fprintf(stderr, "I see. But you DID answer, so...\n");
-        r = read_user_response("Do you want to continue?");
-        if(r != 'y') {
-            fprintf(stderr, "Ok, maybe next time.\n");
-            return EXIT_SUCCESS;
-        }
-    }
-    fprintf(stderr, "That's nice. I am going to show you something. Don't panic.\n");
-    r = read_user_response("Continue?");
-    if(r != 'y') {
-        fprintf(stderr, "I told you not to panic.\n");
+        fprintf(stderr, "Ok, maybe next time.\n");
         return EXIT_SUCCESS;
     }
     global->jibal.units=jibal_units_default();

@@ -1,5 +1,5 @@
 /*
-    JIBAL - Library for ion beam analysis
+    Jyväskylä Ion Beam Analysis Library (JIBAL)
     Copyright (C) 2020 Jaakko Julin <jaakko.julin@jyu.fi>
 
     This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,28 @@
 
 #ifndef _JIBAL_DEFAULTS_H_
 #define _JIBAL_DEFAULTS_H_
-
-#include <jibal_config.h>
 #include <jibal_units.h>
+
+#define jibal_VERSION "@jibal_VERSION@"
+#define jibal_VERSION_MAJOR @jibal_VERSION_MAJOR@
+#define jibal_VERSION_MINOR @jibal_VERSION_MINOR@
+#define jibal_VERSION_PATCH @jibal_VERSION_PATCH@
+
+#define jibal_DESCRIPTION "@jibal_DESCRIPTION@"
+
+#cmakedefine DEVELOPER_MODE_ENABLE
+#cmakedefine JIBAL_DATADIR "@JIBAL_DATADIR@"
+#cmakedefine JIBAL_INSTALL_PREFIX "@JIBAL_INSTALL_PREFIX@"
+
+#ifndef JIBAL_DATADIR
+#define JIBAL_DATADIR "data"
+#endif
+
+#ifndef JIBAL_INSTALL_PREFIX
+#define JIBAL_INSTALL_PREFIX "../../"
+#endif
+
+#define JIBAL_DATADIR_FULL "@JIBAL_INSTALL_PREFIX@/@JIBAL_DATADIR@"
 
 #define JIBAL_STEP_SIZE (10.0*C_TFU)
 
@@ -28,12 +47,9 @@
 #define JIBAL_CONFIG_FILE "jibal.conf"
 #endif
 
-#ifndef JIBAL_INSTALL_PREFIX
-#define JIBAL_INSTALL_PREFIX "../"
-#endif
 
-#ifndef JIBAL_DATADIR
-#define JIBAL_DATADIR "../../data/"
+#ifndef JIBAL_DATADIR_FULL
+#define JIBAL_DATADIR_FULL "../../data/"
 #endif
 
 #define JIBAL_MASSES_FILE  "masses.dat"

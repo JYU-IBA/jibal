@@ -29,7 +29,7 @@ else()
     set(JIBAL_DATADIR "share/${PROJECT_NAME}") #relative to install prefix
     set(JIBAL_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 endif()
-configure_file(jibal_config.h.in jibal_config.h @ONLY)
+configure_file(defaults.h.in defaults.h @ONLY)
 
 set(PKGCONF_REQ_PUB "${PKGCONF_REQ_PUB} gsl") #Sets a variable for pkg-config file generation
 configure_file(
@@ -42,7 +42,7 @@ FILE(GLOB DATAFILES "${CMAKE_SOURCE_DIR}/data/*.*")
 list(REMOVE_ITEM DATAFILES "${CMAKE_SOURCE_DIR}/data/.gitignore")
 #message(STATUS "${DATAFILES}")
 FILE(GLOB PUBLIC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/jibal*.h")
-set(PUBLIC_HEADERS "${PUBLIC_HEADERS};${CMAKE_CURRENT_BINARY_DIR}/jibal_config.h;")
+set(PUBLIC_HEADERS "${PUBLIC_HEADERS};${CMAKE_CURRENT_BINARY_DIR}/defaults.h;")
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
@@ -56,6 +56,7 @@ add_library(Jibal SHARED
         kin.c
         cross_section.c
         jibal.c
+        config.c
         stragg.c
         stop.c
         registry.c
@@ -89,7 +90,7 @@ install(FILES ${PUBLIC_HEADERS}
 
 # install bundled data
 install(FILES ${DATAFILES}
-        DESTINATION share/${PROJECT_NAME}
+        DESTINATION ${JIBAL_DATADIR}
         COMPONENT data
 )
 
