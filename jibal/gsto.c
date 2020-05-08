@@ -1020,7 +1020,7 @@ int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *filename) {
         }
     }
 #ifdef DEBUG
-    fprintf(stderr, "GSTO: Read %i lines from settings file, added %i files, attempt to add %i files failed.\n", i, n_files, n_errors);
+    fprintf(stderr, "GSTO: Read %i lines from settings file, added %i files, attempt to add %i files failed.\n", lineno, n_files, n_errors);
 #endif
     fclose(f);
     return n_files;
@@ -1225,11 +1225,11 @@ int jibal_gsto_em_to_index(const gsto_file_t *file, double em) { /* Returns the 
             }
     }
 #ifdef DEBUG
-fprintf(stderr, "lo=%i, residual=%e m/s (%.2lf%% of bin)\n", lo, v-file->vel[lo],
-            100.0*(v-file->vel[lo])/(file->vel[lo+1]-file->vel[lo]));
+fprintf(stderr, "lo=%i, residual=%e m/s (%.2lf%% of bin)\n", 
+            lo, em - file->em[lo], 100.0*(em - file->em[lo])/(file->em[lo+1] - file->em[lo]));
 #endif
 #ifdef GSTO_VELOCITY_BIN_CHECK_STRICT /* Note: due to floating point issues this is too strict */
-    if (v < file->vel[lo] || v > file->vel[lo + 1]) { /* Sanity check and out-of-bounds check. */
+    if (em < file->em[lo] || em > file->em[lo + 1]) { /* Sanity check and out-of-bounds check. */
         return -1;
     }
 #else
