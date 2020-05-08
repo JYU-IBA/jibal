@@ -162,13 +162,13 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
             continue; /* Empty lines (even after stripping newline and whitespace) are ignored */
         char *line_var=line;
         size_t eq_pos=strcspn(line, "="); /* Finds equality sign */
-        if(line[eq_pos] == '\0' || eq_pos == 0) {
+        if(line[eq_pos] == '\0' || eq_pos <= 1) {
             fprintf(stderr,  WARNING_STRING "Malformed configuration file %s line %i: \"%s\"\n", filename, lineno, line_orig);
             continue;
         }
         line[eq_pos]='\0'; /* Separate argument name from value by replacing the first '=' with a null */
         size_t s;
-        for(s=eq_pos-1; s >= 0 && isspace(line[s]); s--) {line[s]='\0';} /* Replace whitespace before '=' with nulls */
+        for(s=eq_pos-1; s > 0 && isspace(line[s]); s--) {line[s]='\0';} /* Replace whitespace before '=' with nulls */
         char *line_val=line+eq_pos+1; /* First character after the '=', could also be a '\0'! */
         while(isspace(*line_val)) {line_val++;} /* Ignore leading whitespace in values */
 #ifdef DEBUG

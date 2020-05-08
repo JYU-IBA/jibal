@@ -196,7 +196,7 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
             if (file == jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2)) { /* OK */
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
                 size_t n = fread(data, sizeof(double), file->xpoints, file->fp);
-                if(n != file->xpoints) {
+                if((int) n != file->xpoints) {
                     file->valid=FALSE;
                     return 0;
                 }
@@ -260,7 +260,7 @@ void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, void *val) { /* Value
  * header to be int, double or char *. In the last case void * is char **!. */
     char type;
     int n = gsto_header_n(gsto_headers);
-    if(h >= n) {
+    if((int) h >= n) {
         fprintf(stderr, "GSTO Error: %i is not v valid header type. This shouldn't happen.\n", h);
         return;
     }
