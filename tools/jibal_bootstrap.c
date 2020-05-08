@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <getopt.h>
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
