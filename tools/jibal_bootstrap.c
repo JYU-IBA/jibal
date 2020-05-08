@@ -12,6 +12,8 @@
 #ifdef WIN32
 #include <jibal_registry.h>
 #include <win_compat.h>
+#else
+#include <unistd.h>
 #endif
 
 #include "jibal_bootstrap.h"
