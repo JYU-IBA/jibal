@@ -36,6 +36,7 @@ install(TARGETS get_stop get_kin jibaltool srim_gen_stop dpass_decode
         RUNTIME DESTINATION bin
         COMPONENT applications)
 
+install(FILES bootstrap.bat RUNTIME DESTINATION bin COMPONENT applications)
 
 
 if(WIN32) #Extra DLLs for Windows installation that are not handled by InstallRequiredSystemLibraries
