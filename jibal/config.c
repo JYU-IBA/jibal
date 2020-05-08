@@ -9,9 +9,6 @@
 #include <win_compat.h>
 #include <jibal_registry.h>
 #include <io.h>
-#define F_OK 0
-#define W_OK 2
-#define R_OK 4
 #else
 #include <unistd.h>
 #include <libgen.h>
@@ -266,7 +263,11 @@ int jibal_config_user_dir_mkdir_if_necessary() {
             retval = -2;
         }
     } else { /* Nothing exits, create! */
+#ifdef WIN32
+        int status = _mkdir(path);
+#else
         int status = mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+#endif
         if(status != 0) {
             fprintf(stderr, "Making directory %s failed, got error %i.\n", path, status);
             retval = -3;

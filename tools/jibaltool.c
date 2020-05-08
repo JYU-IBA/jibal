@@ -12,6 +12,7 @@
 
 #ifdef WIN32
 #include <jibal_registry.h>
+#include <win_compat.h>
 #endif
 
 void jibaltool_global_free(jibaltool_global *global) {
@@ -295,7 +296,7 @@ void print_commands(FILE *f, const struct command *commands) {
 char read_user_response(const char *question) {
     char *line=NULL;
     size_t line_size=0;
-    ssize_t linelen;
+    //ssize_t linelen;
     char r=0;
     const char *template = "%s [yes/no]: ";
     const char *snarky_comebacks[]={"Please answer either yes or no.",
@@ -313,7 +314,7 @@ char read_user_response(const char *question) {
     if(question) {
         fprintf(stderr, template, question);
     }
-    while((linelen=getline(&line, &line_size, stdin)) > 0) {
+    while(getline(&line, &line_size, stdin) > 0) {
         line[strcspn(line, "\r\n")] = 0; /* Strip newlines */
         if(strcmp(line, "yes") == 0) {
             r = 'y';
