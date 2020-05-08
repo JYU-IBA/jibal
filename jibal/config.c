@@ -244,7 +244,7 @@ char *jibal_config_user_dir() {
 #else
     asprintf(&out, "%s/%s/", dir, ".jibal");
 #endif
-    return out; /* Remember to free when done, memory allocated by asprintf*/
+    return jibal_path_cleanup(out); /* Remember to free when done, memory allocated by asprintf*/
 }
 
 int jibal_config_user_dir_mkdir_if_necessary() {
