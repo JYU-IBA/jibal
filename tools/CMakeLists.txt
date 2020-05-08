@@ -6,6 +6,7 @@ find_path(GETOPT_INCLUDE_DIR getopt.h)
 find_library(GETOPT_LIBRARY getopt)
 endif()
 add_executable(jibaltool jibaltool.c)
+add_executable(jibal_bootstrap jibal_bootstrap.c)
 add_executable(srim_gen_stop srim_gen_stop.c)
 add_executable(dpass_decode dpass_decode.c)
 target_link_libraries(get_stop
@@ -28,6 +29,14 @@ target_link_libraries(jibaltool
     PRIVATE Jibal
     "$<$<BOOL:${UNIX}>:m>"
     ${GETOPT_LIBRARY})
+
+target_include_directories(jibal_bootstrap PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/jibal>
+        )
+target_link_libraries(jibal_bootstrap
+        PRIVATE Jibal
+        )
+
 target_link_libraries(srim_gen_stop
     PRIVATE Jibal
     "$<$<BOOL:${UNIX}>:m>"
