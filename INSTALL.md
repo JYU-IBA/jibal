@@ -49,7 +49,6 @@
             vcpkg.exe install gsl:x64-windows getopt:x64-windows
     
     - Alternatively use *x86-windows* to compile 32-bit libraries. This is not recommended.
-    - 
 5. Clone Jibal repository
 6. Build
     - Set up your MSVC environment by running the vcvars64.bat (or opening the *x64 Native Tools Command Prompt for VS2019*)
@@ -60,7 +59,7 @@
           cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ../
           
     - We use the *-G* option to select the MSVC compiler version. It's not strictly necessary. Use *Visual Studio 15 2017* for  MSVC 2017. Older versions are not supported.
-    - We use the CMake feature to export all symbols in the library (default behaviour on Linux/MacOS/BSD)
+    - It may not be necessary to speficy $CMAKE_TOOLCHAIN_FILE$ explicitly either 
     - Run the following to build the library
     
           msbuild BUILD_ALL.vcxproj
@@ -69,4 +68,9 @@
          
           msbuild PACKAGE.vcxproj
         
-    - Currently there is an assumption of installation directory (determined by CMake) and installing the library somewhere else means it cannot find the necessary data files. The choice is most likely "*C:\Program Files (x86)\jibal*", which probably isn't the default of the installer! To do this properly we have to use the Windows registry, but it is not yet implemented.
+    - You can install it like any other msi installer, for quick deployment run this:
+        
+          msiexec /i jibal-0.2.0-win64.msi /qb
+    
+        
+        
