@@ -129,6 +129,7 @@ set(ConfigPackageLocation lib/Jibal/cmake)
 install(EXPORT JibalTargets
   FILE JibalTargets.cmake
   DESTINATION ${ConfigPackageLocation}
+  COMPONENT headers
 )
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/JibalConfig.cmake
