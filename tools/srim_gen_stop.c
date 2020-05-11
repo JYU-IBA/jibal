@@ -140,7 +140,7 @@ int parse_output(char *filename, FILE *stopping_output_file, int xsteps) {
 }
 
 void remove_newline(char *s) {
-    int i;
+    size_t i;
     for(i=0; i<strlen(s); i++) {
         if(s[i] == '\n' || s[i] == '\r')
             s[i]='\0';

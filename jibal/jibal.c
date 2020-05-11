@@ -16,9 +16,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(__GNUC__) && ! defined(_GNU_SOURCE)
-#define _GNU_SOURCE // Needed for asprintf (from stdio.h) on GNU/Linux
-#endif
 #include <stdio.h>
 #include <jibal.h>
 #include <jibal_config.h>

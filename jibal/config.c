@@ -1,5 +1,6 @@
-#include <stdlib.h>
+#define _GNU_SOURCE
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
@@ -161,13 +162,13 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
             continue; /* Empty lines (even after stripping newline and whitespace) are ignored */
         char *line_var=line;
         size_t eq_pos=strcspn(line, "="); /* Finds equality sign */
-        if(line[eq_pos] == '\0' || eq_pos == 0) {
+        if(line[eq_pos] == '\0' || eq_pos <= 1) {
             fprintf(stderr,  WARNING_STRING "Malformed configuration file %s line %i: \"%s\"\n", filename, lineno, line_orig);
             continue;
         }
         line[eq_pos]='\0'; /* Separate argument name from value by replacing the first '=' with a null */
         size_t s;
-        for(s=eq_pos-1; s >= 0 && isspace(line[s]); s--) {line[s]='\0';} /* Replace whitespace before '=' with nulls */
+        for(s=eq_pos-1; s > 0 && isspace(line[s]); s--) {line[s]='\0';} /* Replace whitespace before '=' with nulls */
         char *line_val=line+eq_pos+1; /* First character after the '=', could also be a '\0'! */
         while(isspace(*line_val)) {line_val++;} /* Ignore leading whitespace in values */
 #ifdef DEBUG
@@ -196,7 +197,8 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
                         char *tmp=strdup(filename); /* Get a char we can mutilate */
                         char *tmp2=dirname(tmp);
                         char *out;
-                        asprintf(&out, "%s/%s", tmp2, line_val);
+                        if(asprintf(&out, "%s/%s", tmp2, line_val) < 0)
+                            out=NULL;
                         jibal_path_cleanup(out);
                         *((char **)var->variable)=out;
                         free(tmp);
@@ -240,10 +242,11 @@ char *jibal_config_user_dir() {
     if(!dir)
         return NULL;
 #ifdef WIN32
-    asprintf(&out, "%s/%s/", dir, "jibal");
+    if(asprintf(&out, "%s/%s/", dir, "jibal") < 0)
 #else
-    asprintf(&out, "%s/%s/", dir, ".jibal");
+    if(asprintf(&out, "%s/%s/", dir, ".jibal") < 0)
 #endif
+        return NULL;
     return jibal_path_cleanup(out); /* Remember to free when done, memory allocated by asprintf*/
 }
 
@@ -281,7 +284,10 @@ char *jibal_config_user_config_filename() {
     char *dir = jibal_config_user_dir();
     if(!dir)
         return NULL;
-    asprintf(&filename, "%s/%s", dir, JIBAL_CONFIG_FILE);
+    if(asprintf(&filename, "%s/%s", dir, JIBAL_CONFIG_FILE) < 0) {
+        free(dir);
+        return NULL;
+    }
     free(dir);
     return jibal_path_cleanup(filename);
 }
@@ -357,7 +363,8 @@ char *jibal_config_filename_seek() {
             case 1:
                 dir = getenv("JIBAL_CONFIG_DIR");
                 if(dir) {
-                    asprintf(&filename, "%s/%s", dir, JIBAL_CONFIG_FILE);
+                    if(asprintf(&filename, "%s/%s", dir, JIBAL_CONFIG_FILE) < 0)
+                        filename=NULL;
                 }
                 break;
             case 2:
@@ -372,10 +379,11 @@ char *jibal_config_filename_seek() {
                 break;
             case 5:
 #ifdef WIN32
-                asprintf(&filename, "../%s", JIBAL_CONFIG_FILE);
+                if(asprintf(&filename, "../%s", JIBAL_CONFIG_FILE) < 0)
 #else
-                asprintf(&filename, "/etc/jibal/%s", JIBAL_CONFIG_FILE);
+                if(asprintf(&filename, "/etc/jibal/%s", JIBAL_CONFIG_FILE) < 0)
 #endif
+                    return NULL;
                 break;
             default:
                 attempt = 0;
