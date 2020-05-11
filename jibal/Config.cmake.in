@@ -1,6 +1,7 @@
 @PACKAGE_INIT@
 
-include(FindGSL)
+include(CMakeFindDependencyMacro)
+find_dependency(GSL)
 
 include ( "${CMAKE_CURRENT_LIST_DIR}/JibalTargets.cmake" )
 
