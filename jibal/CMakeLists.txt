@@ -21,6 +21,9 @@ if(DEBUG_OUTPUT_ENABLE)
 add_compile_options(-DDEBUG)
 endif()
 
+set(INCLUDE_INSTALL_DIR include/${PROJECT_NAME})
+set(LIB_INSTALL_DIR lib/)
+
 option(DEVELOPER_MODE_ENABLE "Enable developer mode" OFF)
 if(DEVELOPER_MODE_ENABLE)
     set(JIBAL_DATADIR "data") #relative to install prefix
@@ -104,8 +107,9 @@ include(CMakePackageConfigHelpers)
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
         "${CMAKE_CURRENT_BINARY_DIR}/JibalConfig.cmake"
         INSTALL_DESTINATION "lib/Jibal/cmake"
-        NO_SET_AND_CHECK_MACRO
-        NO_CHECK_REQUIRED_COMPONENTS_MACRO
+        PATH_VARS INCLUDE_INSTALL_DIR
+#        NO_SET_AND_CHECK_MACRO
+#        NO_CHECK_REQUIRED_COMPONENTS_MACRO
         )
 
 # generate the version file for config
@@ -119,12 +123,18 @@ export(EXPORT JibalTargets
         FILE "${CMAKE_CURRENT_BINARY_DIR}/JibalTargets.cmake"
         )
 # install the configuration file to binary directory too so "installing" the library is not necessary
+
+set(ConfigPackageLocation lib/Jibal/cmake)
+
+install(EXPORT JibalTargets
+  FILE JibalTargets.cmake
+  DESTINATION ${ConfigPackageLocation}
+)
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/JibalConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/JibalConfigVersion.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/JibalTargets.cmake
         #DESTINATION lib/cmake/Jibal
-        DESTINATION lib/Jibal/cmake
+        DESTINATION ${ConfigPackageLocation}
         COMPONENT headers
         )
 # cpack configuration
