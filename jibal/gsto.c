@@ -914,7 +914,7 @@ int jibal_gsto_print_assignments(jibal_gsto *workspace) {
             fprintf(stderr, "\n");
         }        
     }
-    fprintf(stderr, "\n\n");
+    fprintf(stderr, "\n");
     return 1;
 }
 

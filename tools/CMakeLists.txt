@@ -9,6 +9,10 @@ add_executable(jibaltool jibaltool.c)
 add_executable(jibal_bootstrap jibal_bootstrap.c)
 add_executable(srim_gen_stop srim_gen_stop.c)
 add_executable(dpass_decode dpass_decode.c)
+target_include_directories(get_stop PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/jibal>
+        ${GETOPT_INCLUDE_DIR}
+        )
 target_link_libraries(get_stop
     PRIVATE Jibal
     "$<$<BOOL:${UNIX}>:m>"
