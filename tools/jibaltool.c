@@ -90,7 +90,7 @@ void read_options(jibaltool_global *global, int *argc, char ***argv) {
                 global->stopfile=strdup(optarg);
                 break;
             case 'V':
-                printf("%s\n", jibal_VERSION);
+                printf("jibaltool %s JIBAL library version %s\n", jibal_VERSION, jibal_version());
                 exit(EXIT_SUCCESS);
                 break; /* Unnecessary */
             case 'v':
