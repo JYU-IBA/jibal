@@ -10,32 +10,39 @@ See [installation instructions](INSTALL.md)
 
 The library is pretty useless without data files. You can obtain some [elsewhere](http://users.jyu.fi/~jaakjuli/jibal/data/).
 
+There is a tool called *jibal_bootstrap* you can use to make a user configuration. See instructions of the data package.
+
 ## Usage of bundled tools
 
 ### Get_stop
 
 The get\_stop program can be used to extract stopping like this:
 ~~~~
-get_stop 4He SiO2 "1 MeV"
+get_stop 4He "1 MeV" -l SiO2
 ~~~~
 
 or for example (stopping in 100 keV steps)
 ~~~~
-get_stop 4He "Si0.33 O0.33 N0.33" 1MeV 100keV 10MeV
+get_stop 4He 1MeV 100keV 10MeV -l "Si0.33 O0.33 N0.33" 
 ~~~~
 This should (interpolation and other numerical issues aside) reproduce SRIM 2013 stopping values with the data included in the distribution.
 
 
 You can also do energy loss calculations in layers, e.g.
 ~~~~
-get_stop 4He Au 2MeV 1000tfu
+get_stop 4He 2MeV -l Au -t 1000tfu
 ~~~~
 
 Elements are assumed to have natural isotopic composition, unless you tell otherwise, e.g.
 ~~~~
-get_stop 4He "7Li0.60 6Li0.40" 2MeV 1000tfu
+get_stop 4He 2MeV -l "7Li0.60 6Li0.40" -t 1000tfu
 ~~~~
-Note that this results in two elements, but this is fine. 
+
+You can get more verbose output with the -v parameter (or two)
+~~~~
+get_stop 4He 2MeV -l "7Li0.60 6Li0.40" -t 1000tfu -v -v
+~~~~
+
 
 ### Jibaltool
 
