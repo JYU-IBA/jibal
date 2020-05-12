@@ -96,3 +96,7 @@ const char *jibal_error_string(jibal_error err) {
             return "ERROR_UNKNOWN";
     }
 }
+
+const char *jibal_version() {
+    return jibal_VERSION;
+}

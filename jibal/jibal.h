@@ -47,5 +47,6 @@ typedef struct {
 jibal jibal_init(const char *config_filename);
 void jibal_free(jibal *jibal);
 const char *jibal_error_string(jibal_error err);
+const char *jibal_version();
 
 #endif //_JIBAL_JIBAL_H_
