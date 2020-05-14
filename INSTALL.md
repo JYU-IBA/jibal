@@ -62,7 +62,7 @@
     - It may not be necessary to speficy $CMAKE_TOOLCHAIN_FILE$ explicitly either 
     - Run the following to build the library
     
-          msbuild BUILD_ALL.vcxproj
+          msbuild ALL_BUILD.vcxproj
           
     - You can make an installer, it requires [WiX](https://wixtoolset.org/), run the following:
          
