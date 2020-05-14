@@ -59,7 +59,7 @@
           cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ../
           
     - We use the *-G* option to select the MSVC compiler version. It's not strictly necessary. Use *Visual Studio 15 2017* for  MSVC 2017. Older versions are not supported.
-    - It may not be necessary to speficy $CMAKE_TOOLCHAIN_FILE$ explicitly either 
+    - It may not be necessary to specify $CMAKE_TOOLCHAIN_FILE$ explicitly either 
     - Run the following to build the library
     
           msbuild ALL_BUILD.vcxproj
