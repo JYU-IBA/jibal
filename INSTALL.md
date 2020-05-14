@@ -25,7 +25,7 @@
 1. Install [Homebrew](https://brew.sh/)
 2. Run the following:
     
-        $ brew tap JYU-IBA/iba # (TODO: this is not yet ready for use)
+        $ brew tap JYU-IBA/iba
         $ brew install jibal
 
 4. If you want to DEVELOP Jibal and not just use it, follow Linux instructions above, install gsl using Homebrew or MacPorts
