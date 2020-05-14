@@ -21,7 +21,7 @@
 
 #include <jibal_masses.h>
 
-double jibal_erd_cross_section(jibal_isotope *incident, jibal_isotope *target, double theta, double E);
-double jibal_rbs_cross_section(jibal_isotope *incident, jibal_isotope *target, double theta, double E);
+double jibal_erd_cross_section(const jibal_isotope *incident, const jibal_isotope *target, double theta, double E);
+double jibal_rbs_cross_section(const jibal_isotope *incident, const jibal_isotope *target, double theta, double E);
 
 #endif /* _JIBAL_CROSS_SECTION_H_ */

@@ -76,6 +76,7 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
         if(n>=JIBAL_MASSES_ISOTOPES) {
             fprintf(stderr, "Too many isotopes! I was expecting a maximum of %i.\n", JIBAL_MASSES_ISOTOPES);
             return NULL;
+            /* TODO: realloc */
         }
         n++;
     }
@@ -104,14 +105,18 @@ int jibal_abundances_load(jibal_isotope *isotopes, const char *filename) {
         if(sscanf(line, "%i %i %lf", &Z, &A, &abundance) != 3) { /* Failure (problem with data). Let's keep the good data anyway. */
             return n;
         }
-        jibal_isotope *isotope=jibal_isotope_find(isotopes, NULL, Z, A);
-        if(!isotope) {
-#ifdef DEBUG
-            fprintf(stderr, "Couldn't find isotope with Z=%i and A=%i\n", Z, A);
-#endif
-            return n;
+        jibal_isotope *isotope;
+        int found = FALSE;
+        for (isotope = isotopes; isotope->A != 0; isotope++) {
+            if(isotope->Z == Z && isotope->A == A) {
+                isotope->abundance = abundance;
+                found = TRUE;
+                break;
+            }
         }
-        isotope->abundance=abundance;
+        if(!found) {
+            fprintf(stderr, "Couldn't find isotope with Z=%i and A=%i\n", Z, A);
+        }
 #ifdef DEBUG
         fprintf(stderr, "Abundance of %s is now %.8lf.%s\n", isotope->name, abundance, abundance<ABUNDANCE_THRESHOLD?" WARNING: This is below threshold!":"");
 #endif
@@ -344,8 +349,8 @@ void jibal_element_normalize(jibal_element *element) {
     }
 }
 
-jibal_isotope *jibal_isotope_find(jibal_isotope *isotopes, const char *name, int Z, int A) {
-    jibal_isotope *isotope;
+const jibal_isotope * jibal_isotope_find(const jibal_isotope *isotopes, const char *name, int Z, int A) {
+    const jibal_isotope *isotope;
     if(!isotopes)
         return NULL;
     if(name != NULL) {

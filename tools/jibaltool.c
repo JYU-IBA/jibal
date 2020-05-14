@@ -118,7 +118,7 @@ int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
         return -1;
     }
     jibal *jibal = &global->jibal;
-    jibal_isotope *incident = jibal_isotope_find(jibal->isotopes, argv[0], 0, 0); /* e.g. 4He */
+    const jibal_isotope *incident = jibal_isotope_find(jibal->isotopes, argv[0], 0, 0); /* e.g. 4He */
     if(!incident) {
         fprintf(stderr, "%s is not a valid isotope.\n", argv[0]);
         return -1;

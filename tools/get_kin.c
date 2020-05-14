@@ -33,12 +33,12 @@ int main(int argc, char **argv) {
         return -1;
 
     }
-    jibal_isotope *incident = jibal_isotope_find(jibal.isotopes, argv[1], 0, 0);
+    const jibal_isotope *incident = jibal_isotope_find(jibal.isotopes, argv[1], 0, 0);
     if(!incident) {
         fprintf(stderr, "There is no isotope %s in my database.\n", argv[1]);
         return -1;
     }
-    jibal_isotope *target = jibal_isotope_find(jibal.isotopes, argv[2], 0, 0);
+    const jibal_isotope *target = jibal_isotope_find(jibal.isotopes, argv[2], 0, 0);
     if(!target) {
         fprintf(stderr, "There is no isotope %s in my database.\n", argv[2]);
         return -1;

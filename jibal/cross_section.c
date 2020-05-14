@@ -1,7 +1,7 @@
 #include <jibal_cross_section.h>
 #include <jibal_units.h>
 
-double jibal_erd_cross_section(jibal_isotope *incident, jibal_isotope *target, double theta, double E) {
+double jibal_erd_cross_section(const jibal_isotope *incident, const jibal_isotope *target, double theta, double E) {
     double E_cm = target->mass*E/(incident->mass+target->mass);
     double t_sc=C_PI-2*theta;
     double sigma_r = pow(incident->Z*C_E*target->Z*C_E/(8*C_PI*C_EPSILON0*E), 2.0)
@@ -10,7 +10,7 @@ double jibal_erd_cross_section(jibal_isotope *incident, jibal_isotope *target, d
     return sigma_r;
 }
 
-double jibal_rbs_cross_section(jibal_isotope *incident, jibal_isotope *target, double theta, double E) {
+double jibal_rbs_cross_section(const jibal_isotope *incident, const jibal_isotope *target, double theta, double E) {
     double E_cm = target->mass*E/(incident->mass + target->mass);
     double r = incident->mass/target->mass;
     double t_cm = theta + asin(r*sin(theta));;

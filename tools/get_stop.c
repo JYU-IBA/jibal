@@ -31,7 +31,7 @@
 
 typedef struct {
     jibal *jibal;
-    jibal_isotope *incident;
+    const jibal_isotope *incident;
     jibal_layer **target; /* Array of pointers, size n_layers, reallocated as necessary */
     int verbose;
     int n_layers;
