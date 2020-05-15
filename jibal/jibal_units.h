@@ -37,17 +37,35 @@
 #define M_PI 3.14159265358979323846264338327950288
 #endif
 
+#define C_US 1.0e-6
+#define C_NS 1.0e-9
+#define C_PS 1.0e-12
+#define C_CM2 1.0e-4
+#define C_CM3 1.0e-6
+#define C_CM 1.0e-2
+#define C_MM 1.0e-3
+#define C_UM 1.0e-6
+#define C_NM 1.0e-9
+#define C_ANGSTROM 1.0e-10
+#define C_G 1.0e-3
+#define C_UG 1.0e-9
+#define C_G_CM3 1.0e3
+#define C_MSR 1.0e-3
+
+
 #define C_PI M_PI
+#define C_DEG (2.0*C_PI/360.0) /* degree */
 #define C_FWHM 2.35482004503
 #define C_PERCENT 0.01
 #define C_U (1.66053906660e-27) /* atomic mass unit, kg */
 #define C_C (299792458.0) /* speed of light, in m/s, exact. */
 #define C_C2 (C_C*C_C) /* speed of light, squared */
 #define C_E (1.602176634e-19) /* elementary charge, in C, exact. */
+#define C_UC (1.0e-6/C_E)
 #define C_EV (C_E) /* electronvolt, in J */
 #define C_KEV (1.0e3*C_EV) /* keV */
 #define C_MEV (1.0e6*C_EV) /* MeV */
-#define C_DEG (2.0*C_PI/360.0) /* degree */
+
 #define C_H (6.62607015e-34) /* Planck constant, exact. */
 #define C_HBAR (C_H/(2*C_PI))
 #define C_ALPHA (0.0072973525693) /* fine structure constant. Using CODATA 2018 recommended value. */
