@@ -1,6 +1,6 @@
 # JIBAL
 
-Library that provides stopping forces, straggling models, cross sections and various atomic data e.g. masses and abundances for typical IBA applications. The GNU General Public License applies to the source code and any programs compiled thereof in this distribution, but not to any data files. Please note the exceptions under the following notice.
+Library that provides stopping forces, straggling models, cross sections and various atomic data e.g. masses and abundances for typical IBA applications. The GNU General Public License applies to the source code and any programs compiled thereof, scripts and the software as a whole, but not to any of the [data/](data), since the author of this software can not claim authorship of the data. Please note the exceptions to the GPL license under the following notice.
 
     Copyright (C) 2020 Jaakko Julin
 
