@@ -216,8 +216,12 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
                         char *tmp=strdup(filename); /* Get a char we can mutilate */
                         char *tmp2=dirname(tmp);
                         char *out;
-                        if(asprintf(&out, "%s/%s", tmp2, line_val) < 0)
-                            out=NULL;
+                        if(!tmp2 || strlen(tmp2) == 0) { /* Windows kludge. */
+                            out=strdup(line_val);
+                        } else {
+                            if (asprintf(&out, "%s/%s", tmp2, line_val) < 0)
+                                out = NULL;
+                        }
                         jibal_path_cleanup(out);
                         *((char **)var->variable)=out;
                         free(tmp);
