@@ -27,5 +27,6 @@
 double jibal_cs_rbs(const jibal_config *config, const jibal_isotope *incident, const jibal_isotope *target, double theta, double E);
 double jibal_cs_erd(const jibal_config *config, const jibal_isotope *incident, const jibal_isotope *target, double phi, double E);
 
-const char *jibal_cs_name(const jibal_config *config); /* Name of used cross sections */
+const char *jibal_cs_rbs_name(const jibal_config *config); /* Name of used cross sections */
+const char *jibal_cs_erd_name(const jibal_config *config); /* Name of used cross sections */
 #endif /* _JIBAL_CS_H_ */

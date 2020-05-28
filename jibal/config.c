@@ -51,7 +51,8 @@ jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure 
             {JIBAL_CONFIG_VAR_PATH, "assignments_file", &config->assignments_file},
             {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
             {JIBAL_CONFIG_VAR_BOOL, "extrapolate", &config->extrapolate},
-            {JIBAL_CONFIG_VAR_OPTION, "cross_section", &config->cs, jibal_cs_types},
+            {JIBAL_CONFIG_VAR_OPTION, "rbs_cross_section", &config->cs_rbs, jibal_cs_types},
+            {JIBAL_CONFIG_VAR_OPTION, "erd_cross_section", &config->cs_erd, jibal_cs_types},
             {0, 0, NULL}
     }; /* null terminated, we use .type == 0 to stop a loop */
     int n_vars;
@@ -314,7 +315,7 @@ char *jibal_config_user_config_filename() {
 }
 
 jibal_config jibal_config_defaults() {
-    jibal_config config = {.Z_max = JIBAL_MAX_Z, .extrapolate = FALSE, .error = 0, .cs = JIBAL_CS_ANDERSEN};
+    jibal_config config = {.Z_max = JIBAL_MAX_Z, .extrapolate = FALSE, .error = 0, .cs_rbs = JIBAL_CS_ANDERSEN, .cs_erd = JIBAL_CS_ANDERSEN};
     const char *c=getenv("JIBAL_DATADIR");
     if(c) {
         config.datadir=strdup(c);

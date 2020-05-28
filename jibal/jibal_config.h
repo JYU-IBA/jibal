@@ -15,7 +15,8 @@ typedef struct {
     char *assignments_file;
     int Z_max;
     int extrapolate; /* this is boolean, see JIBAL_CONFIG_VAR_BOOL */
-    jibal_cross_section_type cs;
+    jibal_cross_section_type cs_rbs;
+    jibal_cross_section_type cs_erd;
 } jibal_config; /* Some internal configuration (environment etc) */
 
 typedef enum {
