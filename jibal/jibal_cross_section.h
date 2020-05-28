@@ -20,8 +20,18 @@
 #define _JIBAL_CROSS_SECTION_H_
 
 #include <jibal_masses.h>
+typedef enum {
+    JIBAL_CS_NONE=0,
+    JIBAL_CS_RUTHERFORD=1,
+    JIBAL_CS_ANDERSEN=2
+} jibal_cross_section_type;
 
-double jibal_erd_cross_section(const jibal_isotope *incident, const jibal_isotope *target, double theta, double E);
-double jibal_rbs_cross_section(const jibal_isotope *incident, const jibal_isotope *target, double theta, double E);
+
+double jibal_cs_rbs(const jibal_isotope *incident, const jibal_isotope *target, double theta, double E, jibal_cross_section_type type);
+double jibal_cs_erd(const jibal_isotope *incident, const jibal_isotope *target, double phi, double E, jibal_cross_section_type type);
+
+const char *jibal_cs_name(jibal_cross_section_type type);
+
+double jibal_andersen_correction(int z1, int z2, double E_cm, double theta_cm);
 
 #endif /* _JIBAL_CROSS_SECTION_H_ */
