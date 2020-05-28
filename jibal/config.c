@@ -329,16 +329,18 @@ void jibal_config_finalize(jibal_config *config) { /* Fill in missing defaults b
 #ifdef WIN32
     if(!config->datadir) {
         config->datadir=jibal_registry_string_get("RootDirectory");
-        config->datadir=realloc(config->datadir, strlen(config->datadir)+1+strlen(JIBAL_DATADIR)+1+1);
-        if(!config->datadir) {
-            fprintf(stderr, "Allocation issues with config->datadir.\n");
-            return;
+        if(config->datadir) {
+            config->datadir = realloc(config->datadir, strlen(config->datadir) + 1 + strlen(JIBAL_DATADIR) + 1 + 1);
+            if (!config->datadir) {
+                fprintf(stderr, "Allocation issues with config->datadir.\n");
+                return;
+            }
+            config->datadir = strcat(config->datadir, "/");
+            config->datadir = strcat(config->datadir, JIBAL_DATADIR);
+            config->datadir = strcat(config->datadir, "/");
+            config->datadir = jibal_path_cleanup(config->datadir);
+            /* TODO: check if exists */
         }
-        config->datadir=strcat(config->datadir, "/");
-        config->datadir=strcat(config->datadir, JIBAL_DATADIR);
-        config->datadir=strcat(config->datadir, "/");
-        config->datadir=jibal_path_cleanup(config->datadir);
-        /* TODO: check if exists */
     }
 #endif
     if(!config->datadir) {
