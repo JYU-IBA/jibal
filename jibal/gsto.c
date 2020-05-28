@@ -15,35 +15,8 @@
 #endif
 #include "jibal_stragg.h"
 
-
-int gsto_header_n(const gsto_header *header) {
-    const gsto_header *h;
-    int n=0;
-    if (!header)
-        return 0;
-    for (h = header; h->s; h++) {
-        n++;
-    }
-    return n;
-}
-
-int gsto_get_header_value(const gsto_header *header, const char *s) {
-    const gsto_header *h;
-    int i=0;
-    if(!s)
-        return 0; /* TODO: is returning zero a sane fail safe? */
-    for(h=header; h->s; h++) {
-        if (strcmp(h->s, s) == 0) {
-            return i;
-        }
-        i++;
-    }
-    fprintf(stderr, "WARNING: \"%s\" is not a valid header field or value.\n", s);
-    return 0;
-}
-
-const char *gsto_get_header_string(const gsto_header *header, int val) {
-    const gsto_header *h;
+const char *gsto_get_header_string(const jibal_option *header, int val) {
+    const jibal_option *h;
     for(h=header; h->s; h++) {
         if(h->val == val) {
             return h->s;
@@ -211,7 +184,7 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
     return 1;
 }
 void jibal_gsto_fprint_header_property(FILE *f, gsto_header_type h, int val) {
-    const gsto_header *properties;
+    const jibal_option *properties;
     switch(h) {
         case GSTO_HEADER_TYPE:
             properties=gsto_stopping_types;
@@ -239,11 +212,11 @@ void jibal_gsto_fprint_header_property(FILE *f, gsto_header_type h, int val) {
         fprintf(stderr, "GSTO Warning: header type %i doesn't correspond to a header with properties\n", h);
         return;
     }
-    if(val < gsto_header_n(properties))
+    if(val < jibal_option_n(properties))
         fprintf(f, "%s=%s\n", gsto_headers[h].s, properties[val].s);
     else
         fprintf(stderr, "Warning: can't print GSTO header. val=%i (should be < %i)\n",
-                val, gsto_header_n(properties));
+                val, jibal_option_n(properties));
 }
 void jibal_gsto_fprint_header_int(FILE *f, gsto_header_type h, int i) {
     fprintf(f, "%s=%i\n", gsto_get_header_string(gsto_headers, h), i);
@@ -259,7 +232,7 @@ void jibal_gsto_fprint_header_scientific(FILE *f, gsto_header_type h, double val
 void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, void *val) { /* Value is interpreted based on
  * header to be int, double or char *. In the last case void * is char **!. */
     char type;
-    int n = gsto_header_n(gsto_headers);
+    int n = jibal_option_n(gsto_headers);
     if((int) h >= n) {
         fprintf(stderr, "GSTO Error: %i is not v valid header type. This shouldn't happen.\n", h);
         return;
@@ -605,29 +578,29 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
             if (**col != '\0')
                 if (++col >= &columns[3])
                     break;
-        switch (gsto_get_header_value(gsto_headers, columns[0])) {
+        switch (jibal_option_get_value(gsto_headers, columns[0])) {
             case GSTO_HEADER_TYPE:
-                file->type = gsto_get_header_value(gsto_stopping_types, columns[1]);
+                file->type = jibal_option_get_value(gsto_stopping_types, columns[1]);
                 break;
             case GSTO_HEADER_SOURCE:
                 file->source = strdup(columns[1]);
                 break;
             case GSTO_HEADER_FORMAT:
-                file->data_format = gsto_get_header_value(gsto_data_formats, columns[1]);
+                file->data_format = jibal_option_get_value(gsto_data_formats, columns[1]);
                 break;
             case GSTO_HEADER_STOUNIT:
-                file->stounit = gsto_get_header_value(gsto_sto_units, columns[1]);
+                file->stounit = jibal_option_get_value(gsto_sto_units, columns[1]);
                 file->stounit_original = file->stounit;
                 break;
             case GSTO_HEADER_STRAGGUNIT:
-                file->straggunit = gsto_get_header_value(gsto_stragg_units, columns[1]);
+                file->straggunit = jibal_option_get_value(gsto_stragg_units, columns[1]);
                 file->straggunit_original = file->straggunit;
                 break;
             case GSTO_HEADER_XSCALE:
-                file->xscale = gsto_get_header_value(gsto_xscales, columns[1]);
+                file->xscale = jibal_option_get_value(gsto_xscales, columns[1]);
                 break;
             case GSTO_HEADER_XUNIT:
-                file->xunit = gsto_get_header_value(gsto_xunits, columns[1]);
+                file->xunit = jibal_option_get_value(gsto_xunits, columns[1]);
                 file->xunit_original = file->xunit;
                 break;
             case GSTO_HEADER_XPOINTS:

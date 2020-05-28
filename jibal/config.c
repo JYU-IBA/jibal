@@ -51,6 +51,7 @@ jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure 
             {JIBAL_CONFIG_VAR_PATH, "assignments_file", &config->assignments_file},
             {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
             {JIBAL_CONFIG_VAR_BOOL, "extrapolate", &config->extrapolate},
+            {JIBAL_CONFIG_VAR_OPTION, "cross_section", &config->cs, jibal_cs_types},
             {0, 0, NULL}
     }; /* null terminated, we use .type == 0 to stop a loop */
     int n_vars;
@@ -59,6 +60,15 @@ jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure 
     jibal_config_var *vars_out=malloc(s);
     memcpy(vars_out, vars, s);
     return vars_out;
+}
+
+const char *jibal_config_option_string(const jibal_config_var *var) {
+    if(var->option_list == NULL)
+        return "Null";
+    int i = *((int *)var->variable);
+    if(i < 0)
+        return "Negative";
+    return jibal_option_get_string(var->option_list, i);
 }
 
 int jibal_config_file_write(jibal_config *config, FILE *f) {
@@ -83,6 +93,9 @@ int jibal_config_file_write(jibal_config *config, FILE *f) {
                 break;
             case JIBAL_CONFIG_VAR_UNIT:
                 fprintf(f, "%s = %g\n", var->name, *((double *)var->variable));
+                break;
+            case JIBAL_CONFIG_VAR_OPTION:
+                fprintf(f, "%s = %s\n", var->name, jibal_option_get_string(var->option_list, *((int *)var->variable)));
                 break;
         }
     }
@@ -130,6 +143,11 @@ char *jibal_path_cleanup(char *path) { /* In place removal of repeated back or f
     }
 #endif
     return path;
+}
+
+int jibal_config_option_get(const jibal_config_var *var, const char *value) {
+    jibal_option_get_value(var->option_list, value);
+    return 0;
 }
 
 int jibal_config_file_read(const jibal_units *units, jibal_config *config, const char *filename) { /* Memory leaks in
@@ -216,6 +234,9 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
                 case JIBAL_CONFIG_VAR_UNIT:
                     *((double *)var->variable)=jibal_get_val(units, 0, line_val);
                     break;
+                case JIBAL_CONFIG_VAR_OPTION:
+                    *((int *)var->variable)=jibal_option_get_value(var->option_list, line_val);
+                    break;
             }
             break;
         }
@@ -293,7 +314,7 @@ char *jibal_config_user_config_filename() {
 }
 
 jibal_config jibal_config_defaults() {
-    jibal_config config = {.Z_max = JIBAL_MAX_Z, .extrapolate = FALSE, .error = 0};
+    jibal_config config = {.Z_max = JIBAL_MAX_Z, .extrapolate = FALSE, .error = 0, .cs = JIBAL_CS_ANDERSEN};
     const char *c=getenv("JIBAL_DATADIR");
     if(c) {
         config.datadir=strdup(c);

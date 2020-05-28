@@ -63,6 +63,8 @@ add_library(Jibal SHARED
         config.c
         stragg.c
         stop.c
+        option.c
+        cs.c
         registry.c
         win_compat.c
         )
@@ -157,7 +159,7 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "jibal-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 set(CPACK_SOURCE_IGNORE_FILES
         "^${CMAKE_SOURCE_DIR}/.git/"
-        "^${CMAKE_SOURCE_DIR}/\.idea/"
+        "^${CMAKE_SOURCE_DIR}/.idea/"
         ".gitignore$"
         ".DS_Store$"
         "^${CMAKE_SOURCE_DIR}/build/"

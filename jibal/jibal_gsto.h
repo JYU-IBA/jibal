@@ -3,15 +3,12 @@
 
 #include <stdio.h>
 #include <jibal_masses.h>
+#include <jibal_option.h>
 
 #define GSTO_DATAFILES_MAX_LINE_LEN 128
 #define GSTO_METADATA_MAX_LINE_LEN 1024
-#define GSTO_STR_NONE "none"
+#define GSTO_STR_NONE JIBAL_OPTION_STR_NONE
 
-typedef struct {
-    const char *s;
-    int val;
-} gsto_header; /* Association between strings and ints (ints preferably from enums). */
 
 typedef enum {
     GSTO_STO_NONE=0,
@@ -21,7 +18,7 @@ typedef enum {
     GSTO_STO_STRAGG=4
 } gsto_stopping_type; /* TODO: rename */
 
-static const gsto_header gsto_stopping_types[] = {/* TODO: rename */
+static const jibal_option gsto_stopping_types[] = {/* TODO: rename */
         {GSTO_STR_NONE, GSTO_STO_NONE},
         {"nuclear", GSTO_STO_NUCL},
         {"electronic", GSTO_STO_ELE},
@@ -36,7 +33,7 @@ typedef enum {
     GSTO_STO_UNIT_JM2=2, /* J m^2, the SI unit for stopping cross sections... */
 } gsto_stounit;
 
-static const gsto_header gsto_sto_units[] = {
+static const jibal_option gsto_sto_units[] = {
         {GSTO_STR_NONE, GSTO_STO_UNIT_NONE},
         {"eV/(1e15 atoms/cm2)", GSTO_STO_UNIT_EV15CM2},
         {"Jm2", GSTO_STO_UNIT_JM2},
@@ -49,7 +46,7 @@ typedef enum {
     GSTO_STRAGG_UNIT_J2M2, /* J^2 m^2, the SI unit for energy loss straggling variance (omega squared) */
 } gsto_straggunit;
 
-static const gsto_header gsto_stragg_units[] = {
+static const jibal_option gsto_stragg_units[] = {
         {GSTO_STR_NONE, GSTO_STRAGG_UNIT_NONE},
         {"bohr", GSTO_STRAGG_UNIT_BOHR},
         {"J2m2", GSTO_STRAGG_UNIT_J2M2},
@@ -62,7 +59,7 @@ typedef enum {
     GSTO_DF_DOUBLE=2
 } gsto_data_format;
 
-static const gsto_header gsto_data_formats[] = {
+static const jibal_option gsto_data_formats[] = {
         {GSTO_STR_NONE, GSTO_DF_NONE},
         {"ascii", GSTO_DF_ASCII},
         {"binary", GSTO_DF_DOUBLE},
@@ -76,7 +73,7 @@ typedef enum {
     GSTO_XSCALE_ARBITRARY=3
 } gsto_stopping_xscale;
 
-static const gsto_header gsto_xscales[] = {
+static const jibal_option gsto_xscales[] = {
         {GSTO_STR_NONE, GSTO_XSCALE_NONE},
         {"lin", GSTO_XSCALE_LINEAR},
         {"log10", GSTO_XSCALE_LOG10},
@@ -92,7 +89,7 @@ typedef enum {
     GSTO_X_UNIT_J_KG=4, /* J/kg = m^2/s^2 (N.B. this is NOT velocity squared!)*/
 } gsto_xunit;
 
-static const gsto_header gsto_xunits[] = {
+static const jibal_option gsto_xunits[] = {
         {GSTO_STR_NONE, GSTO_X_UNIT_NONE},
         {"m/s", GSTO_X_UNIT_M_S},
         {"keV/u", GSTO_X_UNIT_KEV_U},
@@ -121,7 +118,7 @@ typedef enum {
     GSTO_HEADER_XSCALE=16
 } gsto_header_type;
 
-static const gsto_header gsto_headers[] = {
+static const jibal_option gsto_headers[] = {
         {GSTO_STR_NONE, GSTO_HEADER_NONE},
         {"type", GSTO_HEADER_TYPE},
         {"source", GSTO_HEADER_SOURCE},

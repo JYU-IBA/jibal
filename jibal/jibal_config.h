@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <jibal_units.h>
+#include <jibal_cross_section.h>
 
 typedef struct {
     int error;
@@ -14,6 +15,7 @@ typedef struct {
     char *assignments_file;
     int Z_max;
     int extrapolate; /* this is boolean, see JIBAL_CONFIG_VAR_BOOL */
+    jibal_cross_section_type cs;
 } jibal_config; /* Some internal configuration (environment etc) */
 
 typedef enum {
@@ -23,15 +25,19 @@ typedef enum {
     JIBAL_CONFIG_VAR_BOOL = 3, /* Internally an int */
     JIBAL_CONFIG_VAR_INT = 4, /* 32-bit signed int (aka int) */
     JIBAL_CONFIG_VAR_DOUBLE = 5,
-    JIBAL_CONFIG_VAR_UNIT = 6 /* Number with a unit. Store number after SI conversion. */
+    JIBAL_CONFIG_VAR_UNIT = 6, /* Number with a unit. Store number after SI conversion. */
+    JIBAL_CONFIG_VAR_OPTION = 7 /* Internally an int, input/output as string */
 } jibal_config_var_type;
 
 typedef struct {
     jibal_config_var_type type;
     const char *name;
     void *variable;
+    const jibal_option *option_list; /* Only used with type == JIBAL_CONFIG_VAR_OPTION */
 } jibal_config_var;
 
+int jibal_config_option_get(const jibal_config_var *var, const char *value); /* For var->type == JIBAL_CONFIG_VAR_OPTION */
+const char *jibal_config_option_string(const jibal_config_var *var); /* For var->type == JIBAL_CONFIG_VAR_OPTION */
 char *jibal_config_user_dir();
 int jibal_config_user_dir_mkdir_if_necessary();
 char *jibal_config_user_config_filename();
