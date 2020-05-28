@@ -1,6 +1,6 @@
 # JIBAL
 
-Library that provides stopping forces, straggling models, cross sections and various atomic data e.g. masses and abundances for typical IBA applications.
+Library that provides stopping forces, straggling models, cross sections and various atomic data e.g. masses and abundances for typical IBA applications. The GNU General Public License applies to the source code and any programs compiled thereof, scripts and the software as a whole, but not to any of the [data/](data), since the author of this software can not claim authorship of the data. Please note the exceptions to the GPL license under the following notice.
 
     Copyright (C) 2020 Jaakko Julin
 
@@ -13,10 +13,16 @@ Library that provides stopping forces, straggling models, cross sections and var
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
+    
+This repository includes atomic mass data from the [AME2016 atomic mass evaluation](https://www-nds.iaea.org/amdc/) obtained from the IAEA website. The evaluation has been published in Chinese Physics C 41 (2017) 030002 [(PDF)](https://www-nds.iaea.org/amdc/ame2016/AME2016-a.pdf), 030003 [(PDF)](https://www-nds.iaea.org/amdc/ame2016/AME2016-b.pdf).
+
+This repository includes isotopic abundance data obtained from the CIAAW [website](https://ciaaw.org/isotopic-abundances.htm).
+
+The code includes constants from NIST [CODATA 2018](https://physics.nist.gov/cuu/Constants/).
 
 ## Installation from sources
 
-See [installation instructions](INSTALL.md)
+Please see the [installation instructions](INSTALL.md).
 
 ## Datafiles
 
