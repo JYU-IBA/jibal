@@ -15,7 +15,7 @@ int main() {
             << std::endl;
         return 1;
     }
-    jibal_isotope *alpha=jibal_isotope_find(jibal.isotopes, "4He", 0, 0);
+    const jibal_isotope *alpha=jibal_isotope_find(jibal.isotopes, "4He", 0, 0);
     std::cout << "The mass of " << alpha->name << " is " << alpha->mass/C_U << " u" << std::endl;
     jibal_free(&jibal);
     return 0;
