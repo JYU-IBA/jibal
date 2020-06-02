@@ -843,6 +843,8 @@ int jibal_gsto_print_files(jibal_gsto *workspace, int used_only) {
                     gsto_get_header_string(gsto_xunits, file->xunit));
 
         }
+        fprintf(stderr, "\tx-min=%e\n", file->xmin);
+        fprintf(stderr, "\tx-max=%e\n", file->xmax);
         if(file->stounit != GSTO_STO_UNIT_NONE) {
             if (file->stounit == file->stounit_original) {
                 fprintf(stderr, "\tstopping unit=%s\n", gsto_get_header_string(gsto_sto_units, file->stounit_original));
