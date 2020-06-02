@@ -10,9 +10,9 @@
 - CMake >= 3.13, older versions might work on some systems too
 
 ## Installation instructions for Linux / MacOS (also see MacOS specific instructions below):
-1. Install *git* and GNU Scientific Library (gsl) using your distributions package manager
-    - On Ubuntu: apt install git gsl TODO: check!
-    - On Arch: pacman -S git gsl
+1. Install *git*, *CMake*, and GNU Scientific Library (gsl) using your distributions package manager
+    - On Ubuntu: apt install git cmake libgsl-dev
+    - On Arch: pacman -S git gsl cmake
 2. Run the following:
 
         $ git clone https://github.com/JYU-IBA/jibal.git
