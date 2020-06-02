@@ -10,9 +10,9 @@
 - CMake >= 3.13, older versions might work on some systems too
 
 ## Installation instructions for Linux / MacOS (also see MacOS specific instructions below):
-1. Install *git* and GNU Scientific Library (gsl) using your distributions package manager
-    - On Ubuntu: apt install git gsl TODO: check!
-    - On Arch: pacman -S git gsl
+1. Install *git*, *CMake*, and GNU Scientific Library (gsl) using your distributions package manager
+    - On Ubuntu: apt install git cmake libgsl-dev
+    - On Arch: pacman -S git gsl cmake
 2. Run the following:
 
         $ git clone https://github.com/JYU-IBA/jibal.git
@@ -20,6 +20,14 @@
         $ cmake ../
         $ make
         $ sudo make install
+        
+3. If you get an error when trying to run a program using Jibal (for example *jibaltool*) that looks like this:
+        
+        "error while loading shared libraries: libJibal.so.0: cannot open shared object file: No such file or directory"
+
+   You should add the the path where libraries were installed (typically /usr/local/lib) to LD_LIBRARY_PATH for example by adding this line to your .bashrc or .profile
+   
+        export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
 
 ## Installation instructions for MacOS:
 1. Install [Homebrew](https://brew.sh/)
