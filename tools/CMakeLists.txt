@@ -40,6 +40,7 @@ target_include_directories(jibal_bootstrap PRIVATE
         )
 target_link_libraries(jibal_bootstrap
         PRIVATE Jibal
+        "$<$<BOOL:${UNIX}>:m>"
         )
 
 target_link_libraries(srim_gen_stop
