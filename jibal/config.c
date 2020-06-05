@@ -81,6 +81,8 @@ int jibal_config_file_write(jibal_config *config, FILE *f) {
                 break;
             case JIBAL_CONFIG_VAR_PATH:
             case JIBAL_CONFIG_VAR_STRING:
+                if (*((void **)var->variable) == NULL)
+                    continue;
                 fprintf(f, "%s = %s\n", var->name, *((char**)var->variable));
                 break;
             case JIBAL_CONFIG_VAR_BOOL:
@@ -351,7 +353,7 @@ void jibal_config_finalize(jibal_config *config) { /* Fill in missing defaults b
     if(!config->datadir) {
         config->datadir=strdup(JIBAL_DATADIR_FULL); /* Directory set by CMake is normal if "make install" has been used. */
     }
-    const char *dirs[] = {config->userdatadir, config->datadir, NULL};
+    const char *dirs[] = {".", config->userdatadir, config->datadir, NULL};
     const char **dir;
     for(dir=dirs; *dir != NULL; dir++) {
         if(!config->masses_file) {

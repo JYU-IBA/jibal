@@ -934,18 +934,19 @@ jibal_gsto *jibal_gsto_init(const jibal_element *elements, int Z_max, const char
     workspace->stop_step = JIBAL_STEP_SIZE; /* TODO: set this from some configuration. Used only for layer energy
  * loss calculations */
     workspace->extrapolate = FALSE;
-    if(!files_file_name) { /* If filename given (not NULL), attempt to load settings file */
-        files_file_name=JIBAL_FILES_FILE;
-    }
     jibal_gsto_read_settings_file(workspace, files_file_name);
     workspace->overrides = jibal_gsto_read_assignments_file(workspace, assignments_file_name);
     return workspace;
 }
 
 int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *filename) {
+    if(!filename) {
+        fprintf(stderr, "WARNING: GSTO files configuration not found. Maybe you don't have %s anywhere?\n", JIBAL_FILES_FILE);
+        return 0;
+    }
     FILE *f=fopen(filename, "r");
     if(!f) {
-        fprintf(stderr, "WARNING: Can not open file %s\n", filename);
+        fprintf(stderr, "WARNING: Can not open file \"%s\"\n", filename);
         return 0;
     }
     char *line=malloc(sizeof(char)*GSTO_METADATA_MAX_LINE_LEN);
@@ -1002,6 +1003,10 @@ int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *filename) {
 }
 
 gsto_assignment *jibal_gsto_read_assignments_file(jibal_gsto *workspace, const char *filename) {
+    if(!filename) {
+        fprintf(stderr, "WARNING: No assignments filename given. Maybe you don't have %s anywhere? Create an empty file to suppress this warning.\n", JIBAL_ASSIGNMENTS_FILE);
+        return NULL;
+    }
     FILE *f = fopen(filename, "r");
     if (!f) {
         fprintf(stderr, "WARNING: Can not open file %s. Create an empty file to suppress this warning.\n", filename);
