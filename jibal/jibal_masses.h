@@ -40,8 +40,10 @@
 #define JIBAL_NAT_ISOTOPES 0 /* Special meaning of A=0, natural (abundance > 0.0) isotopes. Useful for natural elements. */
 #define JIBAL_ALL_ISOTOPES -1  /* Special meaning of A=-1, all known isotopes */
 
-typedef char isotope_name[8]; /* These should be null terminated */
-typedef char element_name[4];
+#define JIBAL_ISOTOPE_NAME_LENGTH 8
+
+typedef char isotope_name[JIBAL_ISOTOPE_NAME_LENGTH]; /* These should be null terminated */
+typedef char element_name[JIBAL_ISOTOPE_NAME_LENGTH];
 
 typedef struct {
     isotope_name name; /* "AAAXx eg. 239Pu" */
@@ -53,7 +55,7 @@ typedef struct {
 } jibal_isotope; /* All jibal_isotopes are supposed to be static data */
 
 typedef struct {
-    element_name name;
+    element_name name; /* by default something like "Si", but "natSi", "28Si" are valid names too after jibal_element_copy() */
     int Z;
     int n_isotopes;
     const jibal_isotope **isotopes; /* Array of length n_isotopes, contents are pointers to isotopes */
