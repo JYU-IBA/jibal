@@ -63,6 +63,28 @@ jibal jibal_init(const char *config_filename) {
     return jibal;
 }
 
+void jibal_status_print(FILE *f, const jibal *jibal) {
+    if(jibal->error) {
+        fprintf(f, "Jibal initialization has failed with error code %i (%s)\n", jibal->error, jibal_error_string(jibal->error));
+    }
+    const jibal_isotope *i;
+    int n_isotopes=0;
+    int n_natural_isotopes=0;
+    for(i =jibal->isotopes; i->A != 0; i++) {
+        if(i->abundance >= ABUNDANCE_THRESHOLD)
+            n_natural_isotopes++;
+        n_isotopes++;
+    }
+    fprintf(f, "Jibal %s: %i units, %i elements, %i isotopes, %i isotopes with abundance > %g, %i GSTO files.\n",
+            jibal_version(),
+            jibal_units_count(jibal->units),
+            jibal_elements_Zmax(jibal->elements),
+            n_isotopes,
+            n_natural_isotopes,
+            ABUNDANCE_THRESHOLD,
+            jibal->gsto->n_files);
+}
+
 void jibal_free(jibal *jibal) {
     if(jibal->units)
         jibal_units_free(jibal->units);

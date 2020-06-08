@@ -28,10 +28,6 @@
 #define JIBAL_MASSES_ISOTOPES 4095 /* Maximum number of isotopes.  */
 #endif
 
-#ifndef JIBAL_ELEMENTS
-#define JIBAL_ELEMENTS 118
-#endif
-
 #define ABUNDANCE_THRESHOLD (1e-6)
 
 #define JIBAL_ANY_Z (-1) /* Z number that has a special meaning (Z is anything!). This is used when we want to have

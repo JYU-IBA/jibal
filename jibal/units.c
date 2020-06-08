@@ -53,6 +53,15 @@ jibal_units *jibal_units_default() {
     return units;
 }
 
+int jibal_units_count(const jibal_units *units) {
+    int n=0;
+    while(units) {
+        n++;
+        units=units->next;
+    }
+    return n;
+}
+
 double jibal_units_get(const jibal_units *units, char type, const char *name) {
     if(*name == '\0') /* Empty. */
         return 1.0;

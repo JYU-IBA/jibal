@@ -99,7 +99,7 @@ typedef struct jibal_units {
 
 jibal_units *jibal_units_add(jibal_units *units, double f, char type, char *name);
 jibal_units *jibal_units_default();
-
+int jibal_units_count(const jibal_units *units);
 /*!
  Get a unit
  

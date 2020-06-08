@@ -238,7 +238,7 @@ int print_gstofiles(jibaltool_global *global, int argc, char **argv) {
 
 int print_isotopes(jibaltool_global *global, int argc, char **argv) {
     jibal_isotope *isotopes=global->jibal.isotopes;
-    jibal_isotope *i;
+    const jibal_isotope *i;
     int Z=JIBAL_ANY_Z;
     double threshold=0.0;
     if(argc >= 1) {
@@ -268,7 +268,8 @@ int print_isotopes(jibaltool_global *global, int argc, char **argv) {
 int print_elements(jibaltool_global *global, int argc, char **argv) {
     int Z;
     FILE *out=jibaltool_open_output(global);
-    for(Z=0; Z <= JIBAL_ELEMENTS; Z++) {
+    int Z_max = jibal_elements_Zmax(global->jibal.elements);
+    for(Z=0; Z <= Z_max; Z++) {
         jibal_element *e=&global->jibal.elements[Z];
         fprintf(out, "%2s %3i %2i %2i %9.5lf\n", e->name, e->Z, jibal_element_number_of_isotopes(e, 0.0),
                 jibal_element_number_of_isotopes(e, ABUNDANCE_THRESHOLD), e->avg_mass/C_U);
@@ -293,6 +294,13 @@ void print_commands(FILE *f, const struct command *commands) {
     }
 }
 
+int print_status(jibaltool_global *global, int argc, char **argv) {
+    FILE *out=jibaltool_open_output(global);
+    jibal_status_print(out, &global->jibal);
+    jibaltool_close_output(out);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     jibaltool_global global = {.Z=0, .outfilename=NULL, .stopfile=NULL, .format=NULL, .verbose=0};
     read_options(&global, &argc, &argv);
@@ -305,6 +313,7 @@ int main(int argc, char **argv) {
             {"isotopes", &print_isotopes, "Print a list of isotopes."},
             {"elements", &print_elements, "Print a list of elements."},
             {"config", &print_config, "Print current configuration (config file)."},
+            {"status", &print_status, "Print Jibal status."},
             {NULL, NULL, NULL}
     };
     if(argc < 1) {

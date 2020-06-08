@@ -45,6 +45,7 @@ typedef struct {
 } jibal; /* All in one solution */
 
 jibal jibal_init(const char *config_filename);
+void jibal_status_print(FILE *f, const jibal *jibal);
 void jibal_free(jibal *jibal);
 const char *jibal_error_string(jibal_error err);
 const char *jibal_version();
