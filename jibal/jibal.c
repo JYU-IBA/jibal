@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <jibal.h>
 #include <jibal_config.h>
-#include <defaults.h>
+#include <jibal_defaults.h>
 
 jibal jibal_init(const char *config_filename) {
     jibal jibal;

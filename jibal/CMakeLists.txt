@@ -33,7 +33,7 @@ else()
     set(JIBAL_DATADIR "share/${PROJECT_NAME}") #relative to install prefix
     set(JIBAL_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 endif()
-configure_file(defaults.h.in defaults.h @ONLY)
+configure_file(jibal_defaults.h.in jibal_defaults.h @ONLY)
 
 set(PKGCONF_REQ_PUB "${PKGCONF_REQ_PUB} gsl") #Sets a variable for pkg-config file generation
 configure_file(
@@ -46,7 +46,7 @@ FILE(GLOB DATAFILES "${CMAKE_SOURCE_DIR}/data/*.*")
 list(REMOVE_ITEM DATAFILES "${CMAKE_SOURCE_DIR}/data/.gitignore")
 #message(STATUS "${DATAFILES}")
 FILE(GLOB PUBLIC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/jibal*.h")
-set(PUBLIC_HEADERS "${PUBLIC_HEADERS};${CMAKE_CURRENT_BINARY_DIR}/defaults.h;")
+set(PUBLIC_HEADERS "${PUBLIC_HEADERS};${CMAKE_CURRENT_BINARY_DIR}/jibal_defaults.h;")
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
@@ -118,7 +118,7 @@ configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
 # generate the version file for config
 write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/JibalConfigVersion.cmake"
-        VERSION "${jibal_VERSION_MAJOR}.${jibal_VERSION_MINOR}"
+        VERSION "${jibal_VERSION_MAJOR}.${jibal_VERSION_MINOR}.${jibal_VERSION_PATCH}"
         COMPATIBILITY AnyNewerVersion
 )
 # install the targets to binary directory

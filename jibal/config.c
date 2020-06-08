@@ -15,7 +15,7 @@
 #include <libgen.h>
 #endif
 #include <jibal_config.h>
-#include <defaults.h>
+#include <jibal_defaults.h>
 
 
 char *make_path_and_check_if_exists(const char *directory, const char *file) {

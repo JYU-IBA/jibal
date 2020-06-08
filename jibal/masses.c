@@ -24,7 +24,7 @@
 #include <jibal_masses.h>
 #include <assert.h>
 #include "win_compat.h"
-#include "defaults.h"
+#include "jibal_defaults.h"
 
 //#include "win_compat.h"
 

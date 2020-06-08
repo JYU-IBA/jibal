@@ -7,7 +7,7 @@
 #include <jibal_units.h>
 #include <jibal_phys.h>
 #include <jibal_gsto.h>
-#include <defaults.h>
+#include <jibal_defaults.h>
 #ifdef WIN32
 #include "win_compat.h"
 #else
