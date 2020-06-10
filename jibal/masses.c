@@ -226,11 +226,13 @@ jibal_element *jibal_element_new(const element_name name, int Z, int n_isotopes)
     return e;
 }
 
-const jibal_element * jibal_element_find(const jibal_element *elements, element_name name) {
+const jibal_element * jibal_element_find(const jibal_element *elements, const char *name) {
     /* Element name is typically something like "Si", but if the name looks like a number (only digits 0-9) and is in
      * the valid range, we assume it is the proton number. */
     int Z;
-    char *n=name;
+    const char *n=name;
+    if(name == NULL)
+        return NULL;
     if(*name == '\0')
         return NULL;
     for(Z=0; isdigit(*n);  Z = Z*10+*(n++)-'0');
