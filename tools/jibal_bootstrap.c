@@ -8,7 +8,7 @@
 #include <inttypes.h>
 #include <jibal.h>
 #include <jibal_stop.h>
-#include <defaults.h>
+#include <jibal_defaults.h>
 
 #ifdef WIN32
 #include <jibal_registry.h>

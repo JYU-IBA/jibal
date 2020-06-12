@@ -22,7 +22,7 @@
 #include <jibal.h>
 #include <jibal_stop.h>
 #include <jibal_stragg.h>
-#include <defaults.h>
+#include <jibal_defaults.h>
 
 #ifdef WIN32
 #include <win_compat.h>
