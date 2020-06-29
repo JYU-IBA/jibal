@@ -57,10 +57,11 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
     if(!in_file) {
         return NULL;
     }
-    char line[JIBAL_LINE_LENGTH];
+    char *line = NULL;
+    size_t line_size = 0;
     jibal_isotope *isotopes=malloc(sizeof(jibal_isotope)*(JIBAL_MASSES_ISOTOPES+1));
     int n=0;
-    while(fgets(line, JIBAL_LINE_LENGTH, in_file) != NULL) {
+    while(getline(&line, &line_size, in_file) > 0) {
         line_split=line; /* strsep will screw up line_split, reset for every new line */
         for (col = columns; (*col = strsep(&line_split, " \t")) != NULL;)
             if (**col != '\0')
@@ -75,6 +76,7 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
                                 name);
         if(n>=JIBAL_MASSES_ISOTOPES) {
             fprintf(stderr, "Too many isotopes! I was expecting a maximum of %i.\n", JIBAL_MASSES_ISOTOPES);
+            free(line);
             return NULL;
             /* TODO: realloc */
         }
@@ -85,6 +87,7 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
     fprintf(stderr, "Loaded %i isotopes (maximum set at %i) from %s\n", n, JIBAL_MASSES_ISOTOPES, filename);
 #endif
     fclose(in_file);
+    free(line);
     return isotopes;
 }
 
@@ -98,8 +101,9 @@ int jibal_abundances_load(jibal_isotope *isotopes, const char *filename) {
         fprintf(stderr, "Could not load isotope abundances table from file %s\n", filename);
         return -1;
     }
-    char line[JIBAL_LINE_LENGTH];
-    for(n=0; fgets(line, JIBAL_LINE_LENGTH, in_file) != NULL; n++) {
+    char *line = NULL;
+    size_t line_size = 0;
+    for(n = 0; getline(&line, &line_size, in_file) > 0; n++) {
         int Z, A;
         double abundance;
         if(sscanf(line, "%i %i %lf", &Z, &A, &abundance) != 3) { /* Failure (problem with data). Let's keep the good data anyway. */
@@ -124,6 +128,7 @@ int jibal_abundances_load(jibal_isotope *isotopes, const char *filename) {
 #ifdef DEBUG
     fprintf(stderr, "Successfully loaded %i abundances from %s\n", n, filename);
 #endif
+    free(line);
     return n;
 }
 

@@ -22,8 +22,6 @@
 #include <jibal_units.h>
 #include <jibal_phys.h>
 
-#define JIBAL_LINE_LENGTH 80 /* Maximum length of a single line in any data input file */
-
 #ifndef JIBAL_MASSES_ISOTOPES
 #define JIBAL_MASSES_ISOTOPES 4095 /* Maximum number of isotopes.  */
 #endif

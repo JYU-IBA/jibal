@@ -5,8 +5,6 @@
 #include <jibal_masses.h>
 #include <jibal_option.h>
 
-#define GSTO_DATAFILES_MAX_LINE_LEN 128
-#define GSTO_METADATA_MAX_LINE_LEN 1024
 #define GSTO_STR_NONE JIBAL_OPTION_STR_NONE
 
 

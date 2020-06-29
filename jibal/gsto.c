@@ -462,7 +462,8 @@ double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2) {
 
 int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
     int Z1, Z2, previous_Z1=file->Z1_min, previous_Z2=file->Z2_min-1, skip, i;
-    char *line = calloc(GSTO_DATAFILES_MAX_LINE_LEN, sizeof(char));
+    char *line = NULL;
+    size_t line_size=0;
     int actually_skipped=0;
 #ifdef DEBUG
     fprintf(stderr, "Loading ascii data.\n");
@@ -487,9 +488,8 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
 
                 while (skip--) {
                     file->lineno++;
-                    if(!fgets(line, GSTO_DATAFILES_MAX_LINE_LEN, file->fp))
+                    if(getline(&line, &line_size, file->fp) <= 0)
                         break;
-                    
                     if(*line == '#') {
                         skip++; /* Undoing skip-- */
 #ifdef DEBUG
@@ -503,7 +503,7 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
 #endif
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
                 for(i=0; i<file->xpoints; i++) {
-                    if(!fgets(line, GSTO_DATAFILES_MAX_LINE_LEN, file->fp)) {
+                    if(getline(&line, &line_size, file->fp) <= 0) {
                         fprintf(stderr, "ERROR: File %s ended prematurely when reading Z1=%i Z2=%i stopping point=%i/%i"
                                         ".\n", file->filename, Z1, Z2, i+1, file->xpoints);
                         file->valid = FALSE;
@@ -550,7 +550,8 @@ void jibal_gsto_file_calculate_ncombs(gsto_file_t *file) {
 }
 
 int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) {
-    char *line;
+    char *line = NULL;
+    size_t line_size = 0;
     char *line_split;
     char *columns[3];
     char **col;
@@ -565,9 +566,8 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
         return 0;
     }
     file->lineno = 0;
-    line = calloc(GSTO_DATAFILES_MAX_LINE_LEN, sizeof(char));
     /* parse headers, stop when end of headers found */
-    while (fgets(line, GSTO_DATAFILES_MAX_LINE_LEN, file->fp) != NULL && file->valid) {
+    while(getline(&line, &line_size, file->fp) > 0 && file->valid) {
         file->lineno++;
         if(*line == '#') /* Comments are allowed */
             continue;
@@ -949,12 +949,13 @@ int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *filename) {
         fprintf(stderr, "WARNING: Can not open file \"%s\"\n", filename);
         return 0;
     }
-    char *line=malloc(sizeof(char)*GSTO_METADATA_MAX_LINE_LEN);
+    char *line = NULL;
+    size_t line_size = 0;
     char *line_split;
     char *columns[2];
     char **col;
     int lineno=0, n_files=0, n_errors=0;
-    while (fgets(line, GSTO_METADATA_MAX_LINE_LEN, f) != NULL) {
+    while(getline(&line, &line_size, f) > 0) {
         lineno++;
         if (line[0] == '#') /* Strip comments */
             continue;
@@ -999,6 +1000,7 @@ int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *filename) {
     fprintf(stderr, "GSTO: Read %i lines from settings file, added %i files, attempt to add %i files failed.\n", lineno, n_files, n_errors);
 #endif
     fclose(f);
+    free(line);
     return n_files;
 }
 
@@ -1012,18 +1014,20 @@ gsto_assignment *jibal_gsto_read_assignments_file(jibal_gsto *workspace, const c
         fprintf(stderr, "WARNING: Can not open file %s. Create an empty file to suppress this warning.\n", filename);
         return NULL;
     }
-    char *line = malloc(sizeof(char) * GSTO_METADATA_MAX_LINE_LEN);
+    char *line = NULL;
     char *line_split;
     char *columns[3];
     char **col;
     int lineno = 0, n_possible = 0, n_actual = 0;
-    while (fgets(line, GSTO_METADATA_MAX_LINE_LEN, f) != NULL) { if (line[0] != '#') { n_possible++; }}
+    size_t line_size=0;
+    while(getline(&line, &line_size, f) > 0) { if (line[0] != '#') { n_possible++; }}
     if (n_possible == 0) {
+        free(line);
         return NULL;
     }
     rewind(f);
     gsto_assignment *a = calloc(n_possible, sizeof(gsto_assignment));
-    while (fgets(line, GSTO_METADATA_MAX_LINE_LEN, f) != NULL) {
+    while(getline(&line, &line_size, f) > 0) {
         lineno++;
         if (line[0] == '#') /* Strip comments */
             continue;

@@ -167,8 +167,9 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
     jibal_config_var *vars=make_config_vars(config);
     const jibal_config_var *var;
     unsigned int lineno=0;
-    char *line_orig=malloc(sizeof(char)*JIBAL_CONFIG_MAX_LINE_LEN);
-    while(fgets(line_orig, JIBAL_CONFIG_MAX_LINE_LEN, f)) {
+    char *line_orig = NULL;
+    size_t line_size=0;
+    while(getline(&line_orig, &line_size, f) > 0) {
         char *line=line_orig;
         lineno++;
         if(line[0] == '#') {
