@@ -22,8 +22,8 @@
 #include <jibal_units.h>
 #include <jibal_phys.h>
 
-#ifndef JIBAL_MASSES_ISOTOPES
-#define JIBAL_MASSES_ISOTOPES 4095 /* Maximum number of isotopes.  */
+#ifndef JIBAL_MASSES_ISOTOPES_INITIAL_ALLOC
+#define JIBAL_MASSES_ISOTOPES_INITIAL_ALLOC 4096 /* Guess for number of isotopes. Helps with allocation. Doesn't need to be exact. */
 #endif
 
 #define ABUNDANCE_THRESHOLD (1e-6)

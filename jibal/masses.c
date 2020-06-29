@@ -59,7 +59,8 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
     }
     char *line = NULL;
     size_t line_size = 0;
-    jibal_isotope *isotopes=malloc(sizeof(jibal_isotope)*(JIBAL_MASSES_ISOTOPES+1));
+    size_t n_alloc=JIBAL_MASSES_ISOTOPES_INITIAL_ALLOC;
+    jibal_isotope *isotopes=malloc(sizeof(jibal_isotope)*n_alloc);
     int n=0;
     while(getline(&line, &line_size, in_file) > 0) {
         line_split=line; /* strsep will screw up line_split, reset for every new line */
@@ -68,23 +69,26 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
                 if (++col >= &columns[6])
                     break;
         snprintf(name, JIBAL_ISOTOPE_NAME_LENGTH, "%i%s", (int)strtol(columns[4], NULL, 10), columns[1]);
+        if(n == n_alloc) {
+            n_alloc *= 2;
+            isotopes = realloc(isotopes, sizeof(jibal_isotope) * n_alloc);
+            if (!isotopes) {
+                fprintf(stderr, "Could not allocate space for %zu isotopes.\n", n_alloc);
+                return NULL;
+            }
+        }
         isotope_set(isotopes+n,
                                 strtoimax(columns[3], NULL, 10), 
                                 strtoimax(columns[2], NULL, 10), 
                                 strtoimax(columns[4], NULL, 10), 
                                 strtod(columns[5], NULL),
                                 name);
-        if(n>=JIBAL_MASSES_ISOTOPES) {
-            fprintf(stderr, "Too many isotopes! I was expecting a maximum of %i.\n", JIBAL_MASSES_ISOTOPES);
-            free(line);
-            return NULL;
-            /* TODO: realloc */
-        }
         n++;
     }
-    isotopes[n].A=0; /* "Null terminate" */
+    isotopes = realloc(isotopes, sizeof(jibal_isotope) * (n+1));
+    isotope_set(isotopes+n, 0, 0, 0, 0.0, "");
 #ifdef DEBUG
-    fprintf(stderr, "Loaded %i isotopes (maximum set at %i) from %s\n", n, JIBAL_MASSES_ISOTOPES, filename);
+    fprintf(stderr, "Loaded %i isotopes from %s\n", n, filename);
 #endif
     fclose(in_file);
     free(line);
