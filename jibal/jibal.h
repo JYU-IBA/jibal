@@ -35,16 +35,16 @@ typedef enum {
     JIBAL_ERROR_GSTO = 6
 } jibal_error;
 
-typedef struct {
+typedef struct jibal {
     jibal_error error;
     jibal_units *units;
     jibal_isotope *isotopes;
     jibal_element *elements;
     jibal_gsto *gsto;
-    jibal_config config;
+    jibal_config *config;
 } jibal; /* All in one solution */
 
-jibal jibal_init(const char *config_filename);
+jibal *jibal_init(const char *config_filename);
 void jibal_status_print(FILE *f, const jibal *jibal);
 void jibal_free(jibal *jibal);
 const char *jibal_error_string(jibal_error err);

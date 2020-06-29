@@ -124,24 +124,24 @@ void print_stopping_range(jibal *jibal, global *global, const jibal_material *ma
 int main(int argc, char **argv) {
     global global = {NULL, NULL, NULL, 0, 0};
     double E;
-    jibal jibal=jibal_init(NULL);
-    if(jibal.error) {
-        fprintf(stderr, "Initializing JIBAL failed with error code: %i (%s)\n", jibal.error,
-                jibal_error_string(jibal.error));
+    jibal *jibal=jibal_init(NULL);
+    if(jibal->error) {
+        fprintf(stderr, "Initializing JIBAL failed with error code: %i (%s)\n", jibal->error,
+                jibal_error_string(jibal->error));
         return EXIT_FAILURE;
     }
-    global.jibal = &jibal;
+    global.jibal = jibal;
     read_options(&global, &argc, &argv);
     if(argc < 2) {
         usage();
         return EXIT_FAILURE;
     }
-    global.incident=jibal_isotope_find(jibal.isotopes, argv[0], 0,0 );
+    global.incident=jibal_isotope_find(jibal->isotopes, argv[0], 0,0 );
     if(!global.incident) {
         fprintf(stderr, "No such isotope: %s\n", argv[0]);
         return EXIT_FAILURE;
     }
-    E=jibal_get_val(jibal.units, UNIT_TYPE_ENERGY, argv[1]);
+    E=jibal_get_val(jibal->units, UNIT_TYPE_ENERGY, argv[1]);
     if(global.verbose > 0) {
         fprintf(stderr, "Z1 = %i\n", global.incident->Z);
         fprintf(stderr, "m1 = %g u\n", global.incident->mass / C_U);
@@ -159,36 +159,36 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Layer %i/%i. Thickness %g tfu\n", i+1, global.n_layers, layer->thickness/C_TFU);
             jibal_material_print(stderr, layer->material);
         }
-        if (!jibal_gsto_auto_assign_material(jibal.gsto, global.incident, layer->material))
+        if (!jibal_gsto_auto_assign_material(jibal->gsto, global.incident, layer->material))
             return -1;
     }
-    jibal_gsto_load_all(jibal.gsto);
+    jibal_gsto_load_all(jibal->gsto);
     if(global.verbose > 0) {
-        jibal_gsto_print_assignments(jibal.gsto);
+        jibal_gsto_print_assignments(jibal->gsto);
     }
     if(global.verbose > 1) {
-        jibal_gsto_print_files(jibal.gsto, TRUE);
+        jibal_gsto_print_files(jibal->gsto, TRUE);
     }
     if(global.n_layers == 1 && global.target[0]->thickness == 0.0) {
         jibal_material *material = global.target[0]->material;
         if(argc == 2) {
-            print_stopping_range(&jibal, &global, material, E, E, E);
+            print_stopping_range(jibal, &global, material, E, E, E);
         } else if(argc == 4) {
             double E_low, E_step, E_high;
             E_low=E;
-            E_step=jibal_get_val(jibal.units, UNIT_TYPE_ENERGY, argv[2]);
-            E_high=jibal_get_val(jibal.units, UNIT_TYPE_ENERGY, argv[3]);
+            E_step=jibal_get_val(jibal->units, UNIT_TYPE_ENERGY, argv[2]);
+            E_high=jibal_get_val(jibal->units, UNIT_TYPE_ENERGY, argv[3]);
             fprintf(stderr, "E_low = %g keV\n", E_low/C_KEV);
             fprintf(stderr, "E_step = %g keV\n", E_step/C_KEV);
             fprintf(stderr, "E_high = %g keV\n", E_high/C_KEV);
-            print_stopping_range(&jibal, &global, material, E_low, E_step, E_high);
+            print_stopping_range(jibal, &global, material, E_low, E_step, E_high);
         }
     } else {
         fprintf(stderr, "E = %g keV\n", E/C_KEV);
         double S=0.0;
         double E_0=E;
         for(i=0; i < global.n_layers; i++) {
-            E = jibal_layer_energy_loss_with_straggling(jibal.gsto, global.incident, global.target[i], E, -1.0, &S);
+            E = jibal_layer_energy_loss_with_straggling(jibal->gsto, global.incident, global.target[i], E, -1.0, &S);
         }
         fprintf(stdout, "E_out = %g keV\n", E/C_KEV);
         fprintf(stdout, "delta E = %g keV\n", (E-E_0)/C_KEV);
@@ -197,6 +197,6 @@ int main(int argc, char **argv) {
 
 
    // jibal_material_free(global.target->material);
-    jibal_free(&jibal);
+    jibal_free(jibal);
     return EXIT_SUCCESS;
 }

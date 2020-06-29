@@ -147,8 +147,8 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Bootstrapping failed because of issues with units. This is unheard of.\n");
         exit(EXIT_FAILURE);
     }
-    jibal_config config = jibal_config_init(units, NULL, FALSE); /* Initialize config without any configuration files */
-    if(config.error) {
+    jibal_config *config = jibal_config_init(units, NULL, FALSE); /* Initialize config without any configuration files */
+    if(config->error) {
         fprintf(stderr, "Can't initialize configuration.\n");
         exit(EXIT_FAILURE);
     }
@@ -163,16 +163,16 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    if(config.files_file)
-        free(config.files_file);
-    if(config.assignments_file)
-        free(config.assignments_file);
-    config.files_file=strdup(JIBAL_FILES_FILE); /* Just default names, not so important. We want relative paths to user_dir! */
-    config.assignments_file=strdup(JIBAL_ASSIGNMENTS_FILE);
+    if(config->files_file)
+        free(config->files_file);
+    if(config->assignments_file)
+        free(config->assignments_file);
+    config->files_file=strdup(JIBAL_FILES_FILE); /* Just default names, not so important. We want relative paths to user_dir! */
+    config->assignments_file=strdup(JIBAL_ASSIGNMENTS_FILE);
 
     fprintf(stderr, "A blank user configuration would look like this (with my best guesses):\n\n");
     fprintf(stderr, "======================================================================\n");
-    jibal_config_file_write(&config, stderr);
+    jibal_config_file_write(config, stderr);
     fprintf(stderr, "======================================================================\n");
     fprintf(stderr, "\nI could write it to %s, where Jibal could find it.\n", user_configfile);
 
@@ -187,9 +187,9 @@ int main(int argc, char *argv[]) {
         }
     }
     if(r == 'y') {
-        if(bootstrap_write_user_config(&config) == 0) { /* Success */
-            bootstrap_make_blanks(user_dir, config.files_file);
-            bootstrap_make_blanks(user_dir, config.assignments_file);
+        if(bootstrap_write_user_config(config) == 0) { /* Success */
+            bootstrap_make_blanks(user_dir, config->files_file);
+            bootstrap_make_blanks(user_dir, config->assignments_file);
         }
     } else if (r != 0) {
         fprintf(stderr, "Ok, I didn't do anything, I swear! :) :)\n");
@@ -197,6 +197,7 @@ int main(int argc, char *argv[]) {
     free(user_dir);
     free(user_configfile);
     jibal_units_free(units);
+    jibal_config_free(config);
     fprintf(stderr, "Bootstrap complete. That's it.\n");
     r = read_user_response("Do you want to do it again?");
     if(r == 'y') {

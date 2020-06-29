@@ -443,8 +443,9 @@ char *jibal_config_filename_seek() {
     return NULL;
 }
 
-jibal_config jibal_config_init(const jibal_units *units, const char *filename, int seek) {
-    jibal_config config = jibal_config_defaults();
+jibal_config *jibal_config_init(const jibal_units *units, const char *filename, int seek) {
+    jibal_config *config = malloc(sizeof(jibal_config));
+    *config = jibal_config_defaults();
     char *f=NULL;
     if(filename) {
         f=jibal_path_cleanup(strdup(filename)); /* No memory leak here, trust me */
@@ -452,24 +453,18 @@ jibal_config jibal_config_init(const jibal_units *units, const char *filename, i
         f=jibal_config_filename_seek();
     }
     if(f) {
-        config.error = jibal_config_file_read(units, &config, f);
+        config->error = jibal_config_file_read(units, config, f);
     }
-    jibal_config_finalize(&config);
+    jibal_config_finalize(config);
     return config; /* Note: configuration is not validated. We only set config.error if we TRIED to read a configuration file but failed.  */
 }
 
 void jibal_config_free(jibal_config *config) {
-    if(config->datadir)
-        free(config->datadir);
-    if(config->userdatadir)
-        free(config->userdatadir);
-    if(config->masses_file)
-        free(config->masses_file);
-    if(config->abundances_file)
-        free(config->abundances_file);
-    if(config->files_file)
-        free(config->files_file);
-    if(config->assignments_file)
-        free(config->assignments_file);
-    /* Note, not freeing jibal_config itself! */
+    free(config->datadir);
+    free(config->userdatadir);
+    free(config->masses_file);
+    free(config->abundances_file);
+    free(config->files_file);
+    free(config->assignments_file);
+    free(config);
 }

@@ -25,8 +25,7 @@ void jibaltool_global_free(jibaltool_global *global) {
     if(global->format) {
         free(global->format);
     }
-    jibal_free(&global->jibal);
-    /* Doesn't free "options" itself. */
+    jibal_free(global->jibal);
 }
 
 void jibaltool_usage() {
@@ -117,13 +116,13 @@ int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
         fprintf(stderr, "Usage: jibaltool [--stopfile=<stopfile>] extract_stop_material incident target\n");
         return -1;
     }
-    jibal *jibal = &global->jibal;
+    jibal *jibal = global->jibal;
     const jibal_isotope *incident = jibal_isotope_find(jibal->isotopes, argv[0], 0, 0); /* e.g. 4He */
     if(!incident) {
         fprintf(stderr, "%s is not a valid isotope.\n", argv[0]);
         return -1;
     }
-    jibal_material *target = jibal_material_create(global->jibal.elements, argv[1]);
+    jibal_material *target = jibal_material_create(global->jibal->elements, argv[1]);
     if(!target) {
         fprintf(stderr, "%s is not a valid material formula.\n", argv[1]);
         return -1;
@@ -172,7 +171,7 @@ int extract(jibaltool_global *global, int argc, char **argv) {
                         "extract He H He U\n");
         return -1;
     }
-    jibal *jibal = &global->jibal;
+    jibal *jibal = global->jibal;
     const jibal_element *incident=jibal_element_find(jibal->elements, argv[0]);; /* e.g. He */
     if(!incident)  {
             fprintf(stderr, "%s is not a valid element\n", argv[0]);
@@ -230,19 +229,19 @@ int extract(jibaltool_global *global, int argc, char **argv) {
 }
 
 int print_gstofiles(jibaltool_global *global, int argc, char **argv) {
-    if(jibal_gsto_print_files(global->jibal.gsto, FALSE) != 0) {
-        fprintf(stderr, "Current configuration for files is in %s\n", global->jibal.config.files_file);
+    if(jibal_gsto_print_files(global->jibal->gsto, FALSE) != 0) {
+        fprintf(stderr, "Current configuration for files is in %s\n", global->jibal->config->files_file);
     }
     return 0;
 }
 
 int print_isotopes(jibaltool_global *global, int argc, char **argv) {
-    jibal_isotope *isotopes=global->jibal.isotopes;
+    jibal_isotope *isotopes=global->jibal->isotopes;
     const jibal_isotope *i;
     int Z=JIBAL_ANY_Z;
     double threshold=0.0;
     if(argc >= 1) {
-        const jibal_element *e=jibal_element_find(global->jibal.elements, argv[0]);
+        const jibal_element *e=jibal_element_find(global->jibal->elements, argv[0]);
         if(e)
             Z=e->Z;
     }
@@ -268,9 +267,9 @@ int print_isotopes(jibaltool_global *global, int argc, char **argv) {
 int print_elements(jibaltool_global *global, int argc, char **argv) {
     int Z;
     FILE *out=jibaltool_open_output(global);
-    int Z_max = jibal_elements_Zmax(global->jibal.elements);
+    int Z_max = jibal_elements_Zmax(global->jibal->elements);
     for(Z=0; Z <= Z_max; Z++) {
-        jibal_element *e=&global->jibal.elements[Z];
+        jibal_element *e=&global->jibal->elements[Z];
         fprintf(out, "%2s %3i %2i %2i %9.5lf\n", e->name, e->Z, jibal_element_number_of_isotopes(e, 0.0),
                 jibal_element_number_of_isotopes(e, ABUNDANCE_THRESHOLD), e->avg_mass/C_U);
     }
@@ -280,7 +279,7 @@ int print_elements(jibaltool_global *global, int argc, char **argv) {
 
 int print_config(jibaltool_global *global, int argc, char **argv) {
     FILE *out=jibaltool_open_output(global);
-    jibal_config_file_write(&global->jibal.config, out);
+    jibal_config_file_write(global->jibal->config, out);
     jibaltool_close_output(out);
     return 0;
 }
@@ -296,7 +295,7 @@ void print_commands(FILE *f, const struct command *commands) {
 
 int print_status(jibaltool_global *global, int argc, char **argv) {
     FILE *out=jibaltool_open_output(global);
-    jibal_status_print(out, &global->jibal);
+    jibal_status_print(out, global->jibal);
     jibaltool_close_output(out);
     return 0;
 }
@@ -329,9 +328,9 @@ int main(int argc, char **argv) {
         if (strcmp(c->name, argv[0]) == 0) {
             found = 1;
             global.jibal = jibal_init(global.config_filename);
-            if (global.jibal.error) {
-                fprintf(stderr, "Initializing JIBAL failed with error code: %i (%s)\n", global.jibal.error,
-                        jibal_error_string(global.jibal.error));
+            if (global.jibal->error) {
+                fprintf(stderr, "Initializing JIBAL failed with error code: %i (%s)\n", global.jibal->error,
+                        jibal_error_string(global.jibal->error));
                 return EXIT_FAILURE;
             }
             c->f(&global, argc - 1, argv + 1);

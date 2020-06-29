@@ -216,6 +216,8 @@ int jibal_elements_Zmax(const jibal_element *elements) {
 }
 
 void jibal_elements_free(jibal_element *elements) {
+    if(!elements)
+        return;
     jibal_element *e;
     for(e=elements; e->name[0] != '\0'; e++) {
         if(e->n_isotopes > 0 && e->isotopes) {

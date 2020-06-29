@@ -43,12 +43,12 @@ char *jibal_config_user_dir();
 int jibal_config_user_dir_mkdir_if_necessary();
 char *jibal_config_user_config_filename();
 jibal_config jibal_config_defaults();
-jibal_config jibal_config_init(const jibal_units *units, const char *filename, int seek);
+jibal_config *jibal_config_init(const jibal_units *units, const char *filename, int seek);
 void jibal_config_finalize(jibal_config *config);
 char *jibal_config_filename_seek();
 int jibal_config_file_read(const jibal_units *units, jibal_config *config, const char *filename);
 int jibal_config_file_write(jibal_config *config, FILE *file);
 int jibal_path_is_absolute(const char *path);
 char *jibal_path_cleanup(char *path);
-void jibal_config_free();
+void jibal_config_free(jibal_config *config);
 #endif /* _JIBAL_CONFIG_H_ */

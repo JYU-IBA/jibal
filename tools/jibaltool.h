@@ -7,7 +7,7 @@
 
 
 typedef  struct {
-    jibal jibal;
+    jibal *jibal;
     int Z;
     int verbose;
     char *config_filename;

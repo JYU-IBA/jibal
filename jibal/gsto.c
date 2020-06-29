@@ -93,6 +93,8 @@ void jibal_gsto_file_free(gsto_file_t *file) {
 }
 
 void jibal_gsto_free(jibal_gsto *workspace) {
+    if(!workspace)
+        return;
     int i;
     if(workspace->files) {
         for (i = 0; i < workspace->n_files; i++) {

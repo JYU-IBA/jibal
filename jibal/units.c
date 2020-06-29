@@ -114,6 +114,8 @@ double jibal_get_val(const jibal_units *units, char type, const char *value) {
 }
 
 void jibal_units_free(jibal_units *units) {
+    if(!units)
+        return;
     jibal_units *this;
     this=units;
     while(this != NULL) {
