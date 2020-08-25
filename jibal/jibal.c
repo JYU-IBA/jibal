@@ -33,26 +33,22 @@ jibal *jibal_init(const char *config_filename) {
     jibal->units=jibal_units_default();
     if(!jibal->units) {
         jibal->error = JIBAL_ERROR_UNITS;
-        jibal_free(jibal);
-        return NULL;
+        return jibal;
     }
     jibal->config = jibal_config_init(jibal->units, config_filename, TRUE);
     if(jibal->config->error) {
         jibal->error = JIBAL_ERROR_CONFIG;
-        jibal_free(jibal);
-        return NULL;
+        return jibal;
     }
     jibal->isotopes = jibal_isotopes_load(jibal->config->masses_file);
     if(!jibal->isotopes) {
         fprintf(stderr, "Could not load isotope table from file %s.\n", jibal->config->masses_file);
         jibal->error = JIBAL_ERROR_MASSES;
-        jibal_free(jibal);
-        return NULL;
+        return jibal;
     }
     if(jibal_abundances_load(jibal->isotopes, jibal->config->abundances_file) < 0) {
         jibal->error = JIBAL_ERROR_ABUNDANCES;
-        jibal_free(jibal);
-        return NULL;
+        return jibal;
     }
     jibal->elements=jibal_elements_populate(jibal->isotopes);
 #ifdef DEBUG
@@ -60,16 +56,14 @@ jibal *jibal_init(const char *config_filename) {
 #endif
     if(!jibal->elements) {
         jibal->error = JIBAL_ERROR_ELEMENTS;
-        jibal_free(jibal);
-        return NULL;
+        return jibal;
     }
     jibal->gsto= jibal_gsto_init(jibal->elements, jibal->config->Z_max, jibal->config->files_file,
                                 jibal->config->assignments_file);
     if(!jibal->gsto) {
         fprintf(stderr, "Could not initialize GSTO.\n");
         jibal->error = JIBAL_ERROR_GSTO;
-        jibal_free(jibal);
-        return NULL;
+        return jibal;
     }
     jibal->gsto->extrapolate = jibal->config->extrapolate;
     return jibal;
