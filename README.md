@@ -24,6 +24,10 @@ The code includes constants from NIST [CODATA 2018](https://physics.nist.gov/cuu
 
 Please see the [installation instructions](INSTALL.md).
 
+The latest version from GitHub should compile (at least on Linux), provided that the following badge shows "passing"
+
+![CMake](https://github.com/JYU-IBA/jibal/workflows/CMake/badge.svg)
+
 ## Datafiles
 
 The library is pretty useless without data files. You can obtain some [elsewhere](http://users.jyu.fi/~jaakjuli/jibal/data/).
