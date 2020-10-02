@@ -42,7 +42,7 @@ jobs:
         languages: ${{ matrix.language }}
 
     - run: sudo apt-get install libgsl23 libgsl-dev && mkdir build
-    - run: cd build && cmake -DCMAKE_BUILD_TYPE=Release
+    - run: cd build && cmake -DCMAKE_BUILD_TYPE=Release ..
     - run: cd build && cmake --build . --config Release
 
     - name: Perform CodeQL Analysis
