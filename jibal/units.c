@@ -78,6 +78,8 @@ int jibal_units_print(FILE *out, const jibal_units *units) {
 }
 
 double jibal_units_get(const jibal_units *units, char type, const char *name) {
+    if(name == NULL) /* Not allowed */
+        return 0.0;
     if(*name == '\0') /* Empty. */
         return 1.0;
     while(*name == ' ') {
@@ -122,9 +124,10 @@ double jibal_units_get(const jibal_units *units, char type, const char *name) {
 double jibal_get_val(const jibal_units *units, char type, const char *value) {
     char *end;
     double x=strtod(value, &end);
-    if(end) {
-        x *= jibal_units_get(units, type, end);
+    if(end == value) { /* No conversion, could happen if just a bare unit is given */
+        x = 1.0;
     }
+    x *= jibal_units_get(units, type, end);
     return x;
 }
 

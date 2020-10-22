@@ -302,7 +302,19 @@ int print_status(jibaltool_global *global, int argc, char **argv) {
 
 int print_units(jibaltool_global *global, int argc, char **argv) {
     FILE *out = jibaltool_open_output(global);
-    jibal_units_print(out, global->jibal->units);
+    if(argc == 0) {
+        jibal_units_print(out, global->jibal->units);
+        return 0;
+    } else {
+        double f_in, f_out;
+        f_in = jibal_get_val(global->jibal->units, 0, argv[0]);
+        if(argc >=2) {
+            f_out = jibal_get_val(global->jibal->units, 0, argv[1]);
+        } else {
+            f_out = 1.0;
+        }
+        fprintf(out, "%.10lg\n", f_in/f_out);
+    }
     jibaltool_close_output(out);
     return 0;
 }
