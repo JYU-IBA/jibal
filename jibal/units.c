@@ -54,6 +54,8 @@ jibal_units *jibal_units_default() {
     units=jibal_units_add(units, C_E, UNIT_TYPE_CHARGE, "e");
     units=jibal_units_add(units, 1.0, UNIT_TYPE_VOLTAGE, "V");
     units=jibal_units_add(units, 1.0, UNIT_TYPE_CURRENT, "A");
+    units=jibal_units_add(units, 1.0, UNIT_TYPE_MAGNETIC_FIELD, "T");
+    units=jibal_units_add(units, 1.0e-4, UNIT_TYPE_MAGNETIC_FIELD, "G");
     return units;
 }
 
