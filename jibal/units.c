@@ -96,14 +96,29 @@ double jibal_units_get(const jibal_units *units, char type, const char *name) {
         if(strcmp(units->name, name+1)==0) { /* Last letters match, first letter might be a SI prefix */
             double f=units->f;
             switch(*name) { /* First char */
-                case 'k':
-                    return f*1e3;
-                case 'M':
-                    return f*1e6;
-                case 'G':
-                    return f*1e9;
+                case 'Y':
+                    return f*1e22;
+                case 'Z':
+                    return f*1e21;
+                case 'E':
+                    return f*1e18;
+                case 'P':
+                    return f*1e15;
                 case 'T':
                     return f*1e12;
+                case 'G':
+                    return f*1e9;
+                case 'M':
+                    return f*1e6;
+                case 'k':
+                    return f*1e3;
+                case 'h':
+                    return f*1e2;
+                /* deca is not supported, since we would need two letters "da" for it */
+                case 'd':
+                    return f*1e-1;
+                case 'c':
+                    return f*1e-2;
                 case 'm':
                     return f*1e-3;
                 case 'u':
@@ -112,9 +127,16 @@ double jibal_units_get(const jibal_units *units, char type, const char *name) {
                     return f*1e-9;
                 case 'p':
                     return f*1e-12;
+                case 'f':
+                    return f*1e-15;
+                case 'a':
+                    return f*1e-18;
+                case 'z':
+                    return f*1e-21;
+                case 'y':
+                    return f*1e-24;
                 /* No default case since we fall through */
             }
-            
         }
         units=units->next;
     }
