@@ -40,6 +40,8 @@
 #define M_PI 3.14159265358979323846264338327950288
 #endif
 
+#include <stdio.h>
+
 #define C_US 1.0e-6
 #define C_NS 1.0e-9
 #define C_PS 1.0e-12
@@ -103,6 +105,8 @@ typedef struct jibal_units {
 jibal_units *jibal_units_add(jibal_units *units, double f, char type, char *name);
 jibal_units *jibal_units_default();
 int jibal_units_count(const jibal_units *units);
+int jibal_units_print(FILE *out, const jibal_units *units);
+
 /*!
  Get a unit
  

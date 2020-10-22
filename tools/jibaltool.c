@@ -300,6 +300,13 @@ int print_status(jibaltool_global *global, int argc, char **argv) {
     return 0;
 }
 
+int print_units(jibaltool_global *global, int argc, char **argv) {
+    FILE *out = jibaltool_open_output(global);
+    jibal_units_print(out, global->jibal->units);
+    jibaltool_close_output(out);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     jibaltool_global global = {.Z=0, .outfilename=NULL, .stopfile=NULL, .format=NULL, .verbose=0};
     read_options(&global, &argc, &argv);
@@ -313,6 +320,7 @@ int main(int argc, char **argv) {
             {"elements", &print_elements, "Print a list of elements."},
             {"config", &print_config, "Print current configuration (config file)."},
             {"status", &print_status, "Print Jibal status."},
+            {"units", &print_units, "Print recognized units."},
             {NULL, NULL, NULL}
     };
     if(argc < 1) {

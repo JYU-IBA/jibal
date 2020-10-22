@@ -66,6 +66,15 @@ int jibal_units_count(const jibal_units *units) {
     return n;
 }
 
+int jibal_units_print(FILE *out, const jibal_units *units) {
+    fprintf(out, " Unit   type        factor\n");
+    while(units) {
+        fprintf(out, "%5s      %c  %12.7g\n", units->name, units->type, units->f);
+        units=units->next;
+    }
+    return 0;
+}
+
 double jibal_units_get(const jibal_units *units, char type, const char *name) {
     if(*name == '\0') /* Empty. */
         return 1.0;
