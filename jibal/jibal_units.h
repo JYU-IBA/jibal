@@ -89,6 +89,9 @@
 #define UNIT_TYPE_MASS 'M'
 #define UNIT_TYPE_LAYER_THICKNESS 'X'
 #define UNIT_TYPE_TIME 'T'
+#define UNIT_TYPE_CHARGE 'Q'
+#define UNIT_TYPE_VOLTAGE 'U'
+#define UNIT_TYPE_CURRENT 'I'
 
 typedef struct jibal_units {
     double f; /*!< Factor, i.e. this unit in Si units (e.g. 1.66e-27 for the atomic mass unit) */

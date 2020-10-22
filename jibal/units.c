@@ -50,6 +50,10 @@ jibal_units *jibal_units_default() {
     units=jibal_units_add(units, C_DEG, UNIT_TYPE_ANGLE, "deg");
     units=jibal_units_add(units, C_TFU, UNIT_TYPE_LAYER_THICKNESS, "tfu");
     units=jibal_units_add(units, 1.0, UNIT_TYPE_TIME, "s");
+    units=jibal_units_add(units, 1.0, UNIT_TYPE_CHARGE, "C");
+    units=jibal_units_add(units, C_E, UNIT_TYPE_CHARGE, "e");
+    units=jibal_units_add(units, 1.0, UNIT_TYPE_VOLTAGE, "V");
+    units=jibal_units_add(units, 1.0, UNIT_TYPE_CURRENT, "A");
     return units;
 }
 
