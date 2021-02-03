@@ -29,7 +29,7 @@ void print_kin_rbs(jibal *jibal, const jibal_isotope *incident, const jibal_isot
     double E_rbs = jibal_kin_rbs(incident->mass, target->mass, theta, '+') * E;
     double cs_rbs = jibal_cs_rbs(jibal->config, incident, target, theta, E);
     fprintf(stderr, "RBS (%s scattered by %s to lab angle theta)\n", incident->name, target->name);
-    if(theta > theta_max) {
+    if(incident->mass >= target->mass && theta > theta_max) {
         fprintf(stderr, "theta_max = %g deg (scattering not possible)\n", theta_max/C_DEG);
         return;
     }
