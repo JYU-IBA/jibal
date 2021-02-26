@@ -69,7 +69,4 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A); /* Creat
 void jibal_element_normalize(jibal_element *element);
 const jibal_isotope * jibal_isotope_find(const jibal_isotope *isotopes, const char *name, int Z, int A); /* Give either name or Z and A. If name is NULL Z and A are used. */
 const char *jibal_element_name(const jibal_element *elements, int Z);
-
-double velocity(double E, double mass); /* Use SI units */
-double energy(double v, double mass);
 #endif /* _JIBAL_MASSES_H_ */

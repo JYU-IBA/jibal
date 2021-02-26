@@ -22,30 +22,61 @@
 /* Elementary physics */
 
 #ifdef CLASSICAL
-#define energy(energy,mass) jibal_energy_classical(energy,mass)
-#define velocity(energy,mass) jibal_velocity_classical(energy,mass)
-#define energy_per_mass(velocity) jibal_em_classical(velocity)
-#define velocity_from_em(em) jibal_velocity_em_classical(em)
+#define jibal_energy(energy,mass) jibal_energy_classical(energy,mass)
+#define jibal_velocity(energy,mass) jibal_velocity_classical(energy,mass)
+#define jibal_energy_per_mass(velocity) jibal_em_classical(velocity)
+#define jibal_velocity_from_em(em) jibal_velocity_em_classical(em)
 #else
-#define energy(velocity,mass) jibal_energy_relativistic(velocity,mass) /* v => E */
-#define velocity(energy,mass) jibal_velocity_relativistic(energy,mass)  /* E => v */
-#define energy_per_mass(velocity) jibal_em_relativistic(velocity) /* v => E/m */
-#define velocity_from_em(em) jibal_velocity_em_relativistic(em) /* E/m => v */
+#define jibal_energy(velocity,mass) jibal_energy_relativistic(velocity,mass) /* v => E */
+#define jibal_velocity(energy,mass) jibal_velocity_relativistic(energy,mass)  /* E => v */
+#define jibal_energy_per_mass(velocity) jibal_em_relativistic(velocity) /* v => E/m */
+#define jibal_velocity_from_em(em) jibal_velocity_em_relativistic(em) /* E/m => v */
 #endif
 
-double jibal_velocity_relativistic(double E, double mass);
-double jibal_energy_relativistic(double v, double mass);
-double jibal_em_relativistic(double v);
-double jibal_velocity_em_relativistic(double em);
+#include <jibal_units.h>
 
-double jibal_velocity_classical(double E, double mass);
-double jibal_energy_classical(double v, double mass);
-double jibal_em_classical(double v);
-double jibal_velocity_em_classical(double em);
+inline double jibal_velocity_classical(double E, double m) {
+    return sqrt(2*E/m);
+}
 
+inline double jibal_energy_classical(double v, double m) {
+    return 0.5*m*v*v;
+}
 
-double jibal_velocity_classical_more_accurate(double E, double mass);
-double jibal_velocity_classical_more_accurate(double v, double mass);
+inline double jibal_em_classical(double v) {
+    return 0.5*v*v;
+}
 
-double jibal_linear_interpolation(double x_low, double x_high, double y_low, double y_high, double x);
+inline double jibal_velocity_em_classical(double em) {
+    return sqrt(2*em);
+}
+
+inline double jibal_velocity_classical_more_accurate(double E, double m) {
+    return (C_C*sqrt(2.0/3.0)*sqrt(-1.0+sqrt(6*E/m/C_C2+1)));
+}
+
+inline double jibal_energy_classical_more_accurate(double v, double m) {
+    return (0.5*m*v*v + (3.0/8.0)*m*pow(v, 4.0));
+}
+
+inline double jibal_velocity_relativistic(double E, double m) {
+    return sqrt((1-pow((1.0+E/(m*C_C2)),-2.0))*C_C2);
+}
+
+inline double jibal_energy_relativistic(double v, double m) {
+    return (m*C_C2*(pow(1-pow(v/C_C,2.0),-0.5)-1));
+}
+
+inline double jibal_em_relativistic(double v) {
+    return (C_C2*(pow(1-pow(v/C_C,2.0),-0.5)-1));
+}
+
+inline double jibal_velocity_em_relativistic(double em) {
+    return sqrt((1-pow((1.0+em/C_C2),-2.0))*C_C2);
+}
+
+inline double jibal_linear_interpolation(double x_low, double x_high, double y_low, double y_high, double x) {
+    return y_low+((x-x_low)/(x_high-x_low))*(y_high-y_low);
+}
+
 #endif /* _JIBAL_PHYS_H_ */

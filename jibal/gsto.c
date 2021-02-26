@@ -1114,16 +1114,16 @@ double jibal_gsto_em_from_file_units(double x, const gsto_file_t *file) {
     double em;
     switch (file->xunit) {
         case GSTO_X_UNIT_MEV_U:
-            em=x*(C_MEV/C_U);
+            em = x*(C_MEV/C_U);
             break;
         case GSTO_X_UNIT_KEV_U:
-            em=x*(C_KEV/C_U);
+            em = x*(C_KEV/C_U);
             break;
         case GSTO_X_UNIT_M_S:
-            em=energy_per_mass(x);
+            em = jibal_energy_per_mass(x);
             break;
         default:
-            em=0.0;
+            em = 0.0;
             break;
     }
     return em;
@@ -1180,7 +1180,7 @@ int jibal_gsto_em_to_index(const gsto_file_t *file, double em) { /* Returns the 
             break;
         case GSTO_X_UNIT_M_S:
         default:
-            x=velocity_from_em(em);
+            x= jibal_velocity_from_em(em);
             break;
     }
     int lo, mi, hi;

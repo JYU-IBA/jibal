@@ -53,7 +53,7 @@ void print_kin_erd(jibal *jibal, const jibal_isotope *incident, const jibal_isot
     fprintf(stderr, "phi = %g deg\n", phi/C_DEG);
     fprintf(stderr, "theta_cm = %g deg\n", theta_cm/C_DEG);
     fprintf(stderr, "E_erd = %g keV\n", E_erd/C_KEV);
-    fprintf(stderr, "v_erd = %g m/s\n", velocity(E_erd, target->mass));
+    fprintf(stderr, "v_erd = %g m/s\n", jibal_velocity(E_erd, target->mass));
     fprintf(stderr, "ERD cross section = %g mb/sr (%s)\n", cs_erd/C_MB_SR, jibal_cs_erd_name(jibal->config));
     double inverse_scaling = 4.0 * pow(sin(theta), 2.0) * cos(theta_cm - theta) * cos(phi) / (pow(sin(theta_cm), 2.0));
     double E_inv = (target->mass/incident->mass) * E;

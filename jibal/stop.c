@@ -6,7 +6,7 @@ double jibal_gsto_stop_em(jibal_gsto *workspace, int Z1, int Z2, double em) {
 }
 
 double jibal_gsto_stop_v(jibal_gsto *workspace, int Z1, int Z2, double v) {
-    return jibal_gsto_get_em(workspace, GSTO_STO_ELE, Z1, Z2, energy_per_mass(v));
+    return jibal_gsto_get_em(workspace, GSTO_STO_ELE, Z1, Z2, jibal_energy_per_mass(v));
 }
 
 double jibal_stop(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {
