@@ -25,4 +25,3 @@ endif()
 
 add_subdirectory(jibal)
 add_subdirectory(tools)
-add_subdirectory(demo)
