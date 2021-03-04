@@ -1,3 +1,4 @@
+#include "win_compat.h"
 #ifdef WIN32
 #include <string.h>
 char *strsep(char **stringp, const char *delim) {

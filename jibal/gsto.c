@@ -8,6 +8,7 @@
 #include <jibal_phys.h>
 #include <jibal_gsto.h>
 #include <jibal_defaults.h>
+#include <jibal_config.h>
 #ifdef WIN32
 #include "win_compat.h"
 #else
@@ -1267,7 +1268,7 @@ double jibal_gsto_get_em(jibal_gsto *workspace, gsto_stopping_type type, int Z1,
 }
 
 int jibal_gsto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target, gsto_file_t *file) {
-    int i;
+    size_t i;
     for (i = 0; i < target->n_elements; i++) {
         if(!jibal_gsto_assign(workspace, incident->Z, target->elements[i].Z, file)) {
             return 0;
@@ -1277,8 +1278,7 @@ int jibal_gsto_assign_material(jibal_gsto *workspace, const jibal_isotope *incid
 }
 
 int jibal_gsto_auto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target) {
-    int i;
-
+    size_t i;
     for (i = 0; i < target->n_elements; i++) {
         if(!jibal_gsto_auto_assign(workspace, incident->Z, target->elements[i].Z)) {
             return 0; /* Fail */

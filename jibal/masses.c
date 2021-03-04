@@ -61,7 +61,7 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
     size_t line_size = 0;
     size_t n_alloc=JIBAL_MASSES_ISOTOPES_INITIAL_ALLOC;
     jibal_isotope *isotopes=malloc(sizeof(jibal_isotope)*n_alloc);
-    int n=0;
+    size_t n = 0;
     while(getline(&line, &line_size, in_file) > 0) {
         line_split=line; /* strsep will screw up line_split, reset for every new line */
         for (col = columns; (*col = strsep(&line_split, " \t")) != NULL;)
@@ -88,7 +88,7 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
     isotopes = realloc(isotopes, sizeof(jibal_isotope) * (n+1));
     isotope_set(isotopes+n, 0, 0, 0, 0.0, "");
 #ifdef DEBUG
-    fprintf(stderr, "Loaded %i isotopes from %s\n", n, filename);
+    fprintf(stderr, "Loaded %lu isotopes from %s\n", n, filename);
 #endif
     fclose(in_file);
     free(line);
@@ -141,6 +141,7 @@ void jibal_isotopes_free(jibal_isotope *isotopes) {
 }
 
 jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
+    size_t i;
     if(!isotopes)
         return NULL;
     const jibal_isotope *isotope;
@@ -171,7 +172,7 @@ jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
             elements[Z].isotopes=calloc(elements[Z].n_isotopes, sizeof(jibal_isotope *));
         }
 #ifdef DEBUG
-        fprintf(stderr, "Element %i, name %s, %i isotopes\n", Z, elements[Z].name, elements[Z].n_isotopes);
+        fprintf(stderr, "Element %i, name %s, %lu isotopes\n", Z, elements[Z].name, elements[Z].n_isotopes);
 #endif
     }
     for(isotope=isotopes; isotope->A != 0; isotope++) { /* Copy pointers to isotopes */
@@ -179,20 +180,18 @@ jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
             continue;
         }
         jibal_element *e=&elements[isotope->Z];
-        int i;
-        for(i=0; i < e->n_isotopes && e->isotopes[i] != NULL; i++); /* Find next free slot */
+        for(i = 0; i < e->n_isotopes && e->isotopes[i] != NULL; i++); /* Find next free slot */
         e->isotopes[i]=isotope; /* Shallow copy */
 #ifdef DEBUG
-        fprintf(stderr, "Element %i isotope %i is A=%i\n", isotope->Z, i, isotope->A);
+        fprintf(stderr, "Element %i isotope %lu is A=%i\n", isotope->Z, i, isotope->A);
 #endif
     }
     for(Z=0; Z <= Z_max; Z++) {
         jibal_element *element = &elements[Z];
-        int i;
         /* Note that we don't have a concentration table for "bare" elements. We can still calculate the average
          * mass. */
         element->avg_mass=0.0;
-        for(i=0; i < element->n_isotopes; i++) {
+        for(i = 0; i < element->n_isotopes; i++) {
             element->avg_mass += element->isotopes[i]->abundance*element->isotopes[i]->mass;
         }
         if(*element->name == '\0') {
@@ -263,11 +262,11 @@ const jibal_element * jibal_element_find(const jibal_element *elements, const ch
     return NULL;
 }
 
-int jibal_element_number_of_isotopes(const jibal_element *element, double abundance_threshold) {
+size_t jibal_element_number_of_isotopes(const jibal_element *element, double abundance_threshold) {
     if(!element)
         return 0;
-    int i, n=0;
-    for(i=0; i < element->n_isotopes; i++) {
+    size_t i, n=0;
+    for(i = 0; i < element->n_isotopes; i++) {
         if(element->isotopes[i]->abundance >= abundance_threshold) {
             n++;
 #ifdef DEBUG
@@ -282,9 +281,9 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A) {
     if(!element || A < -1) {
         return NULL;
     }
-    int n;
+    size_t i, j=0, n;
 #ifdef DEBUG
-    fprintf(stderr, "Trying to figure out based on A=%i how many of the %i isotopes to include.\n", A, element->n_isotopes);
+    fprintf(stderr, "Trying to figure out based on A=%i how many of the %lu isotopes to include.\n", A, element->n_isotopes);
 #endif
     switch (A) {
         case JIBAL_ALL_ISOTOPES:
@@ -298,11 +297,10 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A) {
             break;
     }
 #ifdef DEBUG
-    fprintf(stderr, "The answer is %i isotopes\n", n);
+    fprintf(stderr, "The answer is %lu isotopes\n", n);
 #endif
     jibal_element *e=jibal_element_new(element->name, element->Z, n);
-    int i,j=0;
-    for(i=0; i < element->n_isotopes; i++) {
+    for(i = 0; i < element->n_isotopes; i++) {
         switch(A) {
             case JIBAL_ALL_ISOTOPES: /* All isotopes */
                 e->isotopes[i] = element->isotopes[i];
@@ -316,7 +314,7 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A) {
                     e->isotopes[j] = element->isotopes[i];
                     e->concs[j] = element->isotopes[i]->abundance;
 #ifdef DEBUG
-                    fprintf(stderr, "Assigned isotope %i from isotope %i (element %s), abundance %.6f\n", j, i, element->name, element->isotopes[i]->abundance);
+                    fprintf(stderr, "Assigned isotope %lu from isotope %lu (element %s), abundance %.6f\n", j, i, element->name, element->isotopes[i]->abundance);
 #endif
                     j++;
                 }
@@ -332,9 +330,9 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A) {
         }
     }
 #ifdef DEBUG
-    fprintf(stderr, "Found %i isotopes out of %i\n", j, n);
+    fprintf(stderr, "Found %lu isotopes out of %lu\n", j, n);
 #endif
-    if(j==n) { /* We found all the isotopes we were looking for */
+    if(j == n) { /* We found all the isotopes we were looking for */
         jibal_element_normalize(e);
         return e;
     } else {
@@ -345,18 +343,18 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A) {
 
 void jibal_element_normalize(jibal_element *element) {
     double sum=0.0;
-    int i;
+    size_t i;
     if(!element->concs) { /* This array doesn't exist unless the element was created with jibal_element_new() */
         return;
     }
-    for(i=0; i < element->n_isotopes; i++) {
+    for(i = 0; i < element->n_isotopes; i++) {
         sum += element->concs[i];
     }
     if(sum == 0.0) { /* TODO: threshold? Shouldn't be necessary, but you never know. */
         return;
     }
     element->avg_mass=0.0;
-    for(i=0; i < element->n_isotopes; i++) {
+    for(i = 0; i < element->n_isotopes; i++) {
         element->concs[i] /= sum;
         element->avg_mass += element->concs[i]*element->isotopes[i]->mass;
     }

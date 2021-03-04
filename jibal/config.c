@@ -43,17 +43,17 @@ char *make_path_and_check_if_exists(const char *directory, const char *file) {
 jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure that defines config options. Used
  * when config files are read and written. Default values should be handled elsewhere. */
     const jibal_config_var vars[]={
-            {JIBAL_CONFIG_VAR_PATH, "datadir", &config->datadir},
-            {JIBAL_CONFIG_VAR_PATH, "userdatadir", &config->userdatadir},
-            {JIBAL_CONFIG_VAR_PATH, "masses_file", &config->masses_file},
-            {JIBAL_CONFIG_VAR_PATH, "abundances_file", &config->abundances_file},
-            {JIBAL_CONFIG_VAR_PATH, "files_file", &config->files_file},
-            {JIBAL_CONFIG_VAR_PATH, "assignments_file", &config->assignments_file},
-            {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max},
-            {JIBAL_CONFIG_VAR_BOOL, "extrapolate", &config->extrapolate},
+            {JIBAL_CONFIG_VAR_PATH, "datadir", &config->datadir, NULL},
+            {JIBAL_CONFIG_VAR_PATH, "userdatadir", &config->userdatadir, NULL},
+            {JIBAL_CONFIG_VAR_PATH, "masses_file", &config->masses_file, NULL},
+            {JIBAL_CONFIG_VAR_PATH, "abundances_file", &config->abundances_file, NULL},
+            {JIBAL_CONFIG_VAR_PATH, "files_file", &config->files_file, NULL},
+            {JIBAL_CONFIG_VAR_PATH, "assignments_file", &config->assignments_file, NULL},
+            {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max, NULL},
+            {JIBAL_CONFIG_VAR_BOOL, "extrapolate", &config->extrapolate, NULL},
             {JIBAL_CONFIG_VAR_OPTION, "rbs_cross_section", &config->cs_rbs, jibal_cs_types},
             {JIBAL_CONFIG_VAR_OPTION, "erd_cross_section", &config->cs_erd, jibal_cs_types},
-            {0, 0, NULL}
+            {0, 0, NULL, NULL}
     }; /* null terminated, we use .type == 0 to stop a loop */
     int n_vars;
     for(n_vars=0; vars[n_vars].type != 0; n_vars++);

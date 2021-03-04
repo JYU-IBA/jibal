@@ -51,7 +51,7 @@ typedef struct {
 typedef struct {
     element_name name; /* by default something like "Si", but "natSi", "28Si" are valid names too after jibal_element_copy() */
     int Z;
-    int n_isotopes;
+    size_t n_isotopes;
     const jibal_isotope **isotopes; /* Array of length n_isotopes, contents are pointers to isotopes */
     double *concs; /* This is NULL in "elements" table, but when used by jibal_material the concentrations of isotopes goes in an array here. */
     double avg_mass; /* Average mass */
@@ -64,7 +64,7 @@ jibal_element *jibal_elements_populate(const jibal_isotope *isotopes);
 int jibal_elements_Zmax(const jibal_element *elements);
 void jibal_elements_free(jibal_element *elements);
 const jibal_element * jibal_element_find(const jibal_element *elements, const char *name);
-int jibal_element_number_of_isotopes(const jibal_element *element, double abundance_threshold);
+size_t jibal_element_number_of_isotopes(const jibal_element *element, double abundance_threshold);
 jibal_element *jibal_element_copy(const jibal_element *element, int A); /* Create a copy of a single element, either with all known isotopes (A=-1), naturally abundant isotopes (A=0) or a single isotope (A = mass number) */
 void jibal_element_normalize(jibal_element *element);
 const jibal_isotope * jibal_isotope_find(const jibal_isotope *isotopes, const char *name, int Z, int A); /* Give either name or Z and A. If name is NULL Z and A are used. */

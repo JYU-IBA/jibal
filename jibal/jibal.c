@@ -52,7 +52,7 @@ jibal *jibal_init(const char *config_filename) {
     }
     jibal->elements=jibal_elements_populate(jibal->isotopes);
 #ifdef DEBUG
-    fprintf(stderr, "The Z_max of elements array is %i\n", jibal_elements_Zmax(jibal.elements));
+    fprintf(stderr, "The Z_max of elements array is %d\n", jibal_elements_Zmax(jibal->elements));
 #endif
     if(!jibal->elements) {
         jibal->error = JIBAL_ERROR_ELEMENTS;

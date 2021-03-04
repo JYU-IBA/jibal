@@ -4,7 +4,7 @@
 
 
 double jibal_stragg(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {
-    int i;
+    size_t i;
     double sum=0.0;
     double em = E/incident->mass;
     int Z1=incident->Z;

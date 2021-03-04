@@ -17,11 +17,6 @@ set(CMAKE_C_STANDARD 99)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-option(DEBUG_OUTPUT_ENABLE "Enable debug output" OFF)
-if(DEBUG_OUTPUT_ENABLE)
-add_compile_options(-DDEBUG)
-endif()
-
 set(INCLUDE_INSTALL_DIR include/${PROJECT_NAME})
 set(LIB_INSTALL_DIR lib/)
 
@@ -66,7 +61,7 @@ add_library(Jibal SHARED
         option.c
         cs.c
         registry.c
-        win_compat.c
+        "$<$<BOOL:${WIN32}>:win_compat.c>"
         )
 
 target_link_libraries(Jibal GSL::gsl ${PLATFORM_DEPS})

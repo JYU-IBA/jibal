@@ -5,7 +5,7 @@ if(WIN32 AND DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   message(STATUS "CMake toolchain file ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 project(jibal
-        VERSION 0.2.8
+        VERSION 0.2.9
         DESCRIPTION "JIBAL - Jyväskylä ion beam analysis library"
         LANGUAGES C
         )
@@ -13,6 +13,16 @@ set(default_build_type "Release")
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
   set(default_build_type "Debug")
 endif()
+
+option(DEBUG_MODE_ENABLE "Enable debug mode" OFF)
+if(DEBUG_MODE_ENABLE)
+  if (MSVC)
+    add_compile_options(/W4 /WX /DDEBUG)
+  else()
+    add_compile_options(-Wall -Wextra -pedantic -Werror -DDEBUG)
+  endif()
+endif()
+
 add_subdirectory(jibal)
 add_subdirectory(tools)
-#add_subdirectory(demo)
+add_subdirectory(demo)

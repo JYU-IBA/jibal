@@ -16,7 +16,7 @@ double jibal_stop(jibal_gsto *workspace, const jibal_isotope *incident, const ji
 }
 
 double jibal_stop_nuc(const jibal_isotope *incident, const jibal_material *target, double E) {
-    int i;
+    size_t i;
     double sum = 0.0;
     for (i = 0; i < target->n_elements; i++) {
         jibal_element *element = &target->elements[i];
@@ -65,7 +65,7 @@ E_0, double factor) {
 }
 
 double jibal_stop_ele(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {
-    int i;
+    size_t i;
     double sum = 0.0;
     double em=E/incident->mass;
     for (i = 0; i < target->n_elements; i++) {

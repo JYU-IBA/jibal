@@ -6,7 +6,7 @@
 
 typedef struct {
     char *name;
-    int n_elements;
+    size_t n_elements;
     jibal_element *elements; /* Array of elements. N.B. we store our own "copies" of each element so that we can change things (such as isotopic concentrations)! */
     double *concs;
 } jibal_material;
