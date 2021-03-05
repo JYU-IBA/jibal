@@ -34,11 +34,6 @@
 #endif
 
 #include <jibal_units.h>
-/*
-#ifndef pow2
-#define pow2(x) ((x)*(x))
-#endif
-*/
 
 inline double pow2(double x) {
     return x*x;
