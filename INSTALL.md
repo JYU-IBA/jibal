@@ -1,18 +1,18 @@
 # BUILD AND INSTALL INSTRUCTIONS FOR JIBAL (incomplete)
 
 ## Minimum requirements:
-- Microsoft Windows 8.1 or newer, tested on Windows 10 OR
-- Some sane Linux distribution (Arch-based, Debian-based, anything really) OR
-- BSD, maybe? OR
-- MacOS X, something relatively recent probably AND
-- Almost any C compiler (GCC, Clang, MSVC >= 2015) with C99 support
-- GNU Scientific Library >= 2.4
+- Microsoft Windows 8.1 or newer, tested on Windows 10  **OR**
+- Some sane Linux distribution (Arch-based, Debian-based, anything really) **OR**
+- BSD, maybe? **OR**
+- macOS, something relatively recent probably (developer uses Big Sur) **AND**
+- Almost any C compiler (GCC, Clang, MSVC >= 2015) with C99 support **AND**
+- GNU Scientific Library (GSL) >= 2.4  **AND**
 - CMake >= 3.13, older versions might work on some systems too
 
 ## Installation instructions for Linux / MacOS (also see MacOS specific instructions below):
-1. Install *git*, *CMake*, and GNU Scientific Library (gsl) using your distributions package manager
-    - On Ubuntu: apt install git cmake libgsl-dev
-    - On Arch: pacman -S git gsl cmake
+1. Install *git*, *CMake*, and *GNU Scientific Library (GSL)* using your distributions package manager
+    - On Ubuntu / Debian / Raspberry Pi OS: `apt install git cmake libgsl-dev`
+    - On Arch: `pacman -S git gsl cmake`
 2. Run the following:
 
         $ git clone https://github.com/JYU-IBA/jibal.git
@@ -43,21 +43,24 @@
 1. Install Build tools for [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)
     - note that full MSVC is not necessary!
     - also earlier versions (MSVC 2017 and MSVC 2015) can be installed using the same installer
+    - other compilers that work with CMake should work too, but are not tested on Windows
 2. Install [CMake](https://cmake.org/download/)
-    - Latest stable is always preferred (3.17.0 at the time of writing this)
+    - Latest stable is always preferred (3.19.5 at the time of writing this)
     - Allow the installer to add CMake to PATH for convenience
 3. Install [Git](https://git-scm.com/download/win)
     - Other tools, e.g. GitHub Desktop can be used too
     - Allow the installer to add git to PATH for convenience
 4. Install [vcpkg](https://github.com/microsoft/vcpkg)
-    - Clone using git, bootstrap as instructed, place e.g. in *C:\vcpkg*
-    - Set environment variable *VCPKG_DEFAULT_TRIPLET=x64-windows*  and *VCPKG_ROOT=C:\vcpkg* using Windows Control Panel to build 64-bit packages by default
+    - Installation of vcpkg is not necessary but it provides *getopt* for Windows and GSL relatively conveniently 
+    - Clone using git, bootstrap as instructed, place e.g. in `C:\vcpkg`
+    - Set environment variable `VCPKG_DEFAULT_TRIPLET=x64-windows`  and `VCPKG_ROOT=C:\vcpkg` using Windows Control Panel to build 64-bit packages by default
+    - More help available on [Microsoft docs](https://docs.microsoft.com/en-us/cpp/build/install-vcpkg?view=msvc-160&tabs=windows)
     - Install these libraries: *gsl*, *getopt*, specifying x64-windows is not necessary if you did the step above
     
             vcpkg.exe install gsl:x64-windows getopt:x64-windows
     
     - Alternatively use *x86-windows* to compile 32-bit libraries. This is not recommended.
-5. Clone Jibal repository
+5. Clone Jibal repository (this one)
 6. Build
     - Set up your MSVC environment by running the vcvars64.bat (or opening the *x64 Native Tools Command Prompt for VS2019*)
     - Run the following (from wherever jibal is cloned to):
@@ -66,8 +69,8 @@
           cd build
           cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ../
           
-    - We use the *-G* option to select the MSVC compiler version. It's not strictly necessary. Use *Visual Studio 15 2017* for  MSVC 2017. Older versions are not supported.
-    - It may not be necessary to specify $CMAKE_TOOLCHAIN_FILE$ explicitly either 
+    - We use the `-G` option to select the MSVC compiler version. It's not strictly necessary. Use *Visual Studio 15 2017* for  MSVC 2017. Older versions are not supported.
+    - It may not be necessary to specify `$CMAKE_TOOLCHAIN_FILE$` explicitly either 
     - Run the following to build the library
     
           msbuild ALL_BUILD.vcxproj
@@ -78,7 +81,7 @@
         
     - You can install it like any other msi installer, for quick deployment run this:
         
-          msiexec /i jibal-0.2.0-win64.msi /qb
+          msiexec /i jibal-0.X.X-win64.msi /qb
     
         
         

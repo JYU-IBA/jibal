@@ -1,6 +1,6 @@
 # JIBAL
 
-Library that provides stopping forces, straggling models, cross sections and various atomic data e.g. masses and abundances for typical IBA applications. The GNU General Public License applies to the source code and any programs compiled thereof, scripts and the software as a whole, but not to any of the [data/](data), since the author of this software can not claim authorship of the data. Please note the exceptions to the GPL license under the following notice.
+Library that provides stopping forces, straggling models, cross sections and various atomic data e.g. masses and abundances for typical IBA applications. The GNU General Public License applies to the source code (`*.c` and `*.h` files) and any programs compiled thereof, scripts (`*.sh` and `*.py` files) and the software as a whole, but not to any of the [data/](data), since the author of this software can not claim authorship of the data. Please note the exceptions to the GPL license under the following notice.
 
     Copyright (C) 2020 Jaakko Julin
 
@@ -20,6 +20,8 @@ This repository includes isotopic abundance data obtained from the CIAAW [websit
 
 The code includes constants from NIST [CODATA 2018](https://physics.nist.gov/cuu/Constants/).
 
+This library should never be cited in scientific literature without citing the original sources of data. Please contact the [author](AUTHORS) of this library in case of any questions about copyright.
+
 ## Installation from sources
 
 Please see the [installation instructions](INSTALL.md).
@@ -28,13 +30,24 @@ The latest version from GitHub should compile (at least on Linux), provided that
 
 ![CMake](https://github.com/JYU-IBA/jibal/workflows/CMake/badge.svg)
 
+The versions that are tagged with a version number are considered semi-stable [releases](https://github.com/JYU-IBA/jibal/releases). There is no guarantee of interface compatibility between different versions, at least until a major milestone like v1.0 is reached. Any program compiled against Jibal should check for version mismatch between compile time and runtime and explicitly specify which version it is intended to work with. This is also one reason why the library interface is not documented (just kidding; the real reason is lack of time).
+
 ## Datafiles
 
-The library is pretty useless without data files. You can obtain some [elsewhere](http://users.jyu.fi/~jaakjuli/jibal/data/).
+The library can not be  used to its full potential without data files. You can obtain some [elsewhere](http://users.jyu.fi/~jaakjuli/jibal/data/). There are data file generators bundled with the package, but they require the use of programs and files which can not be included in the distribution since they are not free software. If you use external data files, please be aware of possible usage restrictions and copyright issues related to distributing them. For scientific use do not cite the JIBAL library, cite the original data.
 
 There is a tool called *jibal_bootstrap* you can use to make a user configuration. See instructions of the data package.
 
 ## Usage of bundled tools
+
+### Jibaltool
+
+Run from the command line / terminal:
+
+    $ jibaltool
+
+without any arguments to get a short help. You can extract entire files of stopping data and see the current JIBAL configuration.
+
 
 ### Get_stop
 
@@ -65,20 +78,11 @@ You can get more verbose output with the -v parameter (or two)
 get_stop 4He 2MeV -l "7Li0.60 6Li0.40" -t 1000tfu -v -v
 ~~~~
 
-
-### Jibaltool
-
-Run
-    
-    $ jibaltool
-    
-to get a short help. You can extract entire files of stopping data and see the current JIBAL configuration.
-
 ## Using the jibal library with your own programs
 
 Using CMake is preferred, see directory "demo" for an example of a C++ program using Jibal.
 
-Alternatively when compiling your programs against jibal you can get the compiler flags with pkg-config (assuming pkg-config finds jibal.pc file)
+Alternatively when compiling your programs against jibal you can get the compiler flags with pkg-config (assuming pkg-config finds the `jibal.pc` file)
 
 ~~~~
 pkg-config --cflags --libs jibal
