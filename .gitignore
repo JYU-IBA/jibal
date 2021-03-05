@@ -6,3 +6,6 @@
 
 #Generic names of build directories
 *build*/
+
+#Temporary stuffs
+tmp/
