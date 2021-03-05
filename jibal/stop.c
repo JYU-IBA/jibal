@@ -39,7 +39,7 @@ E_0, double factor) {
     double x;
     double h = workspace->stop_step;
 #ifdef DEBUG
-    fprintf(stderr, "Thickness %g, stop step %g\n", layer->thickness, h);
+    fprintf(stderr, "Thickness %g, stop step %g, E = %.3lf keV\n", layer->thickness, h, E/C_KEV);
 #endif
     for (x = 0.0; x <= layer->thickness; x += h) {
         if(x+h > layer->thickness) { /* Last step may be partial */

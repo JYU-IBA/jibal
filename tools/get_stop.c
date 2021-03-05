@@ -67,7 +67,7 @@ void read_options(global *global, int *argc, char ***argv) {
                 exit(EXIT_SUCCESS);
                 break;
             case 'V':
-                printf("%s\n", jibal_VERSION);
+                printf("%s\n", JIBAL_VERSION);
                 exit(EXIT_SUCCESS);
                 break; /* Unnecessary */
             case 'v':

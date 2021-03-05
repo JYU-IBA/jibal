@@ -4,8 +4,8 @@ if(WIN32 AND DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
       CACHE STRING "")
   message(STATUS "CMake toolchain file ${CMAKE_TOOLCHAIN_FILE}")
 endif()
-project(jibal
-        VERSION 0.2.9
+project(Jibal
+        VERSION 0.3.0
         DESCRIPTION "JIBAL - Jyväskylä ion beam analysis library"
         LANGUAGES C
         )
@@ -19,7 +19,7 @@ if(DEBUG_MODE_ENABLE)
   if (MSVC)
     add_compile_options(/W4 /WX /DDEBUG)
   else()
-    add_compile_options(-Wall -Wextra -pedantic -Werror -DDEBUG)
+    add_compile_options(-Wall -Wextra -pedantic -DDEBUG)
   endif()
 endif()
 

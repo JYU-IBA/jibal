@@ -3,7 +3,7 @@ project(demo)
 
 set(CMAKE_CXX_STANDARD 14)
 
-find_package(Jibal REQUIRED)
+find_package(Jibal 0.3.0 REQUIRED)
 
 add_executable(demo demo.cpp)
-target_link_libraries(demo Jibal)
+target_link_libraries(demo jibal)

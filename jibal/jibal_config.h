@@ -7,8 +7,8 @@
 
 typedef struct {
     int error;
-    char *datadir; /* e.g. /usr/local/share/jibal or C:\Program Files\Jibal\share\jibal */
-    char *userdatadir; /* e.g. ~/.jibal/ or %AppData/Jibal */
+    char *datadir; /* e.g. /usr/local/share/jibal or C:\Program Files\JIBAL\share\jibal */
+    char *userdatadir; /* e.g. ~/.jibal/ or %AppData/JIBAL */
     char *masses_file;
     char *abundances_file;
     char *files_file;

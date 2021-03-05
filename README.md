@@ -30,7 +30,7 @@ The latest version from GitHub should compile (at least on Linux), provided that
 
 ![CMake](https://github.com/JYU-IBA/jibal/workflows/CMake/badge.svg)
 
-The versions that are tagged with a version number are considered semi-stable [releases](https://github.com/JYU-IBA/jibal/releases). There is no guarantee of interface compatibility between different versions, at least until a major milestone like v1.0 is reached. Any program compiled against Jibal should check for version mismatch between compile time and runtime and explicitly specify which version it is intended to work with. This is also one reason why the library interface is not documented (just kidding; the real reason is lack of time).
+The versions that are tagged with a version number are considered semi-stable [releases](https://github.com/JYU-IBA/jibal/releases). There is no guarantee of interface compatibility between different versions, at least until a major milestone like v1.0 is reached. Any program compiled against JIBAL should check for version mismatch between compile time and runtime and explicitly specify which version it is intended to work with. This is also one reason why the library interface is not documented (just kidding; the real reason is lack of time).
 
 ## Datafiles
 
@@ -40,7 +40,7 @@ There is a tool called *jibal_bootstrap* you can use to make a user configuratio
 
 ## Usage of bundled tools
 
-### Jibaltool
+### jibaltool
 
 Run from the command line / terminal:
 
@@ -80,7 +80,7 @@ get_stop 4He 2MeV -l "7Li0.60 6Li0.40" -t 1000tfu -v -v
 
 ## Using the jibal library with your own programs
 
-Using CMake is preferred, see directory [demo](demo) for an example of a C++ program using Jibal.
+Using CMake is preferred, see directory [demo](demo) for an example of a C++ program using JIBAL.
 
 Alternatively when compiling your programs against jibal you can get the compiler flags with pkg-config (assuming pkg-config finds the `jibal.pc` file)
 

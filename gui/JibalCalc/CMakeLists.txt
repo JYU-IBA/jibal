@@ -25,6 +25,6 @@ add_executable(JibalCalc
     ${TS_FILES}
 )
 
-target_link_libraries(JibalCalc PRIVATE Qt5::Widgets PRIVATE Jibal)
+target_link_libraries(JibalCalc PRIVATE Qt5::Widgets PRIVATE jibal)
 
 qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})

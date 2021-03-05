@@ -6,7 +6,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    jibal = jibal_init(nullptr);
+    j = jibal_init(nullptr);
     incident = nullptr;
     layer.material = nullptr;
     layer.thickness = 2000.0*C_TFU;
@@ -15,14 +15,14 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    jibal_free(j);
     delete ui;
 }
 
 
 void MainWindow::on_calculatePushButton_clicked()
 {
-
-  ui->energyOutputDoubleSpinBox->setValue(jibal_layer_energy_loss(jibal.gsto, incident, &layer, E, -1.0)/C_KEV);
+    recalculate();
 }
 
 void MainWindow::on_materialThicknessDoubleSpinBox_valueChanged(double arg1)
@@ -39,16 +39,18 @@ void MainWindow::on_ionEnergyLineDoubleSpinBox_valueChanged(double arg1)
 
 void MainWindow::on_ionNameLineEdit_textEdited(const QString &arg1)
 {
-    incident =jibal_isotope_find(jibal.isotopes, arg1.toStdString().c_str(), 0, 0);
+    incident = jibal_isotope_find(j->isotopes, arg1.toStdString().c_str(), 0, 0);
     loadGsto();
     recalculate();
 }
 
 void MainWindow::on_materialFormulaLineEdit_textEdited(const QString &arg1)
 {
-    if(layer.material)
+    if(layer.material) {
         jibal_material_free(layer.material);
-    layer.material=jibal_material_create(jibal.elements, arg1.toStdString().c_str());
+        layer.material = nullptr;
+    }
+    layer.material = jibal_material_create(j->elements, arg1.toStdString().c_str());
     if(layer.material) {
         ui->tableWidget->setRowCount(layer.material->n_elements);
         for(int i = 0; i < layer.material->n_elements; ++i) {
@@ -59,6 +61,7 @@ void MainWindow::on_materialFormulaLineEdit_textEdited(const QString &arg1)
         }
     } else {
         ui->tableWidget->setRowCount(0);
+        return;
     }
     loadGsto();
     recalculate();
@@ -68,13 +71,14 @@ void MainWindow::loadGsto()
 {
     if(!layer.material || !incident)
         return;
-    jibal_gsto_auto_assign_material(jibal.gsto, incident, layer.material);
-    jibal_gsto_load_all(jibal.gsto); /* TODO: calling this might not be necessary always. */
+    jibal_gsto_auto_assign_material(j->gsto, incident, layer.material);
+    jibal_gsto_print_assignments(j->gsto);
+    jibal_gsto_load_all(j->gsto); /* TODO: calling this might not be necessary always. */
 }
 
 void MainWindow::recalculate()
 {
     if(!layer.material || !incident)
         return;
-    ui->energyOutputDoubleSpinBox->setValue(jibal_layer_energy_loss(jibal.gsto, incident, &layer, E, -1.0)/C_KEV);
+    ui->energyOutputDoubleSpinBox->setValue(jibal_layer_energy_loss(j->gsto, incident, &layer, E, -1.0)/C_KEV);
 }

@@ -14,16 +14,16 @@ target_include_directories(get_stop PRIVATE
         ${GETOPT_INCLUDE_DIR}
         )
 target_link_libraries(get_stop
-    PRIVATE Jibal
+    PRIVATE jibal
     "$<$<BOOL:${UNIX}>:m>"
     ${GETOPT_LIBRARY}
 )
 target_link_libraries(get_kin
-    PRIVATE Jibal
+    PRIVATE jibal
     "$<$<BOOL:${UNIX}>:m>"
 )
 target_link_libraries(dpass_decode
-    PRIVATE Jibal
+    PRIVATE jibal
     "$<$<BOOL:${UNIX}>:m>"
 )
 target_include_directories(jibaltool PRIVATE
@@ -31,7 +31,7 @@ target_include_directories(jibaltool PRIVATE
         ${GETOPT_INCLUDE_DIR}
 )
 target_link_libraries(jibaltool
-    PRIVATE Jibal
+    PRIVATE jibal
     "$<$<BOOL:${UNIX}>:m>"
     ${GETOPT_LIBRARY})
 
@@ -39,12 +39,12 @@ target_include_directories(jibal_bootstrap PRIVATE
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/jibal>
         )
 target_link_libraries(jibal_bootstrap
-        PRIVATE Jibal
+        PRIVATE jibal
         "$<$<BOOL:${UNIX}>:m>"
         )
 
 target_link_libraries(srim_gen_stop
-    PRIVATE Jibal
+    PRIVATE jibal
     "$<$<BOOL:${UNIX}>:m>"
 )
 install(TARGETS get_stop get_kin jibaltool srim_gen_stop dpass_decode jibal_bootstrap

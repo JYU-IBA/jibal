@@ -1,6 +1,6 @@
 #ifndef _JIBAL_REGISTRY_H_
 #define _JIBAL_REGISTRY_H_
-#define JIBAL_SUBKEY "SOFTWARE\\JYU\\Jibal"
+#define JIBAL_SUBKEY "SOFTWARE\\JYU\\JIBAL"
 
 char *jibal_registry_string_get(const char *value);
 

@@ -174,6 +174,10 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
         for (Z2=file->Z2_min; Z2<=file->Z2_max; Z2++) {
             if (file == jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2)) { /* OK */
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
+                if(!data) {
+                    file->valid = FALSE; /* Not really */
+                    return 0;
+                }
                 size_t n = fread(data, sizeof(double), file->xpoints, file->fp);
                 if(n != file->xpoints) {
                     file->valid=FALSE;
@@ -470,6 +474,9 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
     for (Z1 = file->Z1_min; Z1 <= file->Z1_max && Z1 <= workspace->Z1_max; Z1++) {
         for (Z2 = file->Z2_min; Z2 <= file->Z2_max && Z2 <= workspace->Z2_max; Z2++) {
             if (file == jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2) || Z1 == JIBAL_ANY_Z || Z2 == JIBAL_ANY_Z) {
+#ifdef DEBUG
+                fprintf(stderr, "File %s is assigned to Z1 = %i, Z2 = %i\n", file->name, Z1, Z2);
+#endif
                 /* This file is assigned to this Z1, Z2 combination, so we have to load the stopping in.
                  * EXCEPTION: if either Z1 or Z2 is "ANY_Z" we ignore this whole skipping thing and just always load
                  * in everything. */
@@ -497,9 +504,11 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
                     actually_skipped++;
                 }
 #ifdef DEBUG
-                fprintf(stderr, "actually skipped %i lines\n", actually_skipped);
+                fprintf(stderr, "actually skipped %i lines, we should be now at line %i\n", actually_skipped, file->lineno);
 #endif
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
+                if(!data)
+                    return 0;
                 for(i = 0; i < file->xpoints; i++) {
                     if(getline(&line, &line_size, file->fp) <= 0) {
                         fprintf(stderr, "ERROR: File %s ended prematurely when reading Z1=%i Z2=%i stopping point=%lu/%lu"
@@ -512,9 +521,14 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
                         i--;
                     } else {
 #ifdef DEBUG
-                        fprintf(stderr, "Loaded stopping [%i][%i][%lu] from line %i.\n", Z1, Z2, i, file->lineno);
+                        fprintf(stderr, "Loading stopping [%i][%i][%lu] from line %i.\n", Z1, Z2, i, file->lineno);
 #endif
-                        data[i] = strtod(line, NULL);
+                        line[strcspn(line, "\r\n")] = 0;  /* Strip newlines */
+                        char *end;
+                        data[i] = strtod(line, &end);
+                        if(end != line+strlen(line)) {
+                            fprintf(stderr, "Could not parse number from line %i from file %s: \"%s\". Got %g.\n", file->lineno, file->name, line, data[i]);
+                        }
                     }
                 }
                 previous_Z1=Z1;
@@ -1069,7 +1083,7 @@ double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, do
     double gamma = 4.0*m1*m2/pow(m1+m2, 2.0);
     double epsilon=(E/C_KEV)*32.53*m2/(Z1*Z2*(m1+m2)*(pow(Z1, 0.23)+pow(Z2, 0.23)));
     double S_ne;
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
     fprintf(stderr, "Nuclear stopping of Z2=%i (m2=%g) for Z1=%i (m2=%g). a_u=%g, gamma=%g, epsilon=%g\n", Z2, m2, Z1, m2, a_u, gamma, epsilon);
 #endif
     if(epsilon <= 30.0) {
@@ -1078,7 +1092,7 @@ double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, do
          S_ne=log(epsilon)/(2*epsilon);
     }
     double S=S_ne*C_PI*pow(a_u, 2.0)*gamma*E/epsilon;
-#ifdef DEBUG
+#ifdef DEBUG_VERBOSE
     fprintf(stderr, "Reduced S_ne=%g, S=%g (eV/tfu)\n", S_ne, S/C_EV_TFU);
 #endif
     return S;
@@ -1186,13 +1200,13 @@ int jibal_gsto_em_to_index(const gsto_file_t *file, double em) { /* Returns the 
     switch (file->xscale) {
         case GSTO_XSCALE_LOG10:
             lo = floor((log10(x) - file->xmin_speedup) * file->xdiv);
-            if(lo < 0 || lo >= file->xpoints) {
+            if(lo >= file->xpoints) {
                 return -1;
             }
             break;
         case GSTO_XSCALE_LINEAR:
             lo = floor((x - file->xmin) * file->xdiv);
-            if(lo < 0 || lo >= file->xpoints) {
+            if(lo >= file->xpoints) {
                 return -1;
             }
             break;
@@ -1209,8 +1223,8 @@ int jibal_gsto_em_to_index(const gsto_file_t *file, double em) { /* Returns the 
                 }
             }
     }
-#ifdef DEBUG
-fprintf(stderr, "lo=%lu, residual=%e m/s (%.2lf%% of bin)\n",
+#ifdef DEBUG_VERBOSE
+fprintf(stderr, "em = %g, lo=%lu, residual=%e m/s (%.2lf%% of bin)\n", em
             lo, em - file->em[lo], 100.0*(em - file->em[lo])/(file->em[lo+1] - file->em[lo]));
 #endif
 #ifdef GSTO_VELOCITY_BIN_CHECK_STRICT /* Note: due to floating point issues this is too strict */
@@ -1229,7 +1243,7 @@ fprintf(stderr, "lo=%lu, residual=%e m/s (%.2lf%% of bin)\n",
 double jibal_gsto_get_em(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2, double em) {
     gsto_file_t *file = jibal_gsto_get_assigned_file(workspace, type, Z1, Z2);
     if(!file || !file->data) {
-        return nan(NULL);
+        return 0.0;
     }
     const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
     assert(data);
@@ -1248,7 +1262,7 @@ double jibal_gsto_get_em(jibal_gsto *workspace, gsto_stopping_type type, int Z1,
                     return data[file->xpoints - 1];
                 }
             }
-            return nan(NULL);
+            return 0.0;
         }
         file->em_index_accel = lo;
     }

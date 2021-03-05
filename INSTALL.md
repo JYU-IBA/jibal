@@ -21,13 +21,15 @@
         $ make
         $ sudo make install
         
-3. If you get an error when trying to run a program using Jibal (for example *jibaltool*) that looks like this:
+3. If you get an error when trying to run a program using JIBAL (for example *jibaltool*) that looks like this:
         
-        "error while loading shared libraries: libJibal.so.0: cannot open shared object file: No such file or directory"
+        "error while loading shared libraries: libjibal.so.0: cannot open shared object file: No such file or directory"
 
    You should add the the path where libraries were installed (typically /usr/local/lib) to LD_LIBRARY_PATH for example by adding this line to your .bashrc or .profile
    
         export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
+
+    Running `ldconfig` as root may also help.
 
 ## Installation instructions for MacOS:
 1. Install [Homebrew](https://brew.sh/)
@@ -36,7 +38,7 @@
         $ brew tap JYU-IBA/iba
         $ brew install jibal
 
-4. If you want to DEVELOP Jibal and not just use it, follow Linux instructions above, install gsl using Homebrew or MacPorts
+4. If you want to DEVELOP JIBAL and not just use it, follow Linux instructions above, install gsl using Homebrew or MacPorts
 
 ## Installation instructions for Microsoft Windows 10:
 
@@ -60,7 +62,7 @@
             vcpkg.exe install gsl:x64-windows getopt:x64-windows
     
     - Alternatively use *x86-windows* to compile 32-bit libraries. This is not recommended.
-5. Clone Jibal repository (this one)
+5. Clone JIBAL repository (this one)
 6. Build
     - Set up your MSVC environment by running the vcvars64.bat (or opening the *x64 Native Tools Command Prompt for VS2019*)
     - Run the following (from wherever jibal is cloned to):

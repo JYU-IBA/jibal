@@ -5,6 +5,7 @@
 #include <QDebug>
 extern "C" {
 #include <jibal.h>
+#include <jibal_stop.h>
 }
 
 QT_BEGIN_NAMESPACE
@@ -34,8 +35,8 @@ private:
     void loadGsto();
     void recalculate();
     Ui::MainWindow *ui;
-    jibal jibal;
-    jibal_isotope *incident;
+    jibal *j;
+    const jibal_isotope *incident;
     jibal_layer layer;
     double E;
 };

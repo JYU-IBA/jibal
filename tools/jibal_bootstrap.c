@@ -134,7 +134,7 @@ void bootstrap_make_blanks(const char *user_dir, const char *filename) { /* Sile
 
 int main(int argc, char *argv[]) {
     char r = 0;
-    fprintf(stderr, "Welcome to Jibal user configuration bootstrap procedure, I will be your guide.\n\n");
+    fprintf(stderr, "Welcome to JIBAL user configuration bootstrap procedure, I will be your guide.\n\n");
     fprintf(stderr, "The rules are simple: I ask the questions and you answer.\n");
     fprintf(stderr, "The questions will be mostly yes/no questions. Let's start with a simple one.\n");
     r = read_user_response("Do you want to continue?");
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "======================================================================\n");
     jibal_config_file_write(config, stderr);
     fprintf(stderr, "======================================================================\n");
-    fprintf(stderr, "\nI could write it to %s, where Jibal could find it.\n", user_configfile);
+    fprintf(stderr, "\nI could write it to %s, where JIBAL could find it.\n", user_configfile);
 
     if(access(user_configfile, F_OK) == -1) { /* Doesn't exist, good */
         r = read_user_response("Do you want me to write this file?");

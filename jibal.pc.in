@@ -8,4 +8,4 @@ Description: @jibal_DESCRIPTION@
 Version: @jibal_VERSION@
 Requires: @PKGCONF_REQ_PUB@
 Cflags: -I"${includedir}"
-Libs: -L"${libdir}" -lJibal
+Libs: -L"${libdir}" -ljibal

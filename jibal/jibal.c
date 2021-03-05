@@ -71,7 +71,7 @@ jibal *jibal_init(const char *config_filename) {
 
 void jibal_status_print(FILE *f, const jibal *jibal) {
     if(jibal->error) {
-        fprintf(f, "Jibal initialization has failed with error code %i (%s)\n", jibal->error, jibal_error_string(jibal->error));
+        fprintf(f, "JIBAL initialization has failed with error code %i (%s)\n", jibal->error, jibal_error_string(jibal->error));
     }
     const jibal_isotope *i;
     int n_isotopes=0;
@@ -124,5 +124,5 @@ const char *jibal_error_string(jibal_error err) {
 }
 
 const char *jibal_version() {
-    return jibal_VERSION;
+    return JIBAL_VERSION;
 }

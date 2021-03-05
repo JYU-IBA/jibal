@@ -89,7 +89,7 @@ void read_options(jibaltool_global *global, int *argc, char ***argv) {
                 global->stopfile=strdup(optarg);
                 break;
             case 'V':
-                printf("jibaltool %s JIBAL library version %s\n", jibal_VERSION, jibal_version());
+                printf("jibaltool %s JIBAL library version %s\n", JIBAL_VERSION, jibal_version());
                 exit(EXIT_SUCCESS);
                 break; /* Unnecessary */
             case 'v':
@@ -143,7 +143,7 @@ int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
     }
     jibal_gsto_load(jibal->gsto, FALSE, file);
     FILE *out=jibaltool_open_output(global);
-    int i;
+    size_t i;
     fprintf(out, "#Stopping Units =  eV/(1E15 atoms/cm2)\n"
                  "#Energy(keV)  S(Elec)    S(Nuc)\n");
     for(i=0; i < file->xpoints; i++) {
@@ -331,7 +331,7 @@ int main(int argc, char **argv) {
             {"isotopes", &print_isotopes, "Print a list of isotopes."},
             {"elements", &print_elements, "Print a list of elements."},
             {"config", &print_config, "Print current configuration (config file)."},
-            {"status", &print_status, "Print Jibal status."},
+            {"status", &print_status, "Print JIBAL status."},
             {"units", &print_units, "Print recognized units."},
             {NULL, NULL, NULL}
     };

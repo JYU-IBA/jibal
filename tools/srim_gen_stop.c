@@ -147,7 +147,7 @@ void remove_newline(char *s) {
     }
 }
 
-int main (int argc, char **argv) {
+int main (void) {
     int Z1, Z2, i;
     double xmin=10.0; /* keV/amu */
     double xmax=10000.0;

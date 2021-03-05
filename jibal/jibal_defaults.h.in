@@ -20,12 +20,12 @@
 #define _JIBAL_DEFAULTS_H_
 #include <jibal_units.h>
 
-#define jibal_VERSION "@jibal_VERSION@"
-#define jibal_VERSION_MAJOR @jibal_VERSION_MAJOR@
-#define jibal_VERSION_MINOR @jibal_VERSION_MINOR@
-#define jibal_VERSION_PATCH @jibal_VERSION_PATCH@
+#define JIBAL_VERSION "@Jibal_VERSION@"
+#define JIBAL_VERSION_MAJOR @Jibal_VERSION_MAJOR@
+#define JIBAL_VERSION_MINOR @Jibal_VERSION_MINOR@
+#define JIBAL_VERSION_PATCH @Jibal_VERSION_PATCH@
 
-#define jibal_DESCRIPTION "@jibal_DESCRIPTION@"
+#define JIBAL_DESCRIPTION "@Jibal_DESCRIPTION@"
 
 #cmakedefine DEVELOPER_MODE_ENABLE
 #cmakedefine JIBAL_DATADIR "@JIBAL_DATADIR@"
@@ -56,7 +56,6 @@
 #define JIBAL_ABUNDANCES_FILE  "abundances.dat"
 #define JIBAL_FILES_FILE "files.txt"
 #define JIBAL_ASSIGNMENTS_FILE "assignments.txt"
-#define JIBAL_CONFIG_MAX_LINE_LEN 256
 
 #define JIBAL_MAX_Z 92
 
