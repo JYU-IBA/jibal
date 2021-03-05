@@ -81,7 +81,7 @@ void jibal_status_print(FILE *f, const jibal *jibal) {
             n_natural_isotopes++;
         n_isotopes++;
     }
-    fprintf(f, "Jibal %s: %i units, %i elements, %i isotopes, %i isotopes with abundance > %g, %i GSTO files.\n",
+    fprintf(f, "Jibal %s: %i units, %i elements, %i isotopes, %i isotopes with abundance > %g, %lu GSTO files.\n",
             jibal_version(),
             jibal_units_count(jibal->units),
             jibal_elements_Zmax(jibal->elements),

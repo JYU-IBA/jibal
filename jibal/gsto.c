@@ -16,6 +16,9 @@
 #endif
 #include "jibal_stragg.h"
 
+extern inline size_t jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2);
+extern inline const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2);
+
 const char *gsto_get_header_string(const jibal_option *header, int val) {
     const jibal_option *h;
     for(h=header; h->s; h++) {
@@ -74,9 +77,9 @@ const char *jibal_gsto_file_source(gsto_file_t *file) {
 }
 
 void jibal_gsto_file_free(gsto_file_t *file) {
-    int i;
+    size_t i;
     if(file->data) {
-        for(i=0; i < file->n_comb; i++) {
+        for(i = 0; i < file->n_comb; i++) {
             if(file->data[i]) {
                 free(file->data[i]);
             }
@@ -96,7 +99,7 @@ void jibal_gsto_file_free(gsto_file_t *file) {
 void jibal_gsto_free(jibal_gsto *workspace) {
     if(!workspace)
         return;
-    int i;
+    size_t i;
     if(workspace->files) {
         for (i = 0; i < workspace->n_files; i++) {
             gsto_file_t *file = &workspace->files[i];
@@ -131,8 +134,8 @@ int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file) 
     if(!jibal_gsto_file_has_combination(file, Z1, Z2)) {
         return 0;
     }
-    int i=jibal_gsto_table_get_index(workspace, Z1, Z2);
-    assert(i >= 0 && i <= workspace->n_comb);
+    size_t i = jibal_gsto_table_get_index(workspace, Z1, Z2);
+    assert(i < workspace->n_comb);
     if(file->type == GSTO_STO_ELE) {
         workspace->stop_assignments[i] = file;
         return 1;
@@ -172,7 +175,7 @@ int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file) {
             if (file == jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2)) { /* OK */
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
                 size_t n = fread(data, sizeof(double), file->xpoints, file->fp);
-                if((int) n != file->xpoints) {
+                if(n != file->xpoints) {
                     file->valid=FALSE;
                     return 0;
                 }
@@ -297,11 +300,13 @@ void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, void *val) { /* Value
 
 void jibal_gsto_fprint_file(FILE *file_out, jibal_gsto *workspace, gsto_file_t *file, gsto_data_format format, int
 Z1_min, int Z1_max, int Z2_min, int Z2_max) {
-    int i, Z1, Z2;
+    int Z1, Z2;
     /* TODO: this is an absolute mess! We have to consider the Z1, Z2 range we are given, the Z1, Z2 range of the
      * file, and also the global Z1, Z2 range (from workspace), since only that data can ever be loaded!
      * To make it even more interesting the we also have the special value JIBAL_ANY_Z.
      * */
+    if(!file)
+        return;
     if(file->Z1_min == JIBAL_ANY_Z) {
         Z1_min = Z1_max = JIBAL_ANY_Z;
     } else if(Z1_min == JIBAL_ANY_Z) {
@@ -369,17 +374,21 @@ Z1_min, int Z1_max, int Z2_min, int Z2_max) {
     }
     jibal_gsto_fprint_header(file_out, GSTO_HEADER_FORMAT, &format);
     fprintf(file_out, "\n");
+    size_t i;
     if(file->xscale == GSTO_XSCALE_ARBITRARY) {
-        for(i=0; i < file->xpoints; i++) {
+        for(i = 0; i < file->xpoints; i++) {
             fprintf(file_out, "%e\n", file->em[i]/(C_KEV/C_U));
         }
+    }
+    if(!file->data) {
+        fprintf(stderr, "This file isn't loaded yet.\n");
+        return;
     }
     for (Z1=Z1_min; Z1 <= Z1_max  && Z1 <= workspace->Z1_max; Z1++) {
         for (Z2 = Z2_min; Z2 <= Z2_max && Z2 <= workspace->Z2_max; Z2++) {
             const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
             if(!data) {
-                fprintf(stderr, "Error: no data for Z1=%i and Z2=%i in %s.%s\n",
-                        Z1, Z2, file->name, file->data?"":"This file isn't loaded yet.");
+                fprintf(stderr, "Error: no data for Z1=%i and Z2=%i in %s.\n", Z1, Z2, file->name);
                 return;
             }
             if(format == GSTO_DF_ASCII) {
@@ -409,53 +418,38 @@ Z1_min, int Z1_max, int Z2_min, int Z2_max) {
     }
 }
 
-int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2) {
-    if(Z1 < 1 || Z1 > workspace->Z1_max || Z2 < 1 || Z2 > workspace->Z2_max) {
-        return -1;
-    }
-    int z1 = (Z1 - 1);
-    int z2 = (Z2 - 1);
-    int i = (workspace->Z2_max * z1 + z2);
-    assert(i >= 0 && i < workspace->n_comb);
-    return i;
-}
-
-int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2) {
+size_t jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2) {
     if(file->Z1_min == JIBAL_ANY_Z) {
         if(file->Z2_min == JIBAL_ANY_Z) {
             return 0; /* Only one index is possible Z1=any, Z2=any */
         } else {
             assert(Z2 <= file->Z2_max);
             assert(Z2 >= file->Z2_min);
-            return Z2-file->Z2_min;
+            return Z2 - file->Z2_min;
         }
     }
     if(file->Z2_min == JIBAL_ANY_Z) {
         assert(Z1 <= file->Z1_max);
         assert(Z1 >= file->Z1_min);
-        return Z1-file->Z1_min;
+        return Z1 - file->Z1_min;
     }
     assert(Z1 >= file->Z1_min);
     assert(Z2 >= file->Z2_min);
     assert(Z1 <= file->Z1_max);
     assert(Z2 <= file->Z2_max);
-    int z1=(Z1 - file->Z1_min);
-    int z2=(Z2 - file->Z2_min);
-    int n_z2=(file->Z2_max-file->Z2_min+1);
-    int i=(n_z2*z1+z2);
+    int z1 = (Z1 - file->Z1_min);
+    int z2 = (Z2 - file->Z2_min);
+    int n_z2 = (file->Z2_max - file->Z2_min + 1);
+    size_t i = (n_z2 * z1 + z2);
     assert(i < file->n_comb);
     return i;
 }
 
-const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2) {
-    if(!file->data)
-        return NULL;
-    return file->data[jibal_gsto_file_get_data_index(file, Z1, Z2)];
-}
+
 
 double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2) {
-    int i=jibal_gsto_file_get_data_index(file, Z1, Z2);
-    assert(i >= 0 && i < file->n_comb);
+    size_t i = jibal_gsto_file_get_data_index(file, Z1, Z2);
+    assert(i < file->n_comb);
     if(file->data[i]) {
         free(file->data[i]);
     }
@@ -464,7 +458,8 @@ double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2) {
 }
 
 int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
-    int Z1, Z2, previous_Z1=file->Z1_min, previous_Z2=file->Z2_min-1, skip, i;
+    int Z1, Z2, previous_Z1=file->Z1_min, previous_Z2=file->Z2_min-1;
+    size_t skip, i;
     char *line = NULL;
     size_t line_size=0;
     int actually_skipped=0;
@@ -485,7 +480,7 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
                                             (Z2 - previous_Z2 - 1)); /* Not sure if correct, but it works. */
                 }
 #ifdef DEBUG
-                fprintf(stderr, "Skipping %i*(%i*%i+%i)=%i lines.\n", file->xpoints, Z1-previous_Z1, file->Z1_max-file->Z2_min+1, Z2-previous_Z2-1, skip);
+                fprintf(stderr, "Skipping %lu*(%i*%i+%i)=%lu lines.\n", file->xpoints, Z1-previous_Z1, file->Z1_max-file->Z2_min+1, Z2-previous_Z2-1, skip);
                 actually_skipped=0;
 #endif
 
@@ -505,9 +500,9 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
                 fprintf(stderr, "actually skipped %i lines\n", actually_skipped);
 #endif
                 double *data = jibal_gsto_file_allocate_data(file, Z1, Z2);
-                for(i=0; i<file->xpoints; i++) {
+                for(i = 0; i < file->xpoints; i++) {
                     if(getline(&line, &line_size, file->fp) <= 0) {
-                        fprintf(stderr, "ERROR: File %s ended prematurely when reading Z1=%i Z2=%i stopping point=%i/%i"
+                        fprintf(stderr, "ERROR: File %s ended prematurely when reading Z1=%i Z2=%i stopping point=%lu/%lu"
                                         ".\n", file->filename, Z1, Z2, i+1, file->xpoints);
                         file->valid = FALSE;
                         break;
@@ -517,7 +512,7 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
                         i--;
                     } else {
 #ifdef DEBUG
-                        fprintf(stderr, "Loaded stopping [%i][%i][%i] from line %i.\n", Z1, Z2, i, file->lineno);
+                        fprintf(stderr, "Loaded stopping [%i][%i][%lu] from line %i.\n", Z1, Z2, i, file->lineno);
 #endif
                         data[i] = strtod(line, NULL);
                     }
@@ -740,11 +735,11 @@ void jibal_gsto_convert_file_to_SI(gsto_file_t *file) {
     }
 
     if(file->stounit == GSTO_STO_UNIT_EV15CM2) {
-        int i_comb;
+        size_t i_comb;
         for (i_comb = 0; i_comb < file->n_comb; i_comb++) {
             double *data = file->data[i_comb];
             if (data) {
-                int i;
+                size_t i;
                 for (i = 0; i < file->xpoints; i++) {
                     data[i] *= C_EV_TFU;
                 }
@@ -762,7 +757,7 @@ void jibal_gsto_convert_file_to_SI(gsto_file_t *file) {
                 int i_comb=jibal_gsto_file_get_data_index(file, Z1, Z2);
                 double *data = file->data[i_comb];
                 if (data) {
-                    int i;
+                    size_t i;
                     for (i = 0; i < file->xpoints; i++) {
                         data[i] *= jibal_stragg_bohr(Z1, Z2);
                     }
@@ -775,9 +770,9 @@ void jibal_gsto_convert_file_to_SI(gsto_file_t *file) {
 }
 
 int jibal_gsto_load_all(jibal_gsto *workspace) { /* For every file, load combinations from file */
-    int i;
+    size_t i;
     int n_success=0;
-    for(i=0; i < workspace->n_files; i++) {
+    for(i = 0; i < workspace->n_files; i++) {
         gsto_file_t *file = &workspace->files[i];
         int assignments = jibal_gsto_file_count_assignments(workspace, file);
         if(!assignments)
@@ -801,7 +796,7 @@ int jibal_gsto_file_count_assignments(jibal_gsto *workspace, gsto_file_t *file) 
 }
 
 int jibal_gsto_print_files(jibal_gsto *workspace, int used_only) {
-    int i;
+    size_t i;
     int assignments;
     gsto_file_t *file;
     if(workspace->n_files == 0) {
@@ -810,13 +805,13 @@ int jibal_gsto_print_files(jibal_gsto *workspace, int used_only) {
     }
     fprintf(stderr, "List of %s GSTO files:\n", used_only?"used":"available");
     
-    for(i=0; i < workspace->n_files; i++) {
+    for(i = 0; i < workspace->n_files; i++) {
         file=&workspace->files[i];
         assignments=jibal_gsto_file_count_assignments(workspace, file);
         if(used_only && !assignments) {
             continue;
         }
-        fprintf(stderr, "%i: %s,\n", i+1, file->name);
+        fprintf(stderr, "%lu: %s,\n", i+1, file->name);
         fprintf(stderr, "\ttype: %s\n", gsto_get_header_string(gsto_stopping_types, file->type));
         fprintf(stderr, "\tfilename: %s\n", file->filename);
         if(file->source) {
@@ -837,7 +832,7 @@ int jibal_gsto_print_files(jibal_gsto *workspace, int used_only) {
             fprintf(stderr, "\t%i (%s) <= Z2 <= %i (%s),\n", file->Z2_min, jibal_element_name(workspace->elements, file->Z2_min),
                     file->Z2_max, jibal_element_name(workspace->elements, file->Z2_max));
         }
-        fprintf(stderr, "\tx-points=%i\n", file->xpoints);
+        fprintf(stderr, "\tx-points=%lu\n", file->xpoints);
         fprintf(stderr, "\tx-scale=%s\n", gsto_get_header_string(gsto_xscales, file->xscale));
         if(file->xunit == file->xunit_original) {
             fprintf(stderr, "\tx-unit=%s\n", gsto_get_header_string(gsto_xunits, file->xunit_original));
@@ -898,20 +893,21 @@ int jibal_gsto_print_assignments(jibal_gsto *workspace) {
 
 int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2) {
     gsto_file_t *file;
-    int success=0, i;
+    int success=0;
+    size_t i;
     if(workspace->overrides) {
         gsto_assignment *a;
         for (a = workspace->overrides; a->file != NULL; a++) {
             if(a->Z1 == Z1 && a->Z2 == Z2) {
                 if(jibal_gsto_assign(workspace, Z1, Z2, a->file)) {
-                    success=1;
+                    success = 1;
                 } else {
                     fprintf(stderr, "Warning: could not assign Z1=%i, Z2=%i to file %s\n", Z1, Z2, a->file->name);
                 }
             }
         }
     }
-    for (i=0; i < workspace->n_files; i++) {
+    for (i = 0; i < workspace->n_files; i++) {
         file=&workspace->files[i];
         if(jibal_gsto_file_has_combination(file, Z1, Z2)) {
             if(!jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2)) {
@@ -1089,9 +1085,11 @@ double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, do
 }
 
 gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2) {
-    int i = jibal_gsto_table_get_index(workspace, Z1, Z2);
-    if(i < 0)
-        return NULL;
+    if(Z1 > workspace->Z1_max || Z2 > workspace->Z2_max) {
+        return NULL; /* Z1 or Z2 out of range of our workspace */
+    }
+    size_t i = jibal_gsto_table_get_index(workspace, Z1, Z2);
+    assert(i < workspace->n_comb);
     if(type == GSTO_STO_ELE)
         return workspace->stop_assignments[i];
     if(type == GSTO_STO_STRAGG)
@@ -1100,9 +1098,9 @@ gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, gsto_stopping_t
 }
 
 gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name) {
-    int i;
+    size_t i;
     gsto_file_t *file;
-    for(i=0; i < workspace->n_files; i++) {
+    for(i = 0; i < workspace->n_files; i++) {
         file = &workspace->files[i];
         if(strcmp(file->name, name) == 0) {
             return file;
@@ -1132,19 +1130,19 @@ double jibal_gsto_em_from_file_units(double x, const gsto_file_t *file) {
 
 double *jibal_gsto_em_table(const gsto_file_t *file) { /* Note: for internal use only, may read the file->fp */
     double *table = malloc(sizeof(double) * file->xpoints);
-    int i;
+    size_t i;
     double x;
 #ifdef DEBUG
-    fprintf(stderr, "Making velocity table, %i points, xmin=%g, xmax=%g, xscale=%i, xunit=%i\n", file->xpoints,
+    fprintf(stderr, "Making velocity table, %lu points, xmin=%g, xmax=%g, xscale=%i, xunit=%i\n", file->xpoints,
             file->xmin, file->xmax, file->xscale, file->xunit);
 #endif
     for (i = 0; i < file->xpoints; i++) {
         switch (file->xscale) {
             case GSTO_XSCALE_LOG10:
-                x = file->xmin * pow(file->xmax / file->xmin, 1.0 * i / (file->xpoints - 1));
+                x = file->xmin * pow(file->xmax / file->xmin, 1.0 * i / (1.0*(file->xpoints - 1)));
                 break;
             case GSTO_XSCALE_LINEAR:
-                x = file->xmin + (file->xmax - file->xmin) * (1.0 * i / (file->xpoints - 1));
+                x = file->xmin + (file->xmax - file->xmin) * (1.0 * i / (1.0*(file->xpoints - 1)));
                 break;
             case GSTO_XSCALE_NONE:
                 x = 0.0;
@@ -1184,7 +1182,7 @@ int jibal_gsto_em_to_index(const gsto_file_t *file, double em) { /* Returns the 
             x= jibal_velocity_from_em(em);
             break;
     }
-    int lo, mi, hi;
+    size_t lo, mi, hi;
     switch (file->xscale) {
         case GSTO_XSCALE_LOG10:
             lo = floor((log10(x) - file->xmin_speedup) * file->xdiv);
@@ -1212,7 +1210,7 @@ int jibal_gsto_em_to_index(const gsto_file_t *file, double em) { /* Returns the 
             }
     }
 #ifdef DEBUG
-fprintf(stderr, "lo=%i, residual=%e m/s (%.2lf%% of bin)\n", 
+fprintf(stderr, "lo=%lu, residual=%e m/s (%.2lf%% of bin)\n",
             lo, em - file->em[lo], 100.0*(em - file->em[lo])/(file->em[lo+1] - file->em[lo]));
 #endif
 #ifdef GSTO_VELOCITY_BIN_CHECK_STRICT /* Note: due to floating point issues this is too strict */
@@ -1230,7 +1228,7 @@ fprintf(stderr, "lo=%i, residual=%e m/s (%.2lf%% of bin)\n",
 
 double jibal_gsto_get_em(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2, double em) {
     gsto_file_t *file = jibal_gsto_get_assigned_file(workspace, type, Z1, Z2);
-    if(!file) {
+    if(!file || !file->data) {
         return nan(NULL);
     }
     const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
@@ -1254,8 +1252,7 @@ double jibal_gsto_get_em(jibal_gsto *workspace, gsto_stopping_type type, int Z1,
         }
         file->em_index_accel = lo;
     }
-    double out;
-    out=jibal_linear_interpolation(file->em[lo], file->em[lo+1], data[lo], data[lo+1], em);
+    double out = jibal_linear_interpolation(file->em[lo], file->em[lo+1], data[lo], data[lo+1], em);
     if(file->straggunit == GSTO_STRAGG_UNIT_BOHR) {
         assert(type == GSTO_STO_STRAGG);
         out *= jibal_stragg_bohr(Z1, Z2);

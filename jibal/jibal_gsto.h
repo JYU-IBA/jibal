@@ -145,8 +145,8 @@ typedef struct {
     int Z2_min;
     int Z1_max;
     int Z2_max;
-    int n_comb;
-    int xpoints; /* How many points of stopping per Z1, Z2 combination */
+    size_t n_comb;
+    size_t xpoints; /* How many points of stopping per Z1, Z2 combination */
     double xmin; /* The first point of stopping corresponds to x=xmin. In units of xunit.*/
     double xmin_original; /* xmin as read from file */
     double xmax; /* The last point of stopping corresponds to x=xmax. In units of xunit. */
@@ -183,8 +183,8 @@ typedef struct {
     const jibal_element *elements;
     int Z1_max;
     int Z2_max;
-    int n_files;
-    int n_comb;
+    size_t n_files;
+    size_t n_comb;
     gsto_file_t *files; /* table of gsto_file_t. Note: not a table of pointers. */
     gsto_file_t **stop_assignments; /* array of n_comb gsto_file_t pointers. For each Z1 and Z2 combination there can
  * be a file assigned. Access with functions. */
@@ -234,14 +234,11 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file);
 int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file);
 void jibal_gsto_fprint_file(FILE *file_out, jibal_gsto *workspace, gsto_file_t *file, gsto_data_format format, int Z1_min, int Z1_max, int Z2_min, int Z2_max);
 
-int jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2);
-const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2);
+size_t jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2);
 void jibal_gsto_file_calculate_ncombs(gsto_file_t *file);
 double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2);
 gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2);
 gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name);
-
-int jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2);
 double jibal_gsto_em_from_file_units(double x, const gsto_file_t *file);
 double *jibal_gsto_em_table(const gsto_file_t *file);
 int jibal_gsto_velocity_to_index(const gsto_file_t *file, double v);
@@ -254,4 +251,10 @@ void jibal_gsto_fprint_header_int(FILE *f, gsto_header_type h, int i);
 void jibal_gsto_fprint_header_string(FILE *f, gsto_header_type h, const char *str);
 void jibal_gsto_fprint_header_scientific(FILE *f, gsto_header_type h, double val);
 void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, void *val);
+inline size_t jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2) {
+    return (workspace->Z2_max * (Z1 - 1) + (Z2 - 1));
+}
+inline const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2) {
+    return file->data[jibal_gsto_file_get_data_index(file, Z1, Z2)];
+}
 #endif /* _JIBAL_GSTO_H_ */
