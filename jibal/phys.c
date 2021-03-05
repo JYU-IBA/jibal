@@ -19,6 +19,8 @@
 #include <math.h>
 #include <jibal_phys.h>
 
+
+extern inline double pow4(double x);
 extern inline double jibal_velocity_relativistic(double E, double mass);
 extern inline double jibal_energy_relativistic(double v, double mass);
 extern inline double jibal_em_relativistic(double v);

@@ -34,6 +34,19 @@
 #endif
 
 #include <jibal_units.h>
+/*
+#ifndef pow2
+#define pow2(x) ((x)*(x))
+#endif
+*/
+
+inline double pow2(double x) {
+    return x*x;
+}
+
+inline double pow4(double x) {
+    return pow2(x*x);
+}
 
 inline double jibal_velocity_classical(double E, double m) {
     return sqrt(2*E/m);
@@ -56,23 +69,23 @@ inline double jibal_velocity_classical_more_accurate(double E, double m) {
 }
 
 inline double jibal_energy_classical_more_accurate(double v, double m) {
-    return (0.5*m*v*v + (3.0/8.0)*m*pow(v, 4.0));
+    return (0.5*m*v*v + (3.0/8.0)*m*pow4(v));
 }
 
 inline double jibal_velocity_relativistic(double E, double m) {
-    return sqrt((1-pow((1.0+E/(m*C_C2)),-2.0))*C_C2);
+    return sqrt((1.0-1.0/pow2((1.0+E/(m*C_C2))))*C_C2);
 }
 
 inline double jibal_energy_relativistic(double v, double m) {
-    return (m*C_C2*(pow(1-pow(v/C_C,2.0),-0.5)-1));
+    return (m*C_C2*(1.0/sqrt(1-pow2(v/C_C))-1));
 }
 
 inline double jibal_em_relativistic(double v) {
-    return (C_C2*(pow(1-pow(v/C_C,2.0),-0.5)-1));
+    return (C_C2*(1.0/sqrt(1-pow2(v/C_C))-1));
 }
 
 inline double jibal_velocity_em_relativistic(double em) {
-    return sqrt((1-pow((1.0+em/C_C2),-2.0))*C_C2);
+    return sqrt((1.0-1.0/pow2((1.0+em/C_C2)))*C_C2);
 }
 
 inline double jibal_linear_interpolation(double x_low, double x_high, double y_low, double y_high, double x) {
