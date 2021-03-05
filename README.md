@@ -1,6 +1,6 @@
 # JIBAL
 
-Library that provides stopping forces, straggling models, cross sections and various atomic data e.g. masses and abundances for typical IBA applications. The GNU General Public License applies to the source code (`*.c` and `*.h` files) and any programs compiled thereof, scripts (`*.sh` and `*.py` files) and the software as a whole, but not to any of the [data/](data), since the author of this software can not claim authorship of the data. Please note the exceptions to the GPL license under the following notice.
+Library that provides stopping forces, straggling models, cross sections and various atomic data e.g. masses and abundances for typical IBA applications. The GNU General Public License applies to the source code (`*.c` and `*.h` files) and any programs compiled thereof, scripts (`*.sh` and `*.py` files) and the software as a whole, but not to any of the [data](data), since the author of this software can not claim authorship of the data. Please note the exceptions to the GPL license under the following notice.
 
     Copyright (C) 2020 Jaakko Julin
 
@@ -80,7 +80,7 @@ get_stop 4He 2MeV -l "7Li0.60 6Li0.40" -t 1000tfu -v -v
 
 ## Using the jibal library with your own programs
 
-Using CMake is preferred, see directory "demo" for an example of a C++ program using Jibal.
+Using CMake is preferred, see directory [demo](demo) for an example of a C++ program using Jibal.
 
 Alternatively when compiling your programs against jibal you can get the compiler flags with pkg-config (assuming pkg-config finds the `jibal.pc` file)
 
