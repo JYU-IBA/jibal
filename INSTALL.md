@@ -64,7 +64,7 @@
     - Alternatively use *x86-windows* to compile 32-bit libraries. This is not recommended.
     - Use *x64 Native Tools Command Prompt for VS2019* if you get errors related to x86 vs x64 platform issues
 5. Clone JIBAL repository (this one)
-6. Build
+6. Build (from command line)
     - Set up your MSVC environment by running the vcvars64.bat (or opening the *x64 Native Tools Command Prompt for VS2019*)
     - Run the following (from wherever JIBAL is cloned to):
     
@@ -84,7 +84,6 @@
         
     - You can install it like any other msi installer, for quick deployment run this:
         
-          msiexec /i jibal-0.X.X-win64.msi /qb
-    
+          msiexec /i Jibal-0.X.X-win64.msi /qb
         
         
