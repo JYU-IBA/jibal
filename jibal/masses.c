@@ -20,8 +20,8 @@
 #include <string.h>
 #include <inttypes.h>
 #include <ctype.h>
-#include <math.h>
 #include <jibal_masses.h>
+#include <jibal_generic.h>
 #include <assert.h>
 #include "win_compat.h"
 #include "jibal_defaults.h"
@@ -159,7 +159,7 @@ jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
         jibal_element *e=&elements[isotope->Z];
         if(e->n_isotopes == 0) { /* We encounter this element for the first time */
             const char *isotope_name;
-            for(isotope_name=isotope->name; isdigit(*isotope_name); isotope_name++);
+            for(isotope_name=isotope->name; jibal_isdigit(*isotope_name); isotope_name++);
             strncpy(e->name, isotope_name, JIBAL_ISOTOPE_NAME_LENGTH);
         }
 
@@ -245,7 +245,7 @@ const jibal_element * jibal_element_find(const jibal_element *elements, const ch
         return NULL;
     if(*name == '\0')
         return NULL;
-    for(Z=0; isdigit(*n);  Z = Z*10+*(n++)-'0');
+    for(Z=0; jibal_isdigit(*n);  Z = Z*10+*(n++)-'0');
 
     int Z_max = jibal_elements_Zmax(elements);
 
@@ -365,7 +365,7 @@ const jibal_isotope * jibal_isotope_find(const jibal_isotope *isotopes, const ch
     if(!isotopes)
         return NULL;
     if(name != NULL) {
-        if (isdigit(*name)) { /* Isotope names usually start with a mass number */
+        if (jibal_isdigit(*name)) { /* Isotope names usually start with a mass number */
             for (isotope = isotopes; isotope->A != 0; isotope++) {
                 if (strcmp(isotope->name, name) == 0) {
                     return isotope;

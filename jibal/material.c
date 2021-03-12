@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <jibal_generic.h>
 #include <jibal_material.h>
 
 const char *parse_element(const char *start, const char **end_ptr, int *A_out, char **name_out, double *conc_out) {
@@ -15,7 +16,7 @@ const char *parse_element(const char *start, const char **end_ptr, int *A_out, c
             a++;
             continue;
         }
-        for (A=0; isdigit(*a); a++) {
+        for (A=0; jibal_isdigit(*a); a++) {
             A *= 10;
             A += (*a - '0');
         }

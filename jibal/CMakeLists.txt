@@ -62,6 +62,7 @@ add_library(jibal SHARED
         option.c
         cs.c
         registry.c
+        generic.c
         "$<$<BOOL:${WIN32}>:win_compat.c>"
         )
 

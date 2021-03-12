@@ -47,7 +47,7 @@
     - also earlier versions (MSVC 2017 and MSVC 2015) can be installed using the same installer
     - other compilers that work with CMake should work too, but are not tested on Windows
 2. Install [CMake](https://cmake.org/download/)
-    - Latest stable is always preferred (3.19.5 at the time of writing this)
+    - Latest stable is always preferred (3.19.6 at the time of writing this)
     - Allow the installer to add CMake to PATH for convenience
 3. Install [Git](https://git-scm.com/download/win)
     - Other tools, e.g. GitHub Desktop can be used too
@@ -62,17 +62,18 @@
             vcpkg.exe install gsl:x64-windows getopt:x64-windows
     
     - Alternatively use *x86-windows* to compile 32-bit libraries. This is not recommended.
+    - Use *x64 Native Tools Command Prompt for VS2019* if you get errors related to x86 vs x64 platform issues
 5. Clone JIBAL repository (this one)
 6. Build
     - Set up your MSVC environment by running the vcvars64.bat (or opening the *x64 Native Tools Command Prompt for VS2019*)
-    - Run the following (from wherever jibal is cloned to):
+    - Run the following (from wherever JIBAL is cloned to):
     
           mkdir build
           cd build
           cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ../
           
     - We use the `-G` option to select the MSVC compiler version. It's not strictly necessary. Use *Visual Studio 15 2017* for  MSVC 2017. Older versions are not supported.
-    - It may not be necessary to specify `$CMAKE_TOOLCHAIN_FILE$` explicitly either 
+    - It may not be necessary to specify `$CMAKE_TOOLCHAIN_FILE$` explicitly either if you followed the instructions
     - Run the following to build the library
     
           msbuild ALL_BUILD.vcxproj
