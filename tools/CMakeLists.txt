@@ -52,8 +52,8 @@ install(TARGETS get_stop get_kin jibaltool srim_gen_stop dpass_decode jibal_boot
         COMPONENT applications)
 
 if(WIN32) #Extra DLLs for Windows installation that are not handled by InstallRequiredSystemLibraries
-    if(Z_VCPKG_ROOT_DIR)
-        set(DLL_ROOT "${Z_VCPKG_ROOT_DIR}/installed/${VCPKG_TARGET_TRIPLET}/bin")
+    if(_VCPKG_INSTALLED_DIR)
+        set(DLL_ROOT "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin")
         message(STATUS "Trying to install extra DLLs (getopt.dll) from ${DLL_ROOT}")
     else()
         set(DLL_ROOT ".")
