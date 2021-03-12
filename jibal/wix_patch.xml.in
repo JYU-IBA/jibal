@@ -2,7 +2,7 @@
 	<CPackWiXFragment Id="#PRODUCTFEATURE">
         <Component Id="RegistryEntries" Directory="TARGETDIR" Guid="76F91C4D-AE06-4B21-B7E9-34850A01E5BD">
             <RegistryKey Root="HKLM"
-                     Key="Software\JYU\JIBAL§"
+                     Key="Software\JYU\JIBAL"
                      Action="createAndRemoveOnUninstall">
                 <RegistryValue Type="integer" Name="SomeIntegerValue" Value="1" KeyPath="yes"/>
                 <RegistryValue Type="string" Name="RootDirectory" Value="[INSTALL_ROOT]"/>
