@@ -14,7 +14,7 @@ Library that provides stopping forces, straggling models, cross sections and var
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
     
-This repository includes atomic mass data from the [AME2016 atomic mass evaluation](https://www-nds.iaea.org/amdc/) obtained from the IAEA website. The evaluation has been published in Chinese Physics C 41 (2017) 030002 [(PDF)](https://www-nds.iaea.org/amdc/ame2016/AME2016-a.pdf), 030003 [(PDF)](https://www-nds.iaea.org/amdc/ame2016/AME2016-b.pdf).
+This repository includes atomic mass data from the [AME2020 atomic mass evaluation](https://www-nds.iaea.org/amdc/) obtained from the IAEA website. The evaluation has been published in Chinese Physics C 45 (2021) 030002 [(PDF)](https://www-nds.iaea.org/amdc/ame2020/AME2020-a.pdf), 030003 [(PDF)](https://www-nds.iaea.org/amdc/ame2020/AME2020-b.pdf).
 
 This repository includes isotopic abundance data obtained from the CIAAW [website](https://ciaaw.org/isotopic-abundances.htm).
 

@@ -1,9 +1,12 @@
 #!/bin/bash
 datadir="../data/"
 
+amefile="massround.mas20.txt"
+ameurl="https://www-nds.iaea.org/amdc/ame2020/massround.mas20.txt"
 
-amefile="mass16.txt"
-ameurl="https://www-nds.iaea.org/amdc/ame2016/$amefile"
+#Check number of headers in ame_decoder.c before uncommenting.
+#amefile="mass16.txt"
+#ameurl="https://www-nds.iaea.org/amdc/ame2016/$amefile"
 
 #Uncomment for 2012 values
 #amefile="mass.mas12"

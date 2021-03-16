@@ -4,12 +4,12 @@
 #include <ctype.h>
 #include <inttypes.h>
 
-#define HEADER_LEN 39
+#define HEADER_LEN 34 /* May depend on version of AME */
 #define ELEM_LEN 4 /* Max 3 bytes for element name and null termination */
 #define MAX_ISOTOPES 3500
 
 #ifndef AMEFILE
-#define AMEFILE "../data/mass16.txt"
+#define AMEFILE "../data/massround.mas20.txt"
 #endif
 
 typedef struct {
@@ -26,7 +26,7 @@ isotope_t *populate_isotopes(const char *filename, int *n_isotopes) {
     int i, i_col, i_name;
     static unsigned char col_offsets[] = {0, 2, 6, 11, 16, 20, 24, 29, 42, 55, 65, 73, 76, 87, 96, 100, 114, 123};
     int len=col_offsets[n_cols]+1;
-    int headers=39;
+    int headers=HEADER_LEN;
     int lineno=0;
     int terminates=1, newline=0;
     char **cols;
@@ -81,6 +81,8 @@ isotope_t *populate_isotopes(const char *filename, int *n_isotopes) {
         isotopes[i].N=strtoimax(cols[2], NULL, 10);
         isotopes[i].Z=strtoimax(cols[3], NULL, 10);
         isotopes[i].A=strtoimax(cols[4], NULL, 10);
+        if(isotopes[i].A == 0) /* AME2020 gives A's only once per A. Stupid. */
+            isotopes[i].A = isotopes[i-1].A; 
         for(c=cols[5]; c < cols[5]+ELEM_LEN-1; c++) {
             if(isspace(*c))
                 continue;
