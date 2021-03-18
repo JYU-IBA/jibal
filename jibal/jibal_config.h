@@ -46,7 +46,9 @@ jibal_config jibal_config_defaults();
 jibal_config *jibal_config_init(const jibal_units *units, const char *filename, int seek);
 void jibal_config_finalize(jibal_config *config);
 char *jibal_config_filename_seek();
+void jibal_config_var_read(const jibal_units *units, FILE *f, const char *filename, jibal_config_var *vars); /* filename is needed because of JIBAL_CONFIG_VAR_PATH */
 int jibal_config_file_read(const jibal_units *units, jibal_config *config, const char *filename);
+void jibal_config_var_write(FILE *f, const jibal_config_var *vars);
 int jibal_config_file_write(jibal_config *config, FILE *file);
 int jibal_path_is_absolute(const char *path);
 char *jibal_path_cleanup(char *path);

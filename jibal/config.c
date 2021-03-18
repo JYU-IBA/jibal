@@ -72,9 +72,8 @@ const char *jibal_config_option_string(const jibal_config_var *var) {
     return jibal_option_get_string(var->option_list, i);
 }
 
-int jibal_config_file_write(jibal_config *config, FILE *f) {
-    jibal_config_var *vars=make_config_vars(config);
-    const jibal_config_var *var;
+void jibal_config_var_write(FILE *f, const jibal_config_var *vars) {
+   const jibal_config_var *var;
     for(var=vars; var->type != 0; var++) {
         switch(var->type) {
             case JIBAL_CONFIG_VAR_NONE:
@@ -102,6 +101,11 @@ int jibal_config_file_write(jibal_config *config, FILE *f) {
                 break;
         }
     }
+}
+
+int jibal_config_file_write(jibal_config *config, FILE *f) {
+    jibal_config_var *vars=make_config_vars(config);
+    jibal_config_var_write(f, vars);
     free(vars);
     return 0;
 }
@@ -153,18 +157,7 @@ int jibal_config_option_get(const jibal_config_var *var, const char *value) {
     return 0;
 }
 
-int jibal_config_file_read(const jibal_units *units, jibal_config *config, const char *filename) { /* Memory leaks in
- * config shouldn't happen (strings are freed and allocated as is necessary, so it is possible to read multiple
- * configuration files. */
-    if(!filename) {
-        return -2;
-    }
-    FILE *f=fopen(filename, "rb");
-    if(!f) {
-        fprintf(stderr, WARNING_STRING "Could not read configuration file \"%s\"\n", filename);
-        return -1;
-    }
-    jibal_config_var *vars=make_config_vars(config);
+void jibal_config_var_read(const jibal_units *units, FILE *f, const char *filename, jibal_config_var *vars) {
     const jibal_config_var *var;
     unsigned int lineno=0;
     char *line_orig = NULL;
@@ -255,6 +248,21 @@ int jibal_config_file_read(const jibal_units *units, jibal_config *config, const
         }
     }
     free(line_orig);
+}
+
+int jibal_config_file_read(const jibal_units *units, jibal_config *config, const char *filename) { /* Memory leaks in
+ * config shouldn't happen (strings are freed and allocated as is necessary, so it is possible to read multiple
+ * configuration files. */
+    if(!filename) {
+        return -2;
+    }
+    FILE *f=fopen(filename, "rb");
+    if(!f) {
+        fprintf(stderr, WARNING_STRING "Could not read configuration file \"%s\"\n", filename);
+        return -1;
+    }
+    jibal_config_var *vars = make_config_vars(config);
+    jibal_config_var_read(units, f, filename, vars); /* TODO: handle errors */
     fclose(f);
     free(vars);
     return 0;
