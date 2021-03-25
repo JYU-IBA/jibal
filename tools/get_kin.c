@@ -35,7 +35,13 @@ void print_kin_rbs(jibal *jibal, const jibal_isotope *incident, const jibal_isot
     }
     fprintf(stderr, "theta = %g deg\n", theta/C_DEG);
     fprintf(stderr, "theta_cm = %g deg\n", theta_cm/C_DEG);
-    fprintf(stderr, "E_rbs = %g keV\n", E_rbs/C_KEV);
+
+    if(incident->mass <= target->mass) {
+        fprintf(stderr, "E_rbs = %g keV\n", E_rbs/C_KEV);
+    } else {
+        fprintf(stderr, "E_rbs = %g keV (plus-sign solution)\n", E_rbs/C_KEV);
+        fprintf(stderr, "E_rbs = %g keV (minus-sign solution)\n", jibal_kin_rbs(incident->mass, target->mass, theta, '-')*E/C_KEV);
+    }
     fprintf(stderr, "RBS cross section = %g mb/sr (%s)\n", cs_rbs/C_MB_SR, jibal_cs_rbs_name(jibal->config));
 }
 
@@ -57,13 +63,15 @@ void print_kin_erd(jibal *jibal, const jibal_isotope *incident, const jibal_isot
     fprintf(stderr, "ERD cross section = %g mb/sr (%s)\n", cs_erd/C_MB_SR, jibal_cs_erd_name(jibal->config));
     double inverse_scaling = 4.0 * pow(sin(theta), 2.0) * cos(theta_cm - theta) * cos(phi) / (pow(sin(theta_cm), 2.0));
     double E_inv = (target->mass/incident->mass) * E;
-    fprintf(stderr, "ERD cross section is %g times the RBS cross section for %g MeV %s scattering from %s to an angle of %g deg\n",
-            inverse_scaling,
-            E_inv/C_MEV,
-            target->name,
-            incident->name,
-            theta/C_DEG
-    );
+    if(inverse_scaling > 0.0) {
+        fprintf(stderr, "ERD cross section is %g times the RBS cross section for %g MeV %s scattering from %s to an angle of %g deg\n",
+                inverse_scaling,
+                E_inv/C_MEV,
+                target->name,
+                incident->name,
+                theta/C_DEG
+        );
+    }
 }
 
 int main(int argc, char **argv) {
