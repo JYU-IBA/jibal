@@ -145,8 +145,30 @@ void jibal_material_free(jibal_material *material) {
     if(!material) {
         return;
     }
+    free(material->name);
+    for(size_t i = 0; i < material->n_elements; i++) {
+        free(material->elements[i].concs);
+        free(material->elements[i].isotopes);
+    }
     free(material->elements);
     free(material->concs);
     free(material);
-    /* TODO: free names of elements and formulae */
+}
+
+jibal_material *jibal_material_copy(const jibal_material *material) {
+    jibal_material *out = malloc(sizeof(jibal_material));
+    *out = *material;
+    if(material->elements) {
+        out->elements = malloc(material->n_elements * sizeof(jibal_element));
+        for(size_t i = 0; i < material->n_elements; i++) {
+            jibal_element *e = jibal_element_copy(&material->elements[i], 0);
+            out->elements[i] = *e;
+            free(e);
+        }
+    }
+    if(material->concs) {
+        out->concs = malloc(sizeof(double) * material->n_elements);
+        memcpy(out->concs, material->concs, sizeof(double ) * material->n_elements);
+    }
+    return out;
 }
