@@ -319,8 +319,10 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A) {
                 j++;
                 break;
             case JIBAL_NAT_ISOTOPES: /* Natural isotopes (above threshold) */
+#ifdef NAT_PREFIX
                 strcpy(e->name, "nat");
                 strncpy(e->name+3, element->name, JIBAL_ISOTOPE_NAME_LENGTH-3);
+#endif
                 if(element->isotopes[i]->abundance >= ABUNDANCE_THRESHOLD && j < n) {
                     e->isotopes[j] = element->isotopes[i];
                     e->concs[j] = element->isotopes[i]->abundance;
@@ -393,17 +395,21 @@ const jibal_isotope * jibal_isotope_find(const jibal_isotope *isotopes, const ch
                 Z = 1;
                 A = 1;
                 break;
-            case 'D':
+            case 'd':
                 Z = 1;
                 A = 2;
                 break;
-            case 'T':
+            case 't':
                 Z = 1;
                 A = 3;
                 break;
             case 'a':
                 Z = 2;
                 A = 4;
+                break;
+            case 'h':
+                Z = 2;
+                A = 3;
                 break;
             default:
                 return NULL;
