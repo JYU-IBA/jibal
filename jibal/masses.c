@@ -386,6 +386,8 @@ const jibal_isotope * jibal_isotope_find(const jibal_isotope *isotopes, const ch
             }
             return NULL; /* No match */
         }
+        if(strlen(name) != 1)
+            return NULL;
         switch (*name) { /* Couple of exceptions (hard coded one character nicknames) */
             case 'n': /* Not sure we should support neutrons, but here we are */
                 Z = 0;
