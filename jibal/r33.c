@@ -387,7 +387,9 @@ void r33_parse_reaction_string(r33_file *rfile) {
     while((*s >= 'a' && *s < 'z') || (*s >= 'A' && *s < 'Z')) /* And letters, like "p" or "Si" */
         s++;
     *s = '\0'; /* What remains after this is not our concern. The original reaction string is still stored in rfile->reaction */
-    fprintf(stderr, "Special snowflake is %s\n", rfile->reaction_nuclei[2]);
+#ifdef DEBUG
+    fprintf(stderr, "R33 special snowflake is %s\n", rfile->reaction_nuclei[2]);
+#endif
     free(p_str[0]);
 }
 int r33_double_to_int(double d) {
