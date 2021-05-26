@@ -99,6 +99,9 @@ void jibal_config_var_write(FILE *f, const jibal_config_var *vars) {
             case JIBAL_CONFIG_VAR_OPTION:
                 fprintf(f, "%s = %s\n", var->name, jibal_option_get_string(var->option_list, *((int *)var->variable)));
                 break;
+            case JIBAL_CONFIG_VAR_SIZE:
+                fprintf(f, "%s = %zu\n", var->name, *((size_t *)var->variable));
+                break;
         }
     }
 }
@@ -157,8 +160,66 @@ int jibal_config_option_get(const jibal_config_var *var, const char *value) {
     return 0;
 }
 
+void jibal_config_var_set(const jibal_units *units, jibal_config_var *var, const char *val, const char *filename) {
+#ifdef DEBUG
+    fprintf(stderr, "Setting \"%s\" (type %i) to \"%s\" (filename = %s)\n", var->name, var->type, val, filename);
+#endif
+    switch(var->type) {
+        case JIBAL_CONFIG_VAR_NONE:
+            break;
+        case JIBAL_CONFIG_VAR_STRING:
+            if(*((char **)var->variable)) { /*  Our void * is actually char ** */
+                free(*((char **)var->variable));
+            }
+            *((char **)var->variable)=strdup(val);
+            break;
+        case JIBAL_CONFIG_VAR_PATH:
+            if(*((char **)var->variable)) { /*  Our void * is actually char ** */
+                free(*((char **)var->variable));
+            }
+            if(jibal_path_is_absolute(val) || !filename) {
+#ifdef DEBUG
+                fprintf(stderr, "Path is absolute or no filename was given.\n");
+#endif
+                *((char **)var->variable)=strdup(val);
+            } else {
+                char *tmp=strdup(filename); /* Get a char we can mutilate */
+                char *tmp2=dirname(tmp);
+                char *out;
+                if(!tmp2 || strlen(tmp2) == 0) { /* Windows kludge. */
+                    out=strdup(val);
+                } else {
+                    if(asprintf(&out, "%s/%s", tmp2, val) < 0)
+                        out = NULL;
+                }
+                jibal_path_cleanup(out);
+                *((char **)var->variable)=out;
+                free(tmp);
+            }
+            break;
+        case JIBAL_CONFIG_VAR_BOOL:
+            *((int *)var->variable)=!strcmp(val, "true"); /* exactly "true" is 1, everything else is 0 */
+            break;
+        case JIBAL_CONFIG_VAR_INT:
+            *((int *)var->variable)=(int)strtol(val, NULL, 0); /* Unsafe for large integers */
+            break;
+        case JIBAL_CONFIG_VAR_DOUBLE:
+            *((double *)var->variable)=strtod(val, NULL);
+            break;
+        case JIBAL_CONFIG_VAR_UNIT:
+            *((double *)var->variable)=jibal_get_val(units, 0, val);
+            break;
+        case JIBAL_CONFIG_VAR_OPTION:
+            *((int *)var->variable)=jibal_option_get_value(var->option_list, val);
+            break;
+        case JIBAL_CONFIG_VAR_SIZE:
+            *((int *)var->variable)=(int)strtoul(val, NULL, 0); /* Handles up to 32 bit probably ok. */
+            break;
+    }
+}
+
 void jibal_config_var_read(const jibal_units *units, FILE *f, const char *filename, jibal_config_var *vars) {
-    const jibal_config_var *var;
+    jibal_config_var *var;
     unsigned int lineno=0;
     char *line_orig = NULL;
     size_t line_size=0;
@@ -190,61 +251,14 @@ void jibal_config_var_read(const jibal_units *units, FILE *f, const char *filena
         fprintf(stderr, "line %i, key=\"%s\", val=\"%s\"\n", lineno, line_var, line_val);
 #endif
         for(var=vars; var->type != 0; var++) {
-            if(strcmp(var->name, line_var)!=0) {
-                continue; /* Doesn't match */
+            if(strcmp(var->name, line_var) == 0) {
+                jibal_config_var_set(units, var, line_val, filename);
+                break;
             }
-            switch(var->type) {
-                case JIBAL_CONFIG_VAR_NONE: /* Execution never reaches this */
-                    break;
-                case JIBAL_CONFIG_VAR_STRING:
-                    if(*((char **)var->variable)) { /*  Our void * is actually char ** */
-                        free(*((char **)var->variable));
-                    }
-                    *((char **)var->variable)=strdup(line_val);
-                    break;
-                case JIBAL_CONFIG_VAR_PATH:
-                    if(*((char **)var->variable)) { /*  Our void * is actually char ** */
-                        free(*((char **)var->variable));
-                    }
-                    if(jibal_path_is_absolute(line_val)) {
-                        *((char **)var->variable)=strdup(line_val);
-                    } else {
-                        char *tmp=strdup(filename); /* Get a char we can mutilate */
-                        char *tmp2=dirname(tmp);
-                        char *out;
-                        if(!tmp2 || strlen(tmp2) == 0) { /* Windows kludge. */
-                            out=strdup(line_val);
-                        } else {
-                            if (asprintf(&out, "%s/%s", tmp2, line_val) < 0)
-                                out = NULL;
-                        }
-                        jibal_path_cleanup(out);
-                        *((char **)var->variable)=out;
-                        free(tmp);
-                    }
-                    break;
-                case JIBAL_CONFIG_VAR_BOOL:
-                    *((int *)var->variable)=!strcmp(line_val, "true"); /* exactly "true" is 1, everything else is 0 */
-                    break;
-                case JIBAL_CONFIG_VAR_INT:
-                    *((int *)var->variable)=(int)strtol(line_val, NULL, 0); /* Unsafe for large integers */
-                    break;
-                case JIBAL_CONFIG_VAR_DOUBLE:
-                    *((double *)var->variable)=strtod(line_val, NULL);
-                    break;
-                case JIBAL_CONFIG_VAR_UNIT:
-                    *((double *)var->variable)=jibal_get_val(units, 0, line_val);
-                    break;
-                case JIBAL_CONFIG_VAR_OPTION:
-                    *((int *)var->variable)=jibal_option_get_value(var->option_list, line_val);
-                    break;
-            }
-            break;
         }
         if(var->type == 0) {
             fprintf(stderr, "JIBAL WARNING: line %i of configuration file: unknown variable \"%s\" with value \"%s\" "
-                            "ignored\n",
-                    lineno, line_var, line_val);
+                            "ignored\n", lineno, line_var, line_val);
         }
     }
     free(line_orig);
