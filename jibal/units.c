@@ -56,6 +56,7 @@ jibal_units *jibal_units_default() {
     units=jibal_units_add(units, 1.0, UNIT_TYPE_CURRENT, "A");
     units=jibal_units_add(units, 1.0, UNIT_TYPE_MAGNETIC_FIELD, "T");
     units=jibal_units_add(units, 1.0e-4, UNIT_TYPE_MAGNETIC_FIELD, "G");
+    units=jibal_units_add(units, 1.0, UNIT_TYPE_SOLID_ANGLE, "sr");
     return units;
 }
 
