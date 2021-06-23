@@ -38,6 +38,12 @@ typedef struct {
     const jibal_option *option_list; /* Only used with type == JIBAL_CONFIG_VAR_OPTION */
 } jibal_config_var;
 
+typedef struct {
+    char *filename; /* filename is needed because of JIBAL_CONFIG_VAR_PATH, can be NULL (no path) */
+    const jibal_units *units; /* units are needed for vars with units */
+    jibal_config_var *vars; /* Terminated with an entry with type==JIBAL_CONFIG_VAR_NONE */
+} jibal_config_file; /* TODO: unused! */
+
 int jibal_config_option_get(const jibal_config_var *var, const char *value); /* For var->type == JIBAL_CONFIG_VAR_OPTION */
 const char *jibal_config_option_string(const jibal_config_var *var); /* For var->type == JIBAL_CONFIG_VAR_OPTION */
 char *jibal_config_user_dir();
@@ -45,14 +51,15 @@ int jibal_config_user_dir_mkdir_if_necessary();
 char *jibal_config_user_config_filename();
 jibal_config jibal_config_defaults();
 jibal_config *jibal_config_init(const jibal_units *units, const char *filename, int seek);
-void jibal_config_finalize(jibal_config *config);
+void jibal_config_free(jibal_config *config);
 char *jibal_config_filename_seek();
+int jibal_config_read_from_file(const jibal_units *units, jibal_config *config, const char *filename);
+void jibal_config_finalize(jibal_config *config);
+int jibal_config_write_to_file(jibal_config *config, const char *filename);
+
 void jibal_config_var_set(const jibal_units *units, jibal_config_var *var, const char *val, const char *filename); /* filename is needed because of JIBAL_CONFIG_VAR_PATH, can be NULL (no path) */
-void jibal_config_var_read(const jibal_units *units, FILE *f, const char *filename, jibal_config_var *vars); /* filename is needed because of JIBAL_CONFIG_VAR_PATH, can be NULL (no path) */
-int jibal_config_file_read(const jibal_units *units, jibal_config *config, const char *filename);
+int jibal_config_var_read(const jibal_units *units, const char *filename, jibal_config_var *vars); /* filename is needed because of JIBAL_CONFIG_VAR_PATH, can be NULL (no path) */
 void jibal_config_var_write(FILE *f, const jibal_config_var *vars);
-int jibal_config_file_write(jibal_config *config, FILE *file);
 int jibal_path_is_absolute(const char *path);
 char *jibal_path_cleanup(char *path);
-void jibal_config_free(jibal_config *config);
 #endif /* _JIBAL_CONFIG_H_ */

@@ -109,7 +109,7 @@ int bootstrap_write_user_config(jibal_config *config) {
         retval = -1;
     } else {
         fprintf(stderr, "You are a brave soul. Writing.\n");
-        jibal_config_file_write(config, config_out);
+        jibal_config_write_to_file(config, config_out);
         fprintf(stderr, "Writing complete.\n");
         fclose(config_out);
     }
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
 
     fprintf(stderr, "A blank user configuration would look like this (with my best guesses):\n\n");
     fprintf(stderr, "======================================================================\n");
-    jibal_config_file_write(config, stderr);
+    jibal_config_write_to_file(config, stderr);
     fprintf(stderr, "======================================================================\n");
     fprintf(stderr, "\nI could write it to %s, where JIBAL could find it.\n", user_configfile);
 

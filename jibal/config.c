@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <libgen.h>
 #endif
+#include <jibal_generic.h>
 #include <jibal_config.h>
 #include <jibal_defaults.h>
 
@@ -59,6 +60,8 @@ jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure 
     for(n_vars=0; vars[n_vars].type != 0; n_vars++);
     size_t s=sizeof(jibal_config_var)*(n_vars+1); /* +1 because the null termination didn't count */
     jibal_config_var *vars_out=malloc(s);
+    if(!vars_out)
+        return NULL;
     memcpy(vars_out, vars, s);
     return vars_out;
 }
@@ -106,7 +109,10 @@ void jibal_config_var_write(FILE *f, const jibal_config_var *vars) {
     }
 }
 
-int jibal_config_file_write(jibal_config *config, FILE *f) {
+int jibal_config_write_to_file(jibal_config *config, const char *filename) {
+    FILE *f = jibal_fopen(filename, "w");
+    if(!f)
+        return 1;
     jibal_config_var *vars=make_config_vars(config);
     jibal_config_var_write(f, vars);
     free(vars);
@@ -218,11 +224,17 @@ void jibal_config_var_set(const jibal_units *units, jibal_config_var *var, const
     }
 }
 
-void jibal_config_var_read(const jibal_units *units, FILE *f, const char *filename, jibal_config_var *vars) {
+int jibal_config_var_read(const jibal_units *units, const char *filename, jibal_config_var *vars) {
     jibal_config_var *var;
     unsigned int lineno=0;
     char *line_orig = NULL;
     size_t line_size=0;
+    if(!filename)
+        return 1;
+    FILE *f = fopen(filename, "r");
+    if(!f) {
+        return 1;
+    }
     while(getline(&line_orig, &line_size, f) > 0) {
         char *line=line_orig;
         lineno++;
@@ -262,22 +274,21 @@ void jibal_config_var_read(const jibal_units *units, FILE *f, const char *filena
         }
     }
     free(line_orig);
+    return 0;
 }
 
-int jibal_config_file_read(const jibal_units *units, jibal_config *config, const char *filename) { /* Memory leaks in
+int jibal_config_read_from_file(const jibal_units *units, jibal_config *config, const char *filename) { /* Memory leaks in
  * config shouldn't happen (strings are freed and allocated as is necessary, so it is possible to read multiple
  * configuration files. */
     if(!filename) {
-        return -2;
-    }
-    FILE *f=fopen(filename, "rb");
-    if(!f) {
-        fprintf(stderr, WARNING_STRING "Could not read configuration file \"%s\"\n", filename);
-        return -1;
+        return 1;
     }
     jibal_config_var *vars = make_config_vars(config);
-    jibal_config_var_read(units, f, filename, vars); /* TODO: handle errors */
-    fclose(f);
+    if(!vars)
+        return 0;
+    if(jibal_config_var_read(units, filename, vars)) {
+        fprintf(stderr, WARNING_STRING "Could not read configuration file \"%s\"\n", filename);
+    }
     free(vars);
     return 0;
 }
@@ -475,7 +486,7 @@ jibal_config *jibal_config_init(const jibal_units *units, const char *filename, 
         f=jibal_config_filename_seek();
     }
     if(f) {
-        config->error = jibal_config_file_read(units, config, f);
+        config->error = jibal_config_read_from_file(units, config, f);
     }
     jibal_config_finalize(config);
     return config; /* Note: configuration is not validated. We only set config.error if we TRIED to read a configuration file but failed.  */

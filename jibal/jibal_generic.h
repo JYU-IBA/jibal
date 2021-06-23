@@ -15,10 +15,12 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <stdio.h>
 
 #ifndef _JIBAL_GENERIC_H_
 #define _JIBAL_GENERIC_H_
 
 int jibal_isdigit(char c);
-
+FILE *jibal_fopen(const char *filename, const char *mode); /* opens file and returns file pointer (like fopen()), returns NULL if fails, stderr if filename is NULL, stdout if filename is "-" */
+void jibal_fclose(FILE *f); /* fclose() unless f is either stdin, stdout or stderr */
 #endif // _JIBAL_GENERIC_H_

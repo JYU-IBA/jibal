@@ -278,9 +278,7 @@ int print_elements(jibaltool_global *global, int argc, char **argv) {
 }
 
 int print_config(jibaltool_global *global, int argc, char **argv) {
-    FILE *out=jibaltool_open_output(global);
-    jibal_config_file_write(global->jibal->config, out);
-    jibaltool_close_output(out);
+    jibal_config_write_to_file(global->jibal->config, global->outfilename);
     return 0;
 }
 
