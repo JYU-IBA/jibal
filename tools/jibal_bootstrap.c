@@ -94,8 +94,7 @@ char read_user_response(const char *question) {
     }
 }
 
-int bootstrap_write_user_config(jibal_config *config) {
-    int retval=0;
+int bootstrap_write_user_config(const jibal_units *units, jibal_config *config) {
     if(jibal_config_user_dir_mkdir_if_necessary() != 0) {
         char *user_dir=jibal_config_user_dir();
         fprintf(stderr, "Directory %s doesn't exist and can not be created. Try creating it manually. Now.\n", user_dir);
@@ -103,17 +102,13 @@ int bootstrap_write_user_config(jibal_config *config) {
         while(read_user_response("Are you ready to continue?") != 'y') {}; /* Infinite loop */
     }
     char *user_configfile=jibal_config_user_config_filename();
-    FILE *config_out = fopen(user_configfile, "w");
-    if(!config_out) {
+    if(jibal_config_write_to_file(units, config, user_configfile)) {
         fprintf(stderr, "I can't write to that damn file.\n");
-        retval = -1;
+        return 1;
     } else {
-        fprintf(stderr, "You are a brave soul. Writing.\n");
-        jibal_config_write_to_file(config, config_out);
-        fprintf(stderr, "Writing complete.\n");
-        fclose(config_out);
+        fprintf(stderr, "You are a brave soul. Write complete.\n");
     }
-    return retval;
+    return 0;
 }
 
 void bootstrap_make_blanks(const char *user_dir, const char *filename) { /* Silently creates empty files if they don't
@@ -172,7 +167,7 @@ int main(int argc, char *argv[]) {
 
     fprintf(stderr, "A blank user configuration would look like this (with my best guesses):\n\n");
     fprintf(stderr, "======================================================================\n");
-    jibal_config_write_to_file(config, stderr);
+    jibal_config_write_to_file(units, config, NULL);
     fprintf(stderr, "======================================================================\n");
     fprintf(stderr, "\nI could write it to %s, where JIBAL could find it.\n", user_configfile);
 
@@ -187,7 +182,7 @@ int main(int argc, char *argv[]) {
         }
     }
     if(r == 'y') {
-        if(bootstrap_write_user_config(config) == 0) { /* Success */
+        if(bootstrap_write_user_config(units, config) == 0) { /* Success */
             bootstrap_make_blanks(user_dir, config->files_file);
             bootstrap_make_blanks(user_dir, config->assignments_file);
         }
