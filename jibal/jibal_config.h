@@ -21,7 +21,7 @@ typedef struct {
 
 typedef enum {
     JIBAL_CONFIG_VAR_NONE = 0,
-    JIBAL_CONFIG_VAR_STRING = 1, /* C string, aka. NUL terminated char * */
+    JIBAL_CONFIG_VAR_STRING = 1, /* C string, aka. NUL terminated char *. */
     JIBAL_CONFIG_VAR_PATH = 2, /* Internally same as above, but we assume relative paths are relative to the config file */
     JIBAL_CONFIG_VAR_BOOL = 3, /* Internally an int */
     JIBAL_CONFIG_VAR_INT = 4, /* 32-bit signed int (aka int) */
@@ -34,7 +34,7 @@ typedef enum {
 typedef struct {
     jibal_config_var_type type;
     const char *name;
-    void *variable;
+    const void *variable; /* this is the pointer to data. We don't free these, so memory must be allocated for the duration of use. Note that for strings variable is supposed to be char ** and we allocate new char * (and free old ones) as is necessary. */
     const jibal_option *option_list; /* Only used with type == JIBAL_CONFIG_VAR_OPTION */
 } jibal_config_var;
 
@@ -58,13 +58,12 @@ void jibal_config_finalize(jibal_config *config);
 int jibal_config_write_to_file(const jibal_units *units, jibal_config *config, const char *filename);
 
 jibal_config_file *jibal_config_file_init(const jibal_units *units);
-int jibal_config_file_set_vars(jibal_config_file *cf, jibal_config_var *vars);
+int jibal_config_file_set_vars(jibal_config_file *cf, jibal_config_var *vars); /* the vars will now be "owned" by the config file and free'd with jibal_config_file_free(). */
 void jibal_config_file_free(jibal_config_file *cf);
 int jibal_config_file_read(jibal_config_file *cf, const char *filename);
 int jibal_config_file_write(const jibal_config_file *cf, const char *filename);
+int jibal_config_file_var_set(jibal_config_file *cf, const char *var, const char *val);
 
-void jibal_config_var_set(const jibal_units *units, jibal_config_var *var, const char *val, const char *filename); /* filename is needed because of JIBAL_CONFIG_VAR_PATH, can be NULL (no path) */
-void jibal_config_var_write(FILE *f, const jibal_config_var *vars);
 int jibal_path_is_absolute(const char *path);
 char *jibal_path_cleanup(char *path);
 #endif /* _JIBAL_CONFIG_H_ */
