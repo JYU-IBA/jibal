@@ -502,6 +502,10 @@ int jibal_config_file_var_set(jibal_config_file *cf, const char *var_str, const 
     if(var->type == 0) { /* No matching var was found */
         return 1;
     }
+    return jibal_config_var_set(cf->units, var, val, cf->filename);
+}
+
+int jibal_config_var_set(const jibal_units *units, jibal_config_var *var, const char *val, const char *filename) {
     if(var->variable == NULL) { /* No data pointer has been set */
         return 1;
     }
@@ -519,13 +523,13 @@ int jibal_config_file_var_set(jibal_config_file *cf, const char *var_str, const 
             if(*((char **)var->variable)) { /*  Our void * is actually char ** */
                 free(*((char **)var->variable));
             }
-            if(jibal_path_is_absolute(val) || !cf->filename) {
+            if(jibal_path_is_absolute(val) || !filename) {
 #ifdef DEBUG
                 fprintf(stderr, "Path is absolute or no filename was given.\n");
 #endif
                 *((char **)var->variable)=strdup(val);
             } else {
-                char *tmp=strdup(cf->filename); /* Get a char we can mutilate */
+                char *tmp=strdup(filename); /* Get a char we can mutilate */
                 char *tmp2=dirname(tmp);
                 char *out;
                 if(!tmp2 || strlen(tmp2) == 0) { /* Windows kludge. */
@@ -549,7 +553,7 @@ int jibal_config_file_var_set(jibal_config_file *cf, const char *var_str, const 
             *((double *)var->variable)=strtod(val, NULL);
             break;
         case JIBAL_CONFIG_VAR_UNIT:
-            *((double *)var->variable)=jibal_get_val(cf->units, 0, val);
+            *((double *)var->variable)=jibal_get_val(units, 0, val);
             break;
         case JIBAL_CONFIG_VAR_OPTION:
             *((int *)var->variable)=jibal_option_get_value(var->option_list, val);

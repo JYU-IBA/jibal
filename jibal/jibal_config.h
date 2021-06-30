@@ -63,6 +63,7 @@ void jibal_config_file_free(jibal_config_file *cf);
 int jibal_config_file_read(jibal_config_file *cf, const char *filename);
 int jibal_config_file_write(const jibal_config_file *cf, const char *filename);
 int jibal_config_file_var_set(jibal_config_file *cf, const char *var, const char *val);
+int jibal_config_var_set(const jibal_units *units, jibal_config_var *var, const char *val, const char *filename);
 
 int jibal_path_is_absolute(const char *path);
 char *jibal_path_cleanup(char *path);
