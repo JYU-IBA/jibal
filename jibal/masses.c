@@ -28,7 +28,7 @@
 
 //#include "win_compat.h"
 
-int isotope_set(jibal_isotope *isotope, int Z, int N, int A, double mass, isotope_name name) {
+int isotope_set(jibal_isotope *isotope, int Z, int N, int A, double mass, const char *name) {
     if(!isotope) {
         return -1;
     }
@@ -37,10 +37,12 @@ int isotope_set(jibal_isotope *isotope, int Z, int N, int A, double mass, isotop
     isotope->A=A;
     isotope->mass=mass*C_U;
     isotope->abundance=0.0; /* TODO: Change this later */
+    isotope->name[0] = '\0';
     if(N+Z != A) {
         fprintf(stderr, "Mass number A=%i does not match with N=%i and Z=%i\n", A, N, Z);
     }
-    strncpy(isotope->name, name, JIBAL_ISOTOPE_NAME_LENGTH);
+    strncpy(isotope->name, name, JIBAL_ISOTOPE_NAME_LENGTH-1);
+    isotope->name[JIBAL_ISOTOPE_NAME_LENGTH-1] = '\0';
     return 0;
 }
 
