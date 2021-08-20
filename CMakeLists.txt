@@ -5,10 +5,12 @@ if(WIN32 AND DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   message(STATUS "CMake toolchain file ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 project(Jibal
-        VERSION 0.3.1
+        VERSION 0.3.2
         DESCRIPTION "JIBAL - Jyväskylä ion beam analysis library"
         LANGUAGES C
         )
+string(TIMESTAMP timestamp "%Y-%m-%d" UTC)
+configure_file(CITATION.cff.in CITATION.cff @ONLY)
 set(default_build_type "Release")
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
   set(default_build_type "Debug")
