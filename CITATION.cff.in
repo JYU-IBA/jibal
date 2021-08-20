@@ -4,7 +4,7 @@ authors:
  - family-names: "Julin"
    given-names: "Jaakko"
    orcid: "https://orcid.org/0000-0003-4376-891X"
-title: "JIBAL"
+title: "Jyväskylä Ion Beam Analysis Library (JIBAL)"
 repository-code: "https://github.com/JYU-IBA/jibal"
 license: GPL-2.0-or-later
 version: @Jibal_VERSION@
