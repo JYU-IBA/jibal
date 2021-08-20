@@ -57,7 +57,7 @@
 #define JIBAL_FILES_FILE "files.txt"
 #define JIBAL_ASSIGNMENTS_FILE "assignments.txt"
 
-#define JIBAL_MAX_Z 92
+#define JIBAL_MAX_Z 94
 
 #define WARNING_STRING "JIBAL WARNING: "
 #define ERROR_STRING "JIBAL ERROR: "
