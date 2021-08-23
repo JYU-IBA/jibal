@@ -157,7 +157,9 @@ void jibal_material_free(jibal_material *material) {
 
 jibal_material *jibal_material_copy(const jibal_material *material) {
     jibal_material *out = malloc(sizeof(jibal_material));
-    *out = *material;
+    //*out = *material;
+    out->n_elements = material->n_elements;
+    out->name = strdup(material->name);
     if(material->elements) {
         out->elements = malloc(material->n_elements * sizeof(jibal_element));
         for(size_t i = 0; i < material->n_elements; i++) {

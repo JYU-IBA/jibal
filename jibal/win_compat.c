@@ -43,7 +43,6 @@ char *dirname(char *path) {
 #include <stdarg.h>
 #include <stdlib.h>
 
-#define vscprintf _vscprintf
 int vasprintf(char **strp, const char *format, va_list ap)
 {
     int len = vscprintf(format, ap);
