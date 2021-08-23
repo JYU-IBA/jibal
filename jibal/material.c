@@ -161,7 +161,7 @@ jibal_material *jibal_material_copy(const jibal_material *material) {
     if(material->elements) {
         out->elements = malloc(material->n_elements * sizeof(jibal_element));
         for(size_t i = 0; i < material->n_elements; i++) {
-            jibal_element *e = jibal_element_copy(&material->elements[i], 0);
+            jibal_element *e = jibal_element_copy(&material->elements[i], JIBAL_ALL_ISOTOPES);
             out->elements[i] = *e;
             free(e);
         }

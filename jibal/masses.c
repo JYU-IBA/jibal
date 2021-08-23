@@ -317,7 +317,11 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A) {
         switch(A) {
             case JIBAL_ALL_ISOTOPES: /* All isotopes */
                 e->isotopes[i] = element->isotopes[i];
-                e->concs[i] = element->isotopes[i]->abundance;
+                if(element->concs) {
+                    e->concs[i] = element->concs[i];
+                } else {
+                    e->concs[i] = element->isotopes[i]->abundance;
+                }
                 j++;
                 break;
             case JIBAL_NAT_ISOTOPES: /* Natural isotopes (above threshold) */
