@@ -15,12 +15,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <jibal.h>
 #include <jibal_config.h>
 #include <jibal_defaults.h>
+#include "win_compat.h"
 
 jibal *jibal_init(const char *config_filename) {
     jibal *jibal = malloc(sizeof(struct jibal));
