@@ -12,9 +12,9 @@ project(Jibal
 string(TIMESTAMP timestamp "%Y-%m-%d" UTC)
 configure_file(CITATION.cff.in CITATION.cff @ONLY)
 set(default_build_type "Release")
-if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
-  set(default_build_type "Debug")
-endif()
+#if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+#  set(default_build_type "Debug")
+#endif()
 
 option(DEBUG_MODE_ENABLE "Enable debug mode" OFF)
 if(DEBUG_MODE_ENABLE)
