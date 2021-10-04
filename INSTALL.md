@@ -1,4 +1,4 @@
-# BUILD AND INSTALL INSTRUCTIONS FOR JIBAL (incomplete)
+# BUILD AND INSTALL INSTRUCTIONS FOR JIBAL
 
 ## Minimum requirements:
 - Microsoft Windows 8.1 or newer, tested on Windows 10  **OR**
@@ -8,6 +8,7 @@
 - Almost any C compiler (GCC, Clang, MSVC >= 2015) with C99 support **AND**
 - GNU Scientific Library (GSL) >= 2.4  **AND**
 - CMake >= 3.13, older versions might work on some systems too
+- Git
 
 ## Installation instructions for Linux / MacOS (also see MacOS specific instructions below):
 1. Install *git*, *CMake*, and *GNU Scientific Library (GSL)* using your distributions package manager
@@ -43,7 +44,7 @@
 ## Installation instructions for Microsoft Windows 10:
 
 1. Install Build tools for [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)
-    - note that full MSVC is not necessary!
+    - note that full MSVC is not necessary, only the build tools!
     - also earlier versions (MSVC 2017 and MSVC 2015) can be installed using the same installer
     - other compilers that work with CMake should work too, but are not tested on Windows
 2. Install [CMake](https://cmake.org/download/)
@@ -76,14 +77,18 @@
     - It may not be necessary to specify `$CMAKE_TOOLCHAIN_FILE$` explicitly either if you followed the instructions
     - Run the following to build the library
     
-          msbuild ALL_BUILD.vcxproj
+          cmake --build . --target ALL_BUILD --config Release
           
     - You can make an installer, it requires [WiX](https://wixtoolset.org/), run the following:
          
+          cmake --build . --target PACKAGE --config Release
+          
+    - Alternatively you may use the vcxproj files with Visual Studio or use *msbuild*:
+   
           msbuild PACKAGE.vcxproj
-        
+          
     - You can install it like any other msi installer, for quick deployment run this:
         
-          msiexec /i Jibal-0.X.X-win64.msi /qb
+        msiexec /i Jibal-0.X.X-win64.msi /qb
         
         
