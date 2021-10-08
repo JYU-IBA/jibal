@@ -5,7 +5,7 @@ if(WIN32 AND DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   message(STATUS "CMake toolchain file ${CMAKE_TOOLCHAIN_FILE}")
 endif()
 project(Jibal
-        VERSION 0.3.3
+        VERSION 0.3.4
         DESCRIPTION "JIBAL - Jyväskylä ion beam analysis library"
         LANGUAGES C
         )
