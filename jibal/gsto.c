@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/param.h>
 #include <string.h>
 #include <math.h>
 #include <assert.h>
@@ -45,7 +46,13 @@ int gsto_add_file(jibal_gsto *workspace, const char *name, const char *filename)
     memset(new_file, 0, sizeof(gsto_file_t));
     new_file->valid = TRUE; /* Will be set to FALSE if there are errors later */
     new_file->name = strdup(name);
-    new_file->filename = strdup(filename);
+    new_file->filename = malloc(sizeof(char) * PATH_MAX);
+    if(!realpath(filename, new_file->filename)) {
+        fprintf(stderr, "Can not convert filename \"%s\" to an absolute path.\n", name);
+        free(new_file->name);
+        free(new_file->filename);
+        return 0;
+    }
     success=jibal_gsto_load(workspace, TRUE, new_file);
 
     if(success) {

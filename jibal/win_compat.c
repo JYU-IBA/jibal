@@ -42,6 +42,7 @@ char *dirname(char *path) {
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <fileapi.h>
 
 int vasprintf(char **strp, const char *format, va_list ap)
 {
@@ -67,6 +68,13 @@ int asprintf(char **strp, const char *format, ...)
     int retval = vasprintf(strp, format, ap);
     va_end(ap);
     return retval;
+}
+
+char *realpath(const char *restrict file_name, char *restrict resolved_name) {
+    DWORD len = GetFullPathNameA(file_name, MAX_PATH, resolved_name, NULL);
+    if(len == 0)
+        return NULL;
+    else return resolved_name;
 }
 
 

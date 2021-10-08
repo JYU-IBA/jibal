@@ -6,6 +6,7 @@
 #define R_OK 4
 char *strsep(char **, const char *);
 char *dirname(char *path);
+char *realpath(const char *restrict file_name, char *restrict resolved_name);
 #endif
 #ifdef _MSC_VER
 #include <stdarg.h>
