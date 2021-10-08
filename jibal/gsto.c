@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/param.h>
 #include <string.h>
 #include <math.h>
 #include <assert.h>
@@ -14,6 +13,7 @@
 #include "win_compat.h"
 #else
 #include <libgen.h>
+#include <sys/param.h>
 #endif
 #include "jibal_stragg.h"
 

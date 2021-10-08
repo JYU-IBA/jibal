@@ -1,5 +1,6 @@
 REM This script probably doesn't work, but it gives you an idea how the process should work
-"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+REM Run this bat script using x64 Native Tools Command Prompt for VS 2019 or run the following bat before running this script
+REM "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
 mkdir build
 cd build
 REM In case you run into errors, delete the build directory or at least delete the CMakeCache.txt file

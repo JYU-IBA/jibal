@@ -4,6 +4,9 @@
 #define F_OK 0
 #define W_OK 2
 #define R_OK 4
+#ifndef PATH_MAX
+#define PATH_MAX _MAX_PATH
+#endif
 char *strsep(char **, const char *);
 char *dirname(char *path);
 char *realpath(const char *restrict file_name, char *restrict resolved_name);

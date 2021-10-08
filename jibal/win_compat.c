@@ -72,9 +72,12 @@ int asprintf(char **strp, const char *format, ...)
 
 char *realpath(const char *restrict file_name, char *restrict resolved_name) {
     DWORD len = GetFullPathNameA(file_name, MAX_PATH, resolved_name, NULL);
-    if(len == 0)
+    if(len == 0)  {
         return NULL;
-    else return resolved_name;
+    } else {
+        // fprintf(stderr, "Original file name: %s, Resolved name: %s\n", file_name, resolved_name);
+        return resolved_name;
+    }
 }
 
 
