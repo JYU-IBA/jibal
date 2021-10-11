@@ -172,6 +172,7 @@ r33_file *r33_file_read(const char *filename) {
         return NULL;
     }
     r33_file *rfile = r33_file_alloc();
+    rfile->filename = strdup(filename);
     char *line = NULL;
     size_t line_size = 0;
     size_t lineno = 0;
