@@ -490,9 +490,7 @@ int jibal_config_file_write(const jibal_config_file *cf, const char *filename) {
 }
 
 int jibal_config_file_var_set(jibal_config_file *cf, const char *var_str, const char *val) {
-#ifdef DEBUG
-    fprintf(stderr, "Setting \"%s\" (type %i) to \"%s\" (filename = %s)\n", var->name, var->type, val, filename);
-#endif
+
     jibal_config_var *var;
     for(var = cf->vars; var->type != 0; var++) {
         if(strcmp(var->name, var_str) == 0) {
@@ -502,6 +500,9 @@ int jibal_config_file_var_set(jibal_config_file *cf, const char *var_str, const 
     if(var->type == 0) { /* No matching var was found */
         return 1;
     }
+#ifdef DEBUG
+    fprintf(stderr, "Setting \"%s\" (type %i) to \"%s\" (filename = %s)\n", var->name, var->type, val, cf->filename);
+#endif
     return jibal_config_var_set(cf->units, var, val, cf->filename);
 }
 
