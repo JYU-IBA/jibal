@@ -475,12 +475,12 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
     size_t line_size=0;
     int actually_skipped=0;
 #ifdef DEBUG
-    fprintf(stderr, "Loading ascii data.\n");
+    fprintf(stderr, "Loading ascii data from file %s.\n", file->name);
 #endif
 
     for (Z1 = file->Z1_min; Z1 <= file->Z1_max && Z1 <= workspace->Z1_max; Z1++) {
         for (Z2 = file->Z2_min; Z2 <= file->Z2_max && Z2 <= workspace->Z2_max; Z2++) {
-            if (file == jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2) || Z1 == JIBAL_ANY_Z || Z2 == JIBAL_ANY_Z) {
+            if (Z1 == JIBAL_ANY_Z || Z2 == JIBAL_ANY_Z || file == jibal_gsto_get_assigned_file(workspace, file->type, Z1, Z2)) {
 #ifdef DEBUG
                 fprintf(stderr, "File %s is assigned to Z1 = %i, Z2 = %i\n", file->name, Z1, Z2);
 #endif
@@ -1109,6 +1109,7 @@ gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, gsto_stopping_t
     if(Z1 > workspace->Z1_max || Z2 > workspace->Z2_max) {
         return NULL; /* Z1 or Z2 out of range of our workspace */
     }
+    assert(Z1 > 0 && Z2 > 0);
     size_t i = jibal_gsto_table_get_index(workspace, Z1, Z2);
     assert(i < workspace->n_comb);
     if(type == GSTO_STO_ELE)
@@ -1252,6 +1253,9 @@ double jibal_gsto_get_em(jibal_gsto *workspace, gsto_stopping_type type, int Z1,
     if(!file || !file->data) {
         return 0.0;
     }
+#ifdef DEBUG_VERBOSE
+    fprintf(stderr, "jibal_gsto_get_em(%p, type = %i, Z1 = %i, Z2 = %i, em = %e (%g keV/u)). File is %s.\n", (void *)workspace, type, Z1, Z2, em, em/(C_KEV/C_U), file->name);
+#endif
     const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
     assert(data);
     int lo;
