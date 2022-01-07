@@ -44,10 +44,6 @@
 #define M_PI_2 (3.14159265358979323846264338327950288/2.0)
 #endif
 
-#ifndef M_2_PI
-#define M_2_PI (2.0*3.14159265358979323846264338327950288)
-#endif
-
 #include <stdio.h>
 
 #define C_US (1.0e-6)
@@ -68,8 +64,8 @@
 
 #define C_PI M_PI
 #define C_PI_2 M_PI_2
-#define C_2_PI M_2_PI
-#define C_DEG (C_2_PI/360.0) /* degree */
+#define C_2PI (2.0*C_PI) /* two times pi, not 2/pi like M_2_PI */
+#define C_DEG (C_2PI/360.0) /* degree */
 #define C_FWHM (2.35482004503)
 #define C_PERCENT (0.01)
 #define C_U (1.66053906660e-27) /* atomic mass unit, kg */
