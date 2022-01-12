@@ -16,8 +16,8 @@ double jibal_stragg(jibal_gsto *workspace, const jibal_isotope *incident, const 
 }
 
 double jibal_stragg_bohr(int Z1, int Z2) {
-    const double bohr = 4.0 * C_PI * pow(C_E, 4.0) / pow(4.0 * C_PI * C_EPSILON0, 2.0);
-    //const double bohr = 6.6741219e-55;
+    //const double bohr = 4.0 * C_PI * pow4(C_E) / pow2(4.0 * C_PI * C_EPSILON0);
+    static const double bohr = C_BOHR_STRAGG;
     return  Z1 * Z1 * Z2 * bohr;
 }
 
