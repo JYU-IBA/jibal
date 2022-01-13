@@ -39,6 +39,10 @@ inline double pow2(double x) {
     return x*x;
 }
 
+inline double pow3(double x) {
+    return (x*x*x);
+}
+
 inline double pow4(double x) {
     return pow2(x*x);
 }
