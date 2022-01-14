@@ -67,6 +67,30 @@ jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure 
     return vars_out;
 }
 
+const char *jibal_config_var_type_name(jibal_config_var_type type) {
+    switch(type) {
+        case JIBAL_CONFIG_VAR_NONE:
+            return JIBAL_OPTION_STR_NONE;
+        case JIBAL_CONFIG_VAR_STRING:
+            return "string";
+        case JIBAL_CONFIG_VAR_PATH:
+            return "path";
+        case JIBAL_CONFIG_VAR_BOOL:
+            return "boolean";
+        case JIBAL_CONFIG_VAR_INT:
+            return "integer";
+        case JIBAL_CONFIG_VAR_DOUBLE:
+            return "float";
+        case JIBAL_CONFIG_VAR_UNIT:
+            return "unit";
+        case JIBAL_CONFIG_VAR_OPTION:
+            return "option";
+        case JIBAL_CONFIG_VAR_SIZE:
+            return "size";
+    }
+    return NULL;
+}
+
 const char *jibal_config_option_string(const jibal_config_var *var) {
     if(var->option_list == NULL)
         return "Null";

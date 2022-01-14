@@ -44,6 +44,7 @@ typedef struct {
     jibal_config_var *vars; /* Terminated with an entry with type==JIBAL_CONFIG_VAR_NONE */
 } jibal_config_file;
 
+const char *jibal_config_var_type_name(jibal_config_var_type type);
 int jibal_config_option_get(const jibal_config_var *var, const char *value); /* For var->type == JIBAL_CONFIG_VAR_OPTION */
 const char *jibal_config_option_string(const jibal_config_var *var); /* For var->type == JIBAL_CONFIG_VAR_OPTION */
 char *jibal_config_user_dir();
