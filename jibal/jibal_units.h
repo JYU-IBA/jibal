@@ -92,6 +92,7 @@
 #define C_BARN (1.0e-28)
 #define C_MB_SR (1.0e-3*C_BARN) /* millibarns/sr */
 
+#define UNIT_TYPE_ANY 0
 #define UNIT_TYPE_ENERGY 'E'
 #define UNIT_TYPE_ANGLE 'A'
 #define UNIT_TYPE_DISTANCE 'L'
