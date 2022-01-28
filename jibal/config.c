@@ -589,3 +589,20 @@ int jibal_config_var_set(const jibal_units *units, jibal_config_var *var, const 
     }
     return 0;
 }
+
+const jibal_config_var *jibal_config_var_find(jibal_config_var *vars, const char *str) {
+    const jibal_config_var *var, *var_found;
+    size_t len = strlen(str);
+    int found = 0;
+    for(var = vars; var->type != 0; var++) {
+        if(strncmp(var->name, str, len) == 0) {
+            found++;
+            var_found = var;
+        }
+    }
+    if(found == 1) {
+        return var_found;
+    } else {
+        return NULL;
+    }
+}
