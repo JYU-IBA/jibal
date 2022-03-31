@@ -99,7 +99,9 @@ jibal_material *jibal_material_create(jibal_element *elements, const char *formu
 #endif
         jibal_element *element=jibal_element_copy(jibal_element_find(elements, name), A);
         free(name);
-        if(!element) {
+        if(!element || ) {
+            free(material->name);
+            free(material);
             return NULL;
         }
 #ifdef DEBUG
