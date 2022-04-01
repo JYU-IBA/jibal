@@ -16,5 +16,11 @@ char *realpath(const char *restrict file_name, char *restrict resolved_name);
 #define vscprintf _vscprintf
 int asprintf(char **strp, const char *format, ...);
 int vasprintf(char **strp, const char *format, va_list ap);
+#include <BaseTsd.h>
+#ifndef ssize_t
+#define ssize_t SSIZE_T
+#endif
+#include <stdio.h>
+ssize_t getline(char **buf, size_t *bufsiz, FILE *fp);
 #endif
 #endif // WIN_COMPAT_H

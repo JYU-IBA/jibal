@@ -81,9 +81,6 @@ char *realpath(const char *restrict file_name, char *restrict resolved_name) {
 }
 
 
-#include <BaseTsd.h>
-#define ssize_t SSIZE_T
-
 /*	$NetBSD: getdelim.c,v 1.2 2015/12/25 20:12:46 joerg Exp $	*/
 /*	NetBSD-src: getline.c,v 1.2 2014/09/16 17:23:50 christos Exp 	*/
 
