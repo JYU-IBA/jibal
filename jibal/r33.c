@@ -16,6 +16,7 @@
 #include <string.h>
 #include <jibal_cross_section.h>
 #include <jibal_r33.h>
+#include "win_compat.h"
 
 typedef enum {
     R33_PARSE_STATE_INIT = 0,
