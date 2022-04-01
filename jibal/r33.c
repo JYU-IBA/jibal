@@ -181,6 +181,9 @@ r33_file *r33_file_read(const char *filename) {
     while(getline(&line, &line_size, f) > 0 && valid) {
         lineno++;
         line[strcspn(line, "\r\n")] = 0; /* Strips all kinds of newlines! R33 requires CR LF sequences, but we happily accept just LF. */
+#ifdef DEBUG
+        fprintf(stderr, "R33 read state %i line %zu: %s\n", state, lineno, line);
+#endif
         if(state == R33_PARSE_STATE_INIT || state == R33_PARSE_STATE_HEADERS) {
             char *line_split = line;
             strsep(&line_split, ":");
@@ -193,7 +196,9 @@ r33_file *r33_file_read(const char *filename) {
                 line_split++; /* Skip space. This parser doesn't care if there is no space! */
             }
             r33_header_type type = r33_header_type_find(line);
-
+#ifdef DEBUG
+            fprintf(stderr, "Header type %i\n", type);
+#endif
             if(state == R33_PARSE_STATE_INIT) {
                 if(type == R33_HEADER_COMMENT) {
                     r33_string_append(&rfile->comment, line_split);
@@ -336,8 +341,10 @@ void r33_string_overwrite(char **dest, const char *src) {
 }
 
 size_t r33_values_read(const char *str, double *dest, size_t n) {
+    if(!str)
+        return 0;
     char *str_orig = strdup(str);
-    char *split = strdup(str);
+    char *split = str_orig;
     char *col;
     size_t i = 0;
     while((col = strsep(&split, " ,;:")) != NULL) {
