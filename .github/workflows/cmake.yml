@@ -40,6 +40,12 @@ jobs:
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: cmake --build . --config $BUILD_TYPE
 
+    - name: Archive build
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifact
+        path: build
+
     - name: Test
       working-directory: ${{runner.workspace}}/build
       shell: bash
