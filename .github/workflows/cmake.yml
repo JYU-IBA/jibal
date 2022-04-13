@@ -44,7 +44,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: build-artifact
-        path: build
+        path: ${{runner.workspace}}/build
 
     - name: Test
       working-directory: ${{runner.workspace}}/build
