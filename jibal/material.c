@@ -68,7 +68,7 @@ const char *parse_element(const char *start, const char **end_ptr, int *A_out, c
 
 jibal_material *jibal_material_create(jibal_element *elements, const char *formula) {
     jibal_material *material=malloc(sizeof(jibal_material));
-    material->n_elements=0;
+    material->n_elements = 0;
     material->name=strdup(formula); /* Default name is the formula */
     const char *a=formula;
     const char *b;
@@ -162,17 +162,15 @@ jibal_material *jibal_material_copy(const jibal_material *material) {
     //*out = *material;
     out->n_elements = material->n_elements;
     out->name = strdup(material->name);
-    if(material->elements) {
-        out->elements = malloc(material->n_elements * sizeof(jibal_element));
-        for(size_t i = 0; i < material->n_elements; i++) {
-            jibal_element *e = jibal_element_copy(&material->elements[i], JIBAL_ALL_ISOTOPES);
-            out->elements[i] = *e;
-            free(e);
-        }
+    out->elements = calloc(material->n_elements, sizeof(jibal_element));
+    for(size_t i = 0; i < material->n_elements; i++) {
+        jibal_element *e = jibal_element_copy(&material->elements[i], JIBAL_ALL_ISOTOPES);
+        out->elements[i] = *e;
+        free(e);
     }
+    out->concs = calloc(material->n_elements, sizeof(double));
     if(material->concs) {
-        out->concs = malloc(sizeof(double) * material->n_elements);
-        memcpy(out->concs, material->concs, sizeof(double ) * material->n_elements);
+        memcpy(out->concs, material->concs, sizeof(double) * material->n_elements);
     }
     return out;
 }
