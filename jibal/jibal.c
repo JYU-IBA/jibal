@@ -90,7 +90,7 @@ char *jibal_status_string(const jibal *jibal) {
             n_natural_isotopes++;
         n_isotopes++;
     }
-    asprintf(&str, "Jibal %s: %i units, %i elements, %i isotopes, %i isotopes with abundance > %g, %lu GSTO files.\n",
+    asprintf(&str, "JIBAL %s: %i units, %i elements, %i isotopes, %i isotopes with abundance > %g, %lu GSTO files.\n",
             jibal_version(),
             jibal_units_count(jibal->units),
             jibal_elements_Zmax(jibal->elements),
@@ -99,6 +99,13 @@ char *jibal_status_string(const jibal *jibal) {
             ABUNDANCE_THRESHOLD,
             jibal->gsto->n_files);
     return str;
+}
+
+const char *jibal_config_filename(const jibal *jibal) {
+    if(!jibal || !jibal->config || !jibal->config->config_file) {
+        return NULL;
+    }
+    return jibal->config->config_file;
 }
 
 void jibal_free(jibal *jibal) {

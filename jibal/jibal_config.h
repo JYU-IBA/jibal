@@ -7,6 +7,7 @@
 
 typedef struct {
     int error;
+    char *config_file; /* set to actual file that was read successfully */
     char *datadir; /* e.g. /usr/local/share/jibal or C:\Program Files\JIBAL\share\jibal */
     char *userdatadir; /* e.g. ~/.jibal/ or %AppData/JIBAL */
     char *masses_file;

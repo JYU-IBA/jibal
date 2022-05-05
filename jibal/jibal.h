@@ -46,7 +46,8 @@ typedef struct jibal {
 
 jibal *jibal_init(const char *config_filename);
 void jibal_status_print(FILE *f, const jibal *jibal);
-char *jibal_status_string(const jibal *jibal);
+char *jibal_status_string(const jibal *jibal); /* Returns a newly allocated status string. */
+const char *jibal_config_filename(const jibal *jibal); /* Returns the filename (full path) where JIBAL configuration was actually (attempted to) read. */
 void jibal_free(jibal *jibal);
 const char *jibal_error_string(jibal_error err);
 const char *jibal_version();

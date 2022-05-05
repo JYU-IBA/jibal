@@ -248,7 +248,7 @@ char *jibal_config_user_config_filename() {
 }
 
 jibal_config jibal_config_defaults() {
-    jibal_config config = {.Z_max = JIBAL_MAX_Z, .extrapolate = FALSE, .error = 0, .cs_rbs = JIBAL_CS_ANDERSEN, .cs_erd = JIBAL_CS_ANDERSEN};
+    jibal_config config = {.Z_max = JIBAL_MAX_Z, .extrapolate = FALSE, .error = 0, .config_file = NULL, .cs_rbs = JIBAL_CS_ANDERSEN, .cs_erd = JIBAL_CS_ANDERSEN};
     const char *c=getenv("JIBAL_DATADIR");
     if(c) {
         config.datadir=strdup(c);
@@ -380,12 +380,14 @@ jibal_config *jibal_config_init(const jibal_units *units, const char *filename, 
     }
     if(f) {
         config->error = jibal_config_read_from_file(units, config, f);
+        config->config_file = f;
     }
     jibal_config_finalize(config);
     return config; /* Note: configuration is not validated. We only set config.error if we TRIED to read a configuration file but failed.  */
 }
 
 void jibal_config_free(jibal_config *config) {
+    free(config->config_file);
     free(config->datadir);
     free(config->userdatadir);
     free(config->masses_file);
