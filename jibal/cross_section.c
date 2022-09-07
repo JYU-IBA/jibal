@@ -7,7 +7,7 @@ double jibal_cross_section_rbs(const jibal_isotope *incident, const jibal_isotop
     double r = incident->mass/target->mass;
     double theta_cm = theta + asin(r*sin(theta));;
     double sigma_cm = pow2((incident->Z*C_E*target->Z*C_E)/(4.0*C_PI*C_EPSILON0))*pow2(1.0/(4.0*E_cm))*pow4(1.0/sin(theta_cm/2.0));
-    double sigma_r = (sigma_cm*pow2(sin(theta_cm)))/(pow2(sin(theta))*cos(theta_cm - theta));
+    double sigma_r = sigma_cm * pow((1.0 + pow2(r) + 2.0 * r * cos(theta_cm)), 3.0/2.0)/(1.0 + r * cos(theta_cm));
     switch (type) {
         case JIBAL_CS_RUTHERFORD:
             return sigma_r;
