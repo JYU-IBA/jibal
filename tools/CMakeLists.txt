@@ -4,6 +4,7 @@ find_path(GETOPT_INCLUDE_DIR getopt.h)
 find_library(GETOPT_LIBRARY getopt)
 endif()
 add_executable(get_stop get_stop.c)
+add_executable(get_cs get_cs.c)
 add_executable(get_kin get_kin.c)
 add_executable(jibaltool jibaltool.c)
 add_executable(jibal_bootstrap jibal_bootstrap.c)
@@ -22,6 +23,12 @@ target_link_libraries(get_kin
     PRIVATE jibal
     "$<$<BOOL:${UNIX}>:m>"
 )
+
+target_link_libraries(get_cs
+        PRIVATE jibal
+        "$<$<BOOL:${UNIX}>:m>"
+        )
+
 target_link_libraries(dpass_decode
     PRIVATE jibal
     "$<$<BOOL:${UNIX}>:m>"
@@ -47,7 +54,7 @@ target_link_libraries(srim_gen_stop
     PRIVATE jibal
     "$<$<BOOL:${UNIX}>:m>"
 )
-install(TARGETS get_stop get_kin jibaltool srim_gen_stop dpass_decode jibal_bootstrap
+install(TARGETS get_stop get_kin get_cs jibaltool srim_gen_stop dpass_decode jibal_bootstrap
         RUNTIME DESTINATION bin
         COMPONENT applications)
 

@@ -1,10 +1,10 @@
 /*
-    LibIBA - Library for ion beam analysis
-    Copyright (C) 2020 Jaakko Julin <jaakko.julin@jyu.fi>
+    Jyväskylä Ion Beam Analysis Library (JIBAL)
+    Copyright (C) 2020-2022 Jaakko Julin <jaakko.julin@jyu.fi>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
+    the Free Software Foundation, either version 2 of the License, or
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
