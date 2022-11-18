@@ -57,6 +57,9 @@ jibal_units *jibal_units_default() {
     units=jibal_units_add(units, 1.0, UNIT_TYPE_MAGNETIC_FIELD, "T");
     units=jibal_units_add(units, 1.0e-4, UNIT_TYPE_MAGNETIC_FIELD, "G");
     units=jibal_units_add(units, 1.0, UNIT_TYPE_SOLID_ANGLE, "sr");
+    units=jibal_units_add(units, 1.0e-3, UNIT_TYPE_DENSITY, "g/m3"); /* We should probably parse units better to avoid units like these */
+    units=jibal_units_add(units, 1000.0, UNIT_TYPE_DENSITY, "g/cm3"); /* We should probably parse units better to avoid units like these */
+
     return units;
 }
 

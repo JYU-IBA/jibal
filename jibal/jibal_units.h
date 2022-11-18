@@ -104,6 +104,7 @@
 #define UNIT_TYPE_CURRENT 'I'
 #define UNIT_TYPE_MAGNETIC_FIELD 'B' /* aka flux density */
 #define UNIT_TYPE_SOLID_ANGLE 'O'
+#define UNIT_TYPE_DENSITY 'D'
 
 typedef struct jibal_units {
     double f; /*!< Factor, i.e. this unit in Si units (e.g. 1.66e-27 for the atomic mass unit) */
