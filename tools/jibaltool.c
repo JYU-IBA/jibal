@@ -8,12 +8,15 @@
 #include <jibal.h>
 #include <jibal_stop.h>
 #include <jibal_defaults.h>
+#include <jibal_cs.h>
+#include <jibal_kin.h>
 
 #ifdef WIN32
 #include <jibal_registry.h>
 #include <win_compat.h>
 #endif
 #include "jibaltool.h"
+#include "jibaltool_get_stop.h"
 
 void jibaltool_global_free(jibaltool_global *global) {
     if(global->outfilename) {
@@ -65,7 +68,7 @@ void read_options(jibaltool_global *global, int *argc, char ***argv) {
     };
     while (1) {
         int option_index = 0;
-        char c = getopt_long(*argc, *argv, "c:hz:o:vVs:", long_options, &option_index);
+        char c = getopt_long(*argc, *argv, "+c:hz:o:vVs:", long_options, &option_index);
         if (c == -1)
             break;
         switch (c) {
@@ -113,6 +116,9 @@ void read_options(jibaltool_global *global, int *argc, char ***argv) {
 
 int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
     if (argc < 2 || !global->stopfile) {
+        for(int i = 0; i < argc; i++) {
+            fprintf(stderr, "argv[%i] = %s\n", i, argv[i]);
+        }
         fprintf(stderr, "Usage: jibaltool [--stopfile=<stopfile>] extract_stop_material incident target\n");
         return -1;
     }
@@ -317,20 +323,156 @@ int print_units(jibaltool_global *global, int argc, char **argv) {
     return 0;
 }
 
+int print_cs(jibaltool_global *global, int argc, char **argv) {
+    jibal *jibal = global->jibal;
+    if(argc < 4) {
+        fprintf(stderr, "Usage: jibaltool cs <incident ion> <target> <energy> <angle>\n\nTarget can be an isotope, element or compound.\nExample: jibaltool cs 4He Si 170deg 2MeV\n");
+        return EXIT_FAILURE;
+    }
+    const jibal_isotope *incident = jibal_isotope_find(jibal->isotopes, argv[0], 0, 0);
+    if(!incident) {
+        fprintf(stderr, "There is no isotope %s in my database.\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+    jibal_material *target_material = jibal_material_create(jibal->elements, argv[1]);
+    if(!target_material) {
+        fprintf(stderr, "Error in creating material from expression %s\n", argv[1]);
+        return EXIT_FAILURE;
+    }
+    double theta = jibal_get_val(jibal->units, UNIT_TYPE_ANGLE, argv[2]);
+    double E = jibal_get_val(jibal->units, UNIT_TYPE_ENERGY, argv[3]);
+
+    double cs_rbs = 0.0;
+    double cs_erd = 0.0;
+    int erd = theta < (90.0*C_DEG);
+    for(size_t i_elem = 0; i_elem < target_material->n_elements; i_elem++) {
+        jibal_element *e = &target_material->elements[i_elem];
+        for(size_t i_isotope = 0; i_isotope < e->n_isotopes; i_isotope++) {
+            const jibal_isotope *isotope = e->isotopes[i_elem];
+            double theta_max=asin(isotope->mass/incident->mass);
+
+            double c = e->concs[i_isotope];
+            if(!(incident->mass > isotope->mass && theta > theta_max)) { /* Scattering possible */
+                double sigma_rbs = jibal_cs_rbs(jibal->config, incident, isotope, theta, E);
+                cs_rbs += c * sigma_rbs;
+            }
+            if(erd) {
+                double sigma_erd = jibal_cs_erd(jibal->config, incident, isotope, theta, E);
+                cs_erd += c * sigma_erd;
+            }
+#ifdef DEBUG
+            fprintf(stderr, "Isotope %zu conc %lf\n", i_isotope, e->concs[i_isotope]);
+#endif
+        }
+    }
+    fprintf(stderr, "RBS cross section is %g mb/sr (%s)\n", cs_rbs/C_MB_SR, jibal_cs_rbs_name(jibal->config));
+    if(erd) {
+        fprintf(stderr, "ERD cross section is %g mb/sr (%s)\n", cs_erd / C_MB_SR, jibal_cs_erd_name(jibal->config));
+    }
+    jibal_material_free(target_material);
+    return EXIT_SUCCESS;
+}
+
+
+void print_kin_rbs(jibal *jibal, const jibal_isotope *incident, const jibal_isotope *target, double theta, double E) {
+    double r = incident->mass/target->mass;
+    double theta_max=asin(target->mass/incident->mass);
+    double theta_cm = theta + asin(r * sin(theta)); /* RBS */
+    double E_rbs = jibal_kin_rbs(incident->mass, target->mass, theta, '+') * E;
+    double cs_rbs = jibal_cs_rbs(jibal->config, incident, target, theta, E);
+    fprintf(stderr, "RBS (%s scattered by %s to lab angle theta)\n", incident->name, target->name);
+    if(incident->mass >= target->mass && theta > theta_max) {
+        fprintf(stderr, "theta_max = %g deg (scattering not possible)\n", theta_max/C_DEG);
+        return;
+    }
+    fprintf(stderr, "theta = %g deg\n", theta/C_DEG);
+    fprintf(stderr, "theta_cm = %g deg\n", theta_cm/C_DEG);
+
+    if(incident->mass <= target->mass) {
+        fprintf(stderr, "E_rbs = %g keV\n", E_rbs/C_KEV);
+    } else {
+        fprintf(stderr, "E_rbs = %g keV (plus-sign solution)\n", E_rbs/C_KEV);
+        fprintf(stderr, "E_rbs = %g keV (minus-sign solution)\n", jibal_kin_rbs(incident->mass, target->mass, theta, '-')*E/C_KEV);
+    }
+    fprintf(stderr, "RBS cross section = %g mb/sr (%s)\n", cs_rbs/C_MB_SR, jibal_cs_rbs_name(jibal->config));
+}
+
+void print_kin_erd(jibal *jibal, const jibal_isotope *incident, const jibal_isotope *target, double phi, double E) {
+    double cs_erd = jibal_cs_erd(jibal->config, incident, target, phi, E);
+    double E_erd = jibal_kin_erd(incident->mass, target->mass, phi) * E;
+    double theta_cm= C_PI - 2 * phi;
+    double theta = atan2(sin(theta_cm), (cos(theta_cm) + target->mass / incident->mass));
+
+    fprintf(stderr, "ERD (%s recoiled by %s to lab angle phi)\n", target->name, incident->name);
+    if(phi >= C_PI/2.0) {
+        fprintf(stderr, "Not possible.\n");
+        return;
+    }
+    fprintf(stderr, "phi = %g deg\n", phi/C_DEG);
+    fprintf(stderr, "theta_cm = %g deg\n", theta_cm/C_DEG);
+    fprintf(stderr, "E_erd = %g keV\n", E_erd/C_KEV);
+    fprintf(stderr, "v_erd = %g m/s\n", jibal_velocity(E_erd, target->mass));
+    fprintf(stderr, "ERD cross section = %g mb/sr (%s)\n", cs_erd/C_MB_SR, jibal_cs_erd_name(jibal->config));
+    double inverse_scaling = 4.0 * pow(sin(theta), 2.0) * cos(theta_cm - theta) * cos(phi) / (pow(sin(theta_cm), 2.0));
+    double E_inv = (target->mass/incident->mass) * E;
+    if(inverse_scaling > 0.0) {
+        fprintf(stderr, "ERD cross section is %g times the RBS cross section for %g MeV %s scattering from %s to an angle of %g deg\n",
+                inverse_scaling,
+                E_inv/C_MEV,
+                target->name,
+                incident->name,
+                theta/C_DEG
+        );
+    }
+}
+
+int print_kin(jibaltool_global *global, int argc, char **argv) {
+    jibal *jibal = global->jibal;
+    if(argc < 4) {
+        fprintf(stderr, "Usage: jibaltool kin <incident ion> <target isotope> <energy> <angle>\n\nExample: jibaltool kin 4He 28Si 170deg 2MeV\n");
+        return EXIT_FAILURE;
+    }
+    const jibal_isotope *incident = jibal_isotope_find(jibal->isotopes, argv[0], 0, 0);
+    if(!incident) {
+        fprintf(stderr, "There is no isotope %s in my database.\n", argv[0]);
+        return -1;
+    }
+    const jibal_isotope *target = jibal_isotope_find(jibal->isotopes, argv[1], 0, 0);
+    if(!target) {
+        fprintf(stderr, "There is no isotope %s in my database.\n", argv[1]);
+        return -1;
+    }
+    double angle = jibal_get_val(jibal->units, UNIT_TYPE_ANGLE, argv[2]); /* RBS */
+    double E = jibal_get_val(jibal->units, UNIT_TYPE_ENERGY, argv[3]);
+    double E_cm = target->mass*E/(incident->mass + target->mass);
+    fprintf(stderr, "E_cm = %g keV\n", E_cm/C_KEV);
+    print_kin_rbs(jibal, incident, target, angle, E);
+    fprintf(stderr, "\n");
+    print_kin_erd(jibal, incident, target, angle, E);
+    return EXIT_SUCCESS;
+}
+
 int main(int argc, char **argv) {
-    jibaltool_global global = {.Z=0, .outfilename=NULL, .stopfile=NULL, .format=NULL, .verbose=0};
+    jibaltool_global global = {.Z=0, .outfilename=NULL, .stopfile=NULL, .format=NULL, .verbose=0, .jibal = NULL};
     read_options(&global, &argc, &argv);
+#ifdef DEBUG
+    fprintf(stderr, "Argument vector after 1st round:\n");
+    for(int i = 0; i < argc; i++) {
+        fprintf(stderr, "argv[%i] = %s\n", i, argv[i]);
+    }
+#endif
     static const struct command commands[] = {
-            {"extract", &extract,
-             "Extract values (e.g. He in Si or a range) in GSTO compatible format."},
-            {"extract_stop_material", &extract_stop_material,
-             "Extract stopping from a single stopping file for a given ion and material. (e.g. 4He in SiO2)"},
+            {"extract", &extract,"Extract values (e.g. He in Si or a range) in GSTO compatible format."},
+            {"extract_stop_material", &extract_stop_material,"Extract stopping from a single stopping file for a given ion and material. (e.g. 4He in SiO2)"},
             {"files", &print_gstofiles, "Print available GSTO files."},
             {"isotopes", &print_isotopes, "Print a list of isotopes."},
             {"elements", &print_elements, "Print a list of elements."},
             {"config", &print_config, "Print current configuration (config file)."},
             {"status", &print_status, "Print JIBAL status."},
             {"units", &print_units, "Print recognized units."},
+            {"cs", &print_cs, "Calculate cross sections."},
+            {"kin", &print_kin, "Calculate kinematics."},
+            {"stop", &print_stop, "Calculate kinematics."},
             {NULL, NULL, NULL}
     };
     if(argc < 1) {
@@ -340,25 +482,28 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    const struct command *c;
-    int found = 0;
-    for (c = commands; c->f != NULL; c++) {
-        if (strcmp(c->name, argv[0]) == 0) {
-            found = 1;
-            global.jibal = jibal_init(global.config_filename);
-            if (global.jibal->error) {
-                fprintf(stderr, "Initializing JIBAL failed with error code: %i (%s)\n", global.jibal->error,
-                        jibal_error_string(global.jibal->error));
-                return EXIT_FAILURE;
-            }
-            c->f(&global, argc - 1, argv + 1);
+    const struct command *c, *c_found = NULL;
+
+    for(c = commands; c->f != NULL; c++) {
+        if(strcmp(c->name, argv[0]) == 0) {
+            c_found = c;
             break;
         }
     }
-    if(!found) {
+    if(c_found) {
+        global.jibal = jibal_init(global.config_filename);
+        if (global.jibal->error) {
+            fprintf(stderr, "Initializing JIBAL failed with error code: %i (%s)\n",
+                    global.jibal->error, jibal_error_string(global.jibal->error));
+            return EXIT_FAILURE;
+        }
+        c_found->f(&global, argc - 1, argv + 1);
+        jibaltool_global_free(&global);
+        return EXIT_SUCCESS;
+    } else {
         fprintf(stderr, "No such command: %s\n\n", argv[0]);
         print_commands(stderr, commands);
+        jibaltool_global_free(&global);
+        return EXIT_FAILURE;
     }
-    jibaltool_global_free(&global);
-    return EXIT_SUCCESS;
 }

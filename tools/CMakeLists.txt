@@ -3,31 +3,10 @@ if(WIN32)
 find_path(GETOPT_INCLUDE_DIR getopt.h)
 find_library(GETOPT_LIBRARY getopt)
 endif()
-add_executable(get_stop get_stop.c)
-add_executable(get_cs get_cs.c)
-add_executable(get_kin get_kin.c)
-add_executable(jibaltool jibaltool.c)
+add_executable(jibaltool jibaltool.c jibaltool_get_stop.c jibaltool_get_stop.h)
 add_executable(jibal_bootstrap jibal_bootstrap.c)
 add_executable(srim_gen_stop srim_gen_stop.c)
 add_executable(dpass_decode dpass_decode.c)
-target_include_directories(get_stop PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/jibal>
-        ${GETOPT_INCLUDE_DIR}
-        )
-target_link_libraries(get_stop
-    PRIVATE jibal
-    "$<$<BOOL:${UNIX}>:m>"
-    ${GETOPT_LIBRARY}
-)
-target_link_libraries(get_kin
-    PRIVATE jibal
-    "$<$<BOOL:${UNIX}>:m>"
-)
-
-target_link_libraries(get_cs
-        PRIVATE jibal
-        "$<$<BOOL:${UNIX}>:m>"
-        )
 
 target_link_libraries(dpass_decode
     PRIVATE jibal
@@ -54,7 +33,7 @@ target_link_libraries(srim_gen_stop
     PRIVATE jibal
     "$<$<BOOL:${UNIX}>:m>"
 )
-install(TARGETS get_stop get_kin get_cs jibaltool srim_gen_stop dpass_decode jibal_bootstrap
+install(TARGETS jibaltool srim_gen_stop dpass_decode jibal_bootstrap
         RUNTIME DESTINATION bin
         COMPONENT applications)
 

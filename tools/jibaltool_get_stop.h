@@ -15,34 +15,14 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef JIBAL_JIBALTOOL_H
-#define JIBAL_JIBALTOOL_H
+#include "jibaltool.h"
 
-#include <jibal.h>
-
-#define JIBAL_TOOL_HELP_STRING "Usage: jibaltool [--version] [--help] <command> [<args>]\n"
-
-
-typedef  struct {
+typedef struct {
     jibal *jibal;
-    int Z;
+    const jibal_isotope *incident;
+    jibal_layer **target; /* Array of pointers, size n_layers, reallocated as necessary */
     int verbose;
-    char *config_filename;
-    char *outfilename;
-    char *stopfile;
-    char *format;
-} jibaltool_global;
+    int n_layers;
+} get_stop_global;
 
-struct command {
-    const char *name;
-    int (*f)(jibaltool_global *, int, char **);
-    const char *help_text;
-};
-
-void jibaltool_global_free(jibaltool_global *options);
-void jibaltool_usage();
-void read_options(jibaltool_global *global, int *argc, char ***argv);
-
-int extract_stop(jibaltool_global *options, int argc, char **argv);
-
-#endif //JIBAL_JIBALTOOL_H
+int print_stop(jibaltool_global *global, int argc, char **argv);
