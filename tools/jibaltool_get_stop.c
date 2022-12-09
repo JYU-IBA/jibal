@@ -114,7 +114,7 @@ int print_stop(jibaltool_global *global, int argc, char **argv) {
         return EXIT_FAILURE;
     }
     if(argc < 2) {
-        fprintf(stderr, "Not enough arguments!\n", argc);
+        fprintf(stderr, "Not enough arguments!\n");
         jibaltool_stop_usage();
         return EXIT_FAILURE;
     }
