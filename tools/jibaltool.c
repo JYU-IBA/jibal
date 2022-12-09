@@ -443,7 +443,17 @@ int print_kin(jibaltool_global *global, int argc, char **argv) {
         return -1;
     }
     double angle = jibal_get_val(jibal->units, UNIT_TYPE_ANGLE, argv[2]); /* RBS */
+    if(angle < 0.0 || angle > 180.0*C_DEG) {
+        fprintf(stderr, "Please give an angle in range of [0, 180 deg]. You gave %g deg.\n", angle/C_DEG);
+        return EXIT_FAILURE;
+    }
     double E = jibal_get_val(jibal->units, UNIT_TYPE_ENERGY, argv[3]);
+    if(E < 0.0 || E > 10000.0*C_MEV) { /* I guess 10 GeV is quite high */
+        fprintf(stderr, "Please check the energy (give a unit if you like to, e.g. \"2.0MeV\"). You gave %g MeV.\n",
+                E / C_MEV);
+        return EXIT_FAILURE;
+    }
+    fprintf(stderr, "E_lab = %g keV\n", E/C_KEV);
     double E_cm = target->mass*E/(incident->mass + target->mass);
     fprintf(stderr, "E_cm = %g keV\n", E_cm/C_KEV);
     print_kin_rbs(jibal, incident, target, angle, E);
