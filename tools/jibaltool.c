@@ -482,7 +482,7 @@ int main(int argc, char **argv) {
             {"units", &print_units, "Print recognized units."},
             {"cs", &print_cs, "Calculate cross sections."},
             {"kin", &print_kin, "Calculate kinematics."},
-            {"stop", &print_stop, "Calculate kinematics."},
+            {"stop", &print_stop, "Calculate stopping and energy loss."},
             {NULL, NULL, NULL}
     };
     if(argc < 1) {
