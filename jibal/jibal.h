@@ -1,6 +1,6 @@
 /*
     Jyväskylä Ion Beam Analysis Library (JIBAL)
-    Copyright (C) 2020-2022 Jaakko Julin <jaakko.julin@jyu.fi>
+    Copyright (C) 2020 - 2023 Jaakko Julin <jaakko.julin@jyu.fi>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _JIBAL_JIBAL_H_
-#define _JIBAL_JIBAL_H_
+#ifndef JIBAL_H
+#define JIBAL_H
 
 #include <jibal_units.h>
 #include <jibal_config.h>
@@ -52,4 +52,4 @@ void jibal_free(jibal *jibal);
 const char *jibal_error_string(jibal_error err);
 const char *jibal_version();
 
-#endif //_JIBAL_JIBAL_H_
+#endif //JIBAL_H

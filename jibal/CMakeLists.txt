@@ -64,6 +64,7 @@ add_library(jibal SHARED
         registry.c
         generic.c
         r33.c
+        csvreader.c
         "$<$<BOOL:${WIN32}>:win_compat.c>"
         )
 
