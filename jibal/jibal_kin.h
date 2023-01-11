@@ -1,6 +1,6 @@
 /*
-    JIBAL - Library for ion beam analysis
-    Copyright (C) 2020 Jaakko Julin <jaakko.julin@jyu.fi>
+    Jyväskylä Ion Beam Analysis Library (JIBAL)
+    Copyright (C) 2020 - 2023 Jaakko Julin <jaakko.julin@jyu.fi>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _JIBAL_KIN_H_
-#define _JIBAL_KIN_H_
+#ifndef JIBAL_KIN_H
+#define JIBAL_KIN_H
 
 #include <jibal_units.h>
 #include <jibal_masses.h>
@@ -25,4 +25,4 @@
 double jibal_kin_rbs(double m1, double m2, double theta, char sign);
 double jibal_kin_erd(double m1, double m2, double theta);
 
-#endif /* _JIBAL_KIN_H_ */
+#endif /* JIBAL_KIN_H */
