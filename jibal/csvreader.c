@@ -5,7 +5,7 @@
 #include "jibal_generic.h"
 #include "jibal_csvreader.h"
 
-jibalcsvreader *jibalcsvreader_init(const char *filename, const jibalcsvreader_settings *settings, const jibalcsvreader_colspec *colspec) {
+jibal_csvreader *jibal_csvreader_init(const char *filename, const jibal_csvreader_settings *settings, const jibal_csvreader_colspec *colspec) {
     if(!filename || !colspec) {
         return NULL;
     }
@@ -14,28 +14,28 @@ jibalcsvreader *jibalcsvreader_init(const char *filename, const jibalcsvreader_s
         return NULL;
     }
     size_t n_cols = 0, colmax = 0;
-    for(const jibalcsvreader_colspec *c = colspec; c->type != JGTABLE_DATA_NONE; c++) {
+    for(const jibal_csvreader_colspec *c = colspec; c->type != JGTABLE_DATA_NONE; c++) {
         n_cols++;
         if(c->colnum > colmax) {
             colmax = c->colnum;
         }
     }
-    jibalcsvreader *reader = jibalcsvreader_allocate(n_cols, colmax);
+    jibal_csvreader *reader = jibal_csvreader_allocate(n_cols, colmax);
     if(!reader)
         return NULL;
     if(settings) { /* Determine settings automatically or make a deep copy */
-        jibalcsvreader_set_settings(reader, jibalcsvreader_settings_clone(settings));
+        jibal_csvreader_set_settings(reader, jibal_csvreader_settings_clone(settings));
     } else {
-        jibalcsvreader_set_settings(reader, jibalcsvreader_settings_by_filename(filename));
+        jibal_csvreader_set_settings(reader, jibal_csvreader_settings_by_filename(filename));
     }
     reader->f = f_in;
     reader->filename = strdup(filename);
 
     for(size_t i = 1; i <= reader->n_cols; i++) {
-        jibalcsvreader_col *col = &(reader->columns[i]);
+        jibal_csvreader_col *col = &(reader->columns[i]);
         col->colspec = colspec[i - 1]; /* -1 because +1 elsewhere */
         col->colspec.name = strdup(col->colspec.name);
-        col->size = jibalcsvreader_type_size(col->colspec.type);
+        col->size = jibal_csvreader_type_size(col->colspec.type);
         col->offset += reader->colsize;
         reader->colsize += col->size;
         if(reader->colhits[col->colspec.colnum] != 0) {
@@ -46,7 +46,7 @@ jibalcsvreader *jibalcsvreader_init(const char *filename, const jibalcsvreader_s
 #ifdef DEBUG
         fprintf(stderr, "Got col %zu, colnum %zu: type: %s, size: %zu, offset: %zu\n",
                 i, col->colspec.colnum,
-                jibalcsvreader_type_name(col->colspec.type),
+                jibal_csvreader_type_name(col->colspec.type),
                 col->size, col->offset
                 );
 #endif
@@ -62,26 +62,26 @@ jibalcsvreader *jibalcsvreader_init(const char *filename, const jibalcsvreader_s
     return reader;
 }
 
-jibalcsvreader *jibalcsvreader_allocate(size_t n_cols, size_t colmax) {
-    jibalcsvreader *reader = calloc(1, sizeof(jibalcsvreader));
+jibal_csvreader *jibal_csvreader_allocate(size_t n_cols, size_t colmax) {
+    jibal_csvreader *reader = calloc(1, sizeof(jibal_csvreader));
     if(!reader)
         return NULL;
     reader->n_cols = n_cols;
-    reader->columns = calloc(n_cols + 1, sizeof(jibalcsvreader_col)); /* +1 because numbering starts from 1 */
+    reader->columns = calloc(n_cols + 1, sizeof(jibal_csvreader_col)); /* +1 because numbering starts from 1 */
     reader->colmax = colmax;
     reader->colhits = calloc(colmax + 1, sizeof(size_t));
     return reader;
 }
 
-jibalcsvreader_settings *jibalcsvreader_settings_allocate() {
-    jibalcsvreader_settings *settings = calloc(1, sizeof(jibalcsvreader_settings));
+jibal_csvreader_settings *jibal_csvreader_settings_allocate() {
+    jibal_csvreader_settings *settings = calloc(1, sizeof(jibal_csvreader_settings));
     if(!settings) {
         return NULL;
     }
     return settings;
 }
 
-void jibalcsvreader_close(jibalcsvreader *reader) {
+void jibal_csvreader_close(jibal_csvreader *reader) {
     if(!reader)
         return;
     fclose(reader->f);
@@ -92,22 +92,37 @@ void jibalcsvreader_close(jibalcsvreader *reader) {
     free(reader->colhits);
     free(reader->line);
     free(reader->filename);
-    jibalcsvreader_settings_free(reader->settings);
+    jibal_csvreader_settings_free(reader->settings);
     free(reader);
 }
 
-size_t jibalcsvreader_lineno(const jibalcsvreader *reader) {
+size_t jibal_csvreader_lineno(const jibal_csvreader *reader) {
     return reader->lineno;
 }
 
-const char *jibalcsvreader_error_string(const jibalcsvreader *reader) {
+size_t jibal_csvreader_column_strlen(jibal_csvreader *reader, size_t i_col) {
+    if(!reader) {
+        return 0;
+    }
+    if(i_col > reader->n_cols) {
+        return 0;
+
+    }
+    char *s = reader->columns[i_col].strdata;
+    if(!s) {
+        return 0;
+    }
+    return strlen(s);
+}
+
+const char *jibal_csvreader_error_string(const jibal_csvreader *reader) {
     if(!reader) {
         return "reader is null";
     }
-    return jibalcsvreader_error_string_by_code(reader->error);
+    return jibal_csvreader_error_string_by_code(reader->error);
 }
 
-const char *jibalcsvreader_error_string_by_code(jibalcsvreader_error error) {
+const char *jibal_csvreader_error_string_by_code(jibal_csvreader_error error) {
     switch(error) {
         case JIBALCSVREADER_SUCCESS:
             return "success";
@@ -123,7 +138,7 @@ const char *jibalcsvreader_error_string_by_code(jibalcsvreader_error error) {
 }
 
 
-int jibalcsvreader_read_line(jibalcsvreader *reader) {
+int jibal_csvreader_read_line(jibal_csvreader *reader) {
     if(!reader)
         return JIBALCSVREADER_ERROR_GENERIC;
     while(getline(&reader->line, &reader->line_size, reader->f) > 0) {
@@ -141,8 +156,8 @@ int jibalcsvreader_read_line(jibalcsvreader *reader) {
     return JIBALCSVREADER_EOF;
 }
 
-int jibalcsvreader_separate_line(jibalcsvreader *reader) {
-    int ret = jibalcsvreader_read_line(reader);
+int jibal_csvreader_separate_line(jibal_csvreader *reader) {
+    int ret = jibal_csvreader_read_line(reader);
     if(ret) {
         return ret;
     }
@@ -174,7 +189,7 @@ int jibalcsvreader_separate_line(jibalcsvreader *reader) {
     return JIBALCSVREADER_SUCCESS;
 }
 
-size_t jibalcsvreader_type_size(jibalcsvreader_data_types type) {
+size_t jibal_csvreader_type_size(jibal_csvreader_data_types type) {
     switch(type) {
         case JGTABLE_DATA_NONE:
             return 0;
@@ -189,7 +204,7 @@ size_t jibalcsvreader_type_size(jibalcsvreader_data_types type) {
     }
 }
 
-const char *jibalcsvreader_type_name(jibalcsvreader_data_types type) {
+const char *jibal_csvreader_type_name(jibal_csvreader_data_types type) {
     switch(type) {
         case JGTABLE_DATA_NONE:
             return "none";
@@ -204,10 +219,10 @@ const char *jibalcsvreader_type_name(jibalcsvreader_data_types type) {
     }
 }
 
-int jibalcsvreader_scan(jibalcsvreader *reader, ...) {
+int jibal_csvreader_scan(jibal_csvreader *reader, ...) {
     va_list ap;
     va_start(ap, reader);
-    int ret = jibalcsvreader_separate_line(reader);
+    int ret = jibal_csvreader_separate_line(reader);
     if(ret) {
         reader->error = ret;
         return ret;
@@ -221,7 +236,7 @@ int jibalcsvreader_scan(jibalcsvreader *reader, ...) {
     char *end;
     int n_success = 0;
     for(size_t i_col = 1; i_col <= reader->n_cols; i_col++) {
-        jibalcsvreader_col *col = &(reader->columns[i_col]);
+        jibal_csvreader_col *col = &(reader->columns[i_col]);
         switch(col->colspec.type) {
             case JGTABLE_DATA_DOUBLE:
                 d = strtod(col->strdata, &end);
@@ -253,8 +268,8 @@ int jibalcsvreader_scan(jibalcsvreader *reader, ...) {
     return n_success;
 }
 
-jibalcsvreader_settings *jibalcsvreader_settings_default() {
-    jibalcsvreader_settings *settings = jibalcsvreader_settings_allocate();
+jibal_csvreader_settings *jibal_csvreader_settings_default() {
+    jibal_csvreader_settings *settings = jibal_csvreader_settings_allocate();
     if(!settings) {
         return NULL;
     }
@@ -266,8 +281,8 @@ jibalcsvreader_settings *jibalcsvreader_settings_default() {
     return settings;
 }
 
-jibalcsvreader_settings *jibalcsvreader_settings_csv() {
-    jibalcsvreader_settings *settings = jibalcsvreader_settings_allocate();
+jibal_csvreader_settings *jibal_csvreader_settings_csv() {
+    jibal_csvreader_settings *settings = jibal_csvreader_settings_allocate();
     if(!settings) {
         return NULL;
     }
@@ -279,8 +294,8 @@ jibalcsvreader_settings *jibalcsvreader_settings_csv() {
     return settings;
 }
 
-jibalcsvreader_settings *jibalcsvreader_settings_tsv() {
-    jibalcsvreader_settings *settings = jibalcsvreader_settings_allocate();
+jibal_csvreader_settings *jibal_csvreader_settings_tsv() {
+    jibal_csvreader_settings *settings = jibal_csvreader_settings_allocate();
     if(!settings) {
         return NULL;
     }
@@ -292,27 +307,27 @@ jibalcsvreader_settings *jibalcsvreader_settings_tsv() {
     return settings;
 }
 
-jibalcsvreader_settings *jibalcsvreader_settings_clone(const jibalcsvreader_settings *settings) {
-    jibalcsvreader_settings *out = jibalcsvreader_settings_allocate();
+jibal_csvreader_settings *jibal_csvreader_settings_clone(const jibal_csvreader_settings *settings) {
+    jibal_csvreader_settings *out = jibal_csvreader_settings_allocate();
     *out = *settings;
     out->delim = strdup(out->delim);
     return out;
 }
 
-jibalcsvreader_settings *jibalcsvreader_settings_by_filename(const char *filename) {
+jibal_csvreader_settings *jibal_csvreader_settings_by_filename(const char *filename) {
     size_t l = strlen(filename);
     const size_t suffix_len = 4; /* including "." */
     if(l > suffix_len) {
         if(strncasecmp(filename + l - suffix_len, ".csv", 4) == 0) {
-            return jibalcsvreader_settings_csv();
+            return jibal_csvreader_settings_csv();
         } else if(strncasecmp(filename + l - suffix_len, ".tsv", 4) == 0) {
-            return jibalcsvreader_settings_tsv();
+            return jibal_csvreader_settings_tsv();
         }
     }
-    return jibalcsvreader_settings_default();
+    return jibal_csvreader_settings_default();
 }
 
-int jibalcsvreader_set_settings(jibalcsvreader *reader, jibalcsvreader_settings *settings) {
+int jibal_csvreader_set_settings(jibal_csvreader *reader, jibal_csvreader_settings *settings) {
     if(!reader || !settings) {
         return JIBALCSVREADER_ERROR_GENERIC;
     }
@@ -325,7 +340,7 @@ int jibalcsvreader_set_settings(jibalcsvreader *reader, jibalcsvreader_settings 
     return JIBALCSVREADER_SUCCESS;
 }
 
-void jibalcsvreader_settings_free(jibalcsvreader_settings *settings) {
+void jibal_csvreader_settings_free(jibal_csvreader_settings *settings) {
     if(!settings)
         return;
     free(settings->delim);
