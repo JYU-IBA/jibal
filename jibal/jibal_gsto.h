@@ -250,7 +250,7 @@ void jibal_gsto_fprint_header_property(FILE *f, gsto_header_type h, int val);
 void jibal_gsto_fprint_header_int(FILE *f, gsto_header_type h, int i);
 void jibal_gsto_fprint_header_string(FILE *f, gsto_header_type h, const char *str);
 void jibal_gsto_fprint_header_scientific(FILE *f, gsto_header_type h, double val);
-void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, void *val);
+void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, const void *val);
 inline size_t jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2) {
     return (workspace->Z2_max * (Z1 - 1) + (Z2 - 1));
 }

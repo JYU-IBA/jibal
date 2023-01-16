@@ -246,7 +246,7 @@ void jibal_gsto_fprint_header_scientific(FILE *f, gsto_header_type h, double val
     fprintf(f, "%s=%e\n", gsto_get_header_string(gsto_headers, h), val);
 }
 
-void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, void *val) { /* Value is interpreted based on
+void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, const void *val) { /* Value is interpreted based on
  * header to be int, double or char *. In the last case void * is char **!. */
     char type;
     int n = jibal_option_n(gsto_headers);

@@ -114,7 +114,7 @@ int bootstrap_write_user_config(const jibal_units *units, jibal_config *config) 
 void bootstrap_make_blanks(const char *user_dir, const char *filename) { /* Silently creates empty files if they don't
  * exist, filename is relative to user_dir */
     char *path;
-    asprintf(&path, "%s/%s", user_dir, filename);
+    int ret = asprintf(&path, "%s/%s", user_dir, filename);
     if(!path)
         return;
     path = jibal_path_cleanup(path);

@@ -78,8 +78,12 @@ void jibal_status_print(FILE *f, const jibal *jibal) {
 
 char *jibal_status_string(const jibal *jibal) {
     char *str;
+    int ret;
     if(jibal->error) {
-        asprintf(&str, "JIBAL initialization has failed with error code %i (%s)\n", jibal->error, jibal_error_string(jibal->error));
+        ret = asprintf(&str, "JIBAL initialization has failed with error code %i (%s)\n", jibal->error, jibal_error_string(jibal->error));
+        if(ret < 0) {
+            fprintf(stderr, "Allocation failure.\n");
+        }
         return str;
     }
     const jibal_isotope *i;
@@ -90,7 +94,7 @@ char *jibal_status_string(const jibal *jibal) {
             n_natural_isotopes++;
         n_isotopes++;
     }
-    asprintf(&str, "JIBAL %s: %i units, %i elements, %i isotopes, %i isotopes with abundance > %g, %lu GSTO files.\n",
+    ret = asprintf(&str, "JIBAL %s: %i units, %i elements, %i isotopes, %i isotopes with abundance > %g, %lu GSTO files.\n",
             jibal_version(),
             jibal_units_count(jibal->units),
             jibal_elements_Zmax(jibal->elements),
@@ -98,6 +102,9 @@ char *jibal_status_string(const jibal *jibal) {
             n_natural_isotopes,
             ABUNDANCE_THRESHOLD,
             jibal->gsto->n_files);
+    if(ret < 0) {
+        fprintf(stderr, "Allocation failure.\n");
+    }
     return str;
 }
 

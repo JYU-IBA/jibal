@@ -43,6 +43,91 @@
 #define INCLUDE_NUCLEAR 0
 
 #define SRIM_PATH_MAXLEN 2048
+#define SRIM_GEN_INPUT_MAX_LEN 1000
+
+typedef struct {
+    double xmin; /* keV/amu */
+    double xmax;
+    int xsteps; /* steps numbered 0, 1, 2, ...., vsteps-1 */
+    int z1_min;
+    int z2_min;
+    int z1_max;
+    int z2_max;
+    int n_combinations;
+    char *out_filename;
+} srim_gen_settings;
+
+void remove_newline(char *s) {
+    size_t i;
+    for(i=0; i<strlen(s); i++) {
+        if(s[i] == '\n' || s[i] == '\r')
+            s[i]='\0';
+    }
+}
+
+srim_gen_settings *read_settings(FILE *f) {
+    srim_gen_settings *settings = calloc(1, sizeof(srim_gen_settings));
+    settings->xmin = 10.0; /* keV/amu */
+    settings->xmax = 10000.0;
+    settings->xsteps = XSTEPS; /* steps numbered 0, 1, 2, ...., vsteps-1 */
+    settings->z1_min = 1;
+    settings->z2_min = 1;
+    settings->z1_max = Z_MAX;
+    settings->z2_max = Z_MAX;
+    settings->n_combinations = 0;
+    char *input = malloc(sizeof(char)*SRIM_GEN_INPUT_MAX_LEN);
+    fprintf(stderr, "Please enter output filename, e.g. \"srim2013.ele\": ");
+    fgets(input, SRIM_GEN_INPUT_MAX_LEN, f);
+    remove_newline(input);
+    settings->out_filename = strdup(input);
+    fprintf(stderr, "Input minimum energy in keV/u (e.g. 10): ");
+    input = fgets(input, SRIM_GEN_INPUT_MAX_LEN, f);
+    if(!input) {
+        return NULL;
+    }
+    settings->xmin=strtod(input, NULL);
+    fprintf(stderr, "xmin=%g keV/u\n", settings->xmin);
+    fprintf(stderr, "Input maximum energy in keV/u (e.g. 10000): ");
+    input = fgets(input, SRIM_GEN_INPUT_MAX_LEN, f);
+    if(!input) {
+        return NULL;
+    }
+    settings->xmax=strtod(input, NULL);
+    fprintf(stderr, "xmax=%g keV/u\n", settings->xmax);
+    fprintf(stderr, "Input number of stopping steps to calculate between xmin and xmax in log scale (e.g. 101): ");
+    input = fgets(input, SRIM_GEN_INPUT_MAX_LEN, f);
+    if(!input) {
+        return NULL;
+    }
+    settings->xsteps=strtol(input, NULL, 10);
+    fprintf(stderr, "Input Z1 minimum (e.g. 1): ");
+    input = fgets(input, SRIM_GEN_INPUT_MAX_LEN, f);
+    if(!input) {
+        return NULL;
+    }
+    settings->z1_min=strtol(input, NULL, 10);
+    fprintf(stderr, "Input Z1 maximum (e.g. 92): ");
+    input = fgets(input, SRIM_GEN_INPUT_MAX_LEN, f);
+    if(!input) {
+        return NULL;
+    }
+    settings->z1_max=strtol(input, NULL, 10);
+    fprintf(stderr, "Input Z2 minimum (e.g. 1): ");
+    input = fgets(input, SRIM_GEN_INPUT_MAX_LEN, f);
+    if(!input) {
+        return NULL;
+    }
+    settings->z2_min=strtol(input, NULL, 10);
+    fprintf(stderr, "Input Z2 maximum (e.g. 92): ");
+    input = fgets(input, SRIM_GEN_INPUT_MAX_LEN, f);
+    if(!input) {
+        return NULL;
+    }
+    settings->z2_max=strtol(input, NULL, 10);
+    settings->n_combinations = (settings->z1_max - settings->z1_min + 1)*(settings->z2_max - settings->z2_min + 1);
+    free(input);
+    return settings;
+}
 
 int generate_sr_in(char *out_filename, int Z1, int Z2, int xsteps, double xmin, double xmax) {
     FILE *sr_file = fopen(out_filename, "w");
@@ -139,102 +224,40 @@ int parse_output(char *filename, FILE *stopping_output_file, int xsteps) {
     }
 }
 
-void remove_newline(char *s) {
-    size_t i;
-    for(i=0; i<strlen(s); i++) {
-        if(s[i] == '\n' || s[i] == '\r')
-            s[i]='\0';
-    }
-}
-
-int main (void) {
-    int Z1, Z2, i;
-    double xmin=10.0; /* keV/amu */
-    double xmax=10000.0;
-    int xsteps=XSTEPS; /* steps numbered 0, 1, 2, ...., vsteps-1 */
-    int z1_min=1;
-    int z2_min=1;
-    int z1_max=Z_MAX;
-    int z2_max=Z_MAX;
-    int n_combinations;
-    FILE *stopping_output_file;
-    i=0;
-    char *input=malloc(sizeof(char)*1000);
-    fprintf(stderr, "Please enter output filename, e.g. \"srim2013.ele\": ");
-    fgets(input, 1000, stdin);
-    remove_newline(input); 
-    stopping_output_file = fopen(input, "w");
-    if(!stopping_output_file) {
-        fprintf(stderr, "Could not open file \"%s\" for output", input);
-        return 0;
-    }
-#ifdef WIN32 
-    fprintf(stderr, "Please enter SRIM path, e.g. \"C:\\SRIM\\SR Module\\\": ");
-#else
-    fprintf(stderr, "Since you are not running Windows, I'll try to use wine to run SRModule.exe. I need to know where it is.\nPlease enter SRIM path, e.g. \"%s/.wine/drive_c/SRIM/SR Module/\"\n> ", getenv("HOME")?getenv("HOME"):"/home/user/");
-#endif
-    char *srim_path=malloc(sizeof(char)*SRIM_PATH_MAXLEN);
-    fgets(srim_path, SRIM_PATH_MAXLEN, stdin);
-    remove_newline(srim_path);
-    fprintf(stderr, "Attempting to chdir to \"%s\"\n", srim_path);
-    if(chdir(srim_path) != 0) {
-        fprintf(stderr, "Could not chdir to given path. Error number %i.\n", errno);
-        return 0;
-    }
-    fprintf(stderr, "Input minimum energy in keV/u (e.g. 10): ");
-    fgets(input, 1000, stdin);
-    xmin=strtod(input, NULL);
-    fprintf(stderr, "xmin=%g keV/u\n", xmin);
-    fprintf(stderr, "Input maximum energy in keV/u (e.g. 10000): ");
-    fgets(input, 1000, stdin);
-    xmax=strtod(input, NULL);
-    fprintf(stderr, "xmax=%g keV/u\n", xmax);
-    fprintf(stderr, "Input number of stopping steps to calculate between xmin and xmax in log scale (e.g. 101): ");
-    fgets(input, 1000, stdin);
-    xsteps=strtol(input, NULL, 10);
-    fprintf(stderr, "Input Z1 minimum (e.g. 1): ");
-    fgets(input, 1000, stdin);
-    z1_min=strtol(input, NULL, 10);
-    fprintf(stderr, "Input Z1 maximum (e.g. 92): ");
-    fgets(input, 1000, stdin);
-    z1_max=strtol(input, NULL, 10);
-    fprintf(stderr, "Input Z2 minimum (e.g. 1): ");
-    fgets(input, 1000, stdin);
-    z2_min=strtol(input, NULL, 10);
-    fprintf(stderr, "Input Z2 maximum (e.g. 92): ");
-    fgets(input, 1000, stdin);
-    z2_max=strtol(input, NULL, 10);
-    n_combinations = (z1_max-z1_min+1)*(z2_max-z2_min+1);
+void print_headers(FILE *stopping_output_file, const srim_gen_settings *settings) {
     jibal_gsto_fprint_header_property(stopping_output_file, GSTO_HEADER_TYPE, GSTO_STO_ELE);
     jibal_gsto_fprint_header_string(stopping_output_file, GSTO_HEADER_SOURCE, "SRIM");
-    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_Z1MIN, &z1_min);
-    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_Z1MAX, &z1_max);
-    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_Z2MIN, &z2_min);
-    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_Z2MAX, &z2_max);
+    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_Z1MIN, &settings->z1_min);
+    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_Z1MAX, &settings->z1_max);
+    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_Z2MIN, &settings->z2_min);
+    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_Z2MAX, &settings->z2_max);
     jibal_gsto_fprint_header_property(stopping_output_file, GSTO_HEADER_STOUNIT, GSTO_STO_UNIT_EV15CM2);
     jibal_gsto_fprint_header_property(stopping_output_file, GSTO_HEADER_XUNIT, GSTO_X_UNIT_KEV_U);
     jibal_gsto_fprint_header_property(stopping_output_file, GSTO_HEADER_FORMAT, GSTO_DF_ASCII);
-    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_XMIN, &xmin);
-    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_XMAX, &xmax);
+    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_XMIN, &settings->xmin);
+    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_XMAX, &settings->xmax);
     jibal_gsto_fprint_header_property(stopping_output_file, GSTO_HEADER_XSCALE, GSTO_XSCALE_LOG10);
-    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_XPOINTS, &xsteps);
+    jibal_gsto_fprint_header(stopping_output_file, GSTO_HEADER_XPOINTS, &settings->xsteps);
     fprintf(stopping_output_file, "\n");
-    i=0;
-    fprintf(stderr, "\n");
-    for(Z1=z1_min; Z1<=z1_max; Z1++) {
-        for(Z2=z2_min; Z2<=z2_max; Z2++) {
+}
+
+int generate_output(FILE *stopping_output_file, srim_gen_settings *settings) {
+    int Z1, Z2, i;
+    i = 0;
+    for(Z1 = settings->z1_min; Z1 <= settings->z1_max; Z1++) {
+        for(Z2 = settings->z2_min; Z2 <= settings->z2_max; Z2++) {
             i++;
-            generate_sr_in(SR_FILE_PATH, Z1, Z2, xsteps, xmin, xmax);
+            generate_sr_in(SR_FILE_PATH, Z1, Z2, settings->xsteps, settings->xmin, settings->xmax);
             if(run_srim(SR_MODULE_PATH)) {
-                if(parse_output(SR_OUTPUT_FILE, stopping_output_file, xsteps)) {
-                    fprintf(stderr, "\rZ1=%i. Z2=%i.     OK. %3i/%i.\n", Z1, Z2, i, n_combinations);
+                if(parse_output(SR_OUTPUT_FILE, stopping_output_file, settings->xsteps)) {
+                    fprintf(stderr, "\rZ1 = %3i. Z2 = %3i.     OK. %3i/%i.\n", Z1, Z2, i, settings->n_combinations);
                 } else {
-                    fprintf(stderr, "\rZ1=%i. Z2=%i. Not OK. %3i/%i.\n", Z1, Z2, i, n_combinations);
-                    exit(0);
+                    fprintf(stderr, "\rZ1 = %3i. Z2 = %3i. Not OK. %3i/%i.\n", Z1, Z2, i, settings->n_combinations);
+                    return EXIT_FAILURE;
                 }
             } else {
                 fprintf(stderr, "\nError in running SRModule.\n");
-                exit(0);
+                return EXIT_FAILURE;
             }
         }
 #ifndef WIN32 /* We are too lazy to sleep on Windows */
@@ -242,5 +265,36 @@ int main (void) {
 #endif
     }
     fprintf(stderr, "\n");
-    return 1;
+    return EXIT_SUCCESS;
+}
+
+int main (void) {
+    srim_gen_settings *settings = read_settings(stdin);
+    if(!settings) {
+        fprintf(stderr, "Could not read all required settings.\n");
+        return EXIT_FAILURE;
+    }
+    FILE *stopping_output_file = fopen(settings->out_filename, "w");
+    if(!stopping_output_file) {
+        fprintf(stderr, "Could not open file \"%s\" for output", settings->out_filename);
+        return 0;
+    }
+#ifdef WIN32 
+    fprintf(stderr, "Please enter SRIM path, e.g. \"C:\\SRIM\\SR Module\\\": ");
+#else
+    fprintf(stderr, "Since you are not running Windows, I'll try to use wine to run SRModule.exe. I need to know where it is.\nPlease enter SRIM path, e.g. \"%s/.wine/drive_c/SRIM/SR Module/\"\n> ", getenv("HOME")?getenv("HOME"):"/home/user/");
+#endif
+    char *srim_path = malloc(sizeof(char) * SRIM_PATH_MAXLEN);
+    fgets(srim_path, SRIM_PATH_MAXLEN, stdin);
+    remove_newline(srim_path);
+    fprintf(stderr, "Attempting to chdir to \"%s\"\n", srim_path);
+    if(chdir(srim_path) != 0) {
+        fprintf(stderr, "Could not chdir to given path. Error number %i.\n", errno);
+        return EXIT_FAILURE;
+    }
+    generate_output(stopping_output_file, settings);
+    fclose(stopping_output_file);
+    free(settings->out_filename);
+    free(settings);
+    return EXIT_SUCCESS;
 }
