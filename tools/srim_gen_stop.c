@@ -77,7 +77,10 @@ srim_gen_settings *read_settings(FILE *f) {
     settings->n_combinations = 0;
     char *input = malloc(sizeof(char)*SRIM_GEN_INPUT_MAX_LEN);
     fprintf(stderr, "Please enter output filename, e.g. \"srim2013.ele\": ");
-    fgets(input, SRIM_GEN_INPUT_MAX_LEN, f);
+    input = fgets(input, SRIM_GEN_INPUT_MAX_LEN, f);
+    if(!input) {
+        return NULL;
+    }
     remove_newline(input);
     settings->out_filename = strdup(input);
     fprintf(stderr, "Input minimum energy in keV/u (e.g. 10): ");
@@ -285,7 +288,10 @@ int main (void) {
     fprintf(stderr, "Since you are not running Windows, I'll try to use wine to run SRModule.exe. I need to know where it is.\nPlease enter SRIM path, e.g. \"%s/.wine/drive_c/SRIM/SR Module/\"\n> ", getenv("HOME")?getenv("HOME"):"/home/user/");
 #endif
     char *srim_path = malloc(sizeof(char) * SRIM_PATH_MAXLEN);
-    fgets(srim_path, SRIM_PATH_MAXLEN, stdin);
+    srim_path = fgets(srim_path, SRIM_PATH_MAXLEN, stdin);
+    if(!srim_path) {
+        return EXIT_FAILURE;
+    }
     remove_newline(srim_path);
     fprintf(stderr, "Attempting to chdir to \"%s\"\n", srim_path);
     if(chdir(srim_path) != 0) {

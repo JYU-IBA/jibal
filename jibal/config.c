@@ -331,8 +331,9 @@ char *jibal_config_filename_seek() {
                 filename = jibal_config_user_config_filename();
                 break;
             case 4:
-                asprintf(&filename, "%s/etc/jibal/%s", JIBAL_INSTALL_PREFIX, JIBAL_CONFIG_FILE);
                 /* TODO: Installers might put everything in a different directory */
+                if(asprintf(&filename, "%s/etc/jibal/%s", JIBAL_INSTALL_PREFIX, JIBAL_CONFIG_FILE) < 0)
+                    return NULL;
                 break;
             case 5:
 #ifdef WIN32
