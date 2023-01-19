@@ -85,6 +85,7 @@ jibal_material *jibal_material_create(jibal_element *elements, const char *formu
             break;
         }
         a=b;
+        free(name);
     }
     material->elements=calloc(material->n_elements, sizeof(jibal_element));
     material->concs=calloc(material->n_elements, sizeof(double));

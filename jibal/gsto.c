@@ -93,13 +93,9 @@ void jibal_gsto_file_free(gsto_file_t *file) {
         }
         free(file->data);
     }
-    if(file->em) {
-        free(file->em);
-    }
+    free(file->em);
     free(file->name);
-    if(file->source) {
-        free(file->source);
-    }
+    free(file->source);
     free(file->filename);
 }
 
@@ -119,6 +115,7 @@ void jibal_gsto_free(jibal_gsto *workspace) {
     if(workspace->overrides) {
         free(workspace->overrides);
     }
+    free(workspace);
 }
 
 int jibal_gsto_file_has_combination(const gsto_file_t *file, int Z1, int Z2) {
@@ -601,6 +598,7 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
                 file->type = jibal_option_get_value(gsto_stopping_types, columns[1]);
                 break;
             case GSTO_HEADER_SOURCE:
+                free(file->source); /* If we do multiple passes (e.g. first headers only) this frees previous allocation by strdup() */
                 file->source = strdup(columns[1]);
                 break;
             case GSTO_HEADER_FORMAT:
@@ -997,6 +995,7 @@ int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *filename) {
                 datadir=tmp;
                 file = calloc(strlen(datadir) + 1 + strlen(file) + 1, sizeof(char));
                 strcat(file, datadir);
+                free(datadir);
                 strcat(file, "/");
                 strcat(file, columns[1]);
                 file = jibal_path_cleanup(file);
