@@ -58,6 +58,7 @@ typedef struct {
 } jibal_element;
 
 jibal_isotope *jibal_isotopes_load(const char *filename);
+size_t jibal_isotopes_n(const jibal_isotope *isotopes); /* Number of isotopes */
 int jibal_abundances_load(jibal_isotope *isotopes, const char *filename);
 void jibal_isotopes_free(jibal_isotope *isotopes);
 jibal_element *jibal_elements_populate(const jibal_isotope *isotopes);

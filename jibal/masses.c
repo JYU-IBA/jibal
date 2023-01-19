@@ -97,6 +97,15 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
     return isotopes;
 }
 
+size_t jibal_isotopes_n(const jibal_isotope *isotopes) {
+    size_t n_isotopes = 0;
+    const jibal_isotope *isotope;
+    for(isotope = isotopes; isotope->A != 0; isotope++) {
+        n_isotopes++;
+    }
+    return n_isotopes;
+}
+
 int jibal_abundances_load(jibal_isotope *isotopes, const char *filename) {
     int n;
     if(!filename) {
