@@ -4,7 +4,7 @@
 
 Library that provides stopping forces, straggling models, cross sections and various atomic data e.g. masses and abundances for typical IBA applications. The GNU General Public License applies to the source code (`*.c` and `*.h` files) and any programs compiled thereof, scripts (`*.sh` and `*.py` files) and the software as a whole, but not to any of the [data](data), since the author of this software can not claim authorship of the data. Please note the exceptions to the GPL license under the following notice.
 
-    Copyright (C) 2020 - 2022 Jaakko Julin
+    Copyright (C) 2020 - 2023 Jaakko Julin
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -51,36 +51,36 @@ Run from the command line / terminal:
 without any arguments to get a short help. You can extract entire files of stopping data and see the current JIBAL configuration.
 
 
-### Get_stop
+### Extract stopping data
 
-The get\_stop program can be used to extract stopping like this:
+The jibaltool program can be used to extract stopping like this:
 ~~~~
-get_stop 4He "1 MeV" -l SiO2
+jibaltool stop 4He "1 MeV" -l SiO2
 ~~~~
 
 or for example (stopping in 100 keV steps)
 ~~~~
-get_stop 4He 1MeV 100keV 10MeV -l "Si0.33 O0.33 N0.33" 
+jibaltool stop 4He 1MeV 100keV 10MeV -l "Si0.33 O0.33 N0.33" 
 ~~~~
 This should (interpolation and other numerical issues aside) reproduce SRIM 2013 stopping values with the data included in the distribution.
 
 
 You can also do energy loss calculations in layers, e.g.
 ~~~~
-get_stop 4He 2MeV -l Au -t 1000tfu
+jibaltool stop 4He 2MeV -l Au -t 1000tfu
 ~~~~
 
 Elements are assumed to have natural isotopic composition, unless you tell otherwise, e.g.
 ~~~~
-get_stop 4He 2MeV -l "7Li0.60 6Li0.40" -t 1000tfu
+jibaltool stop 4He 2MeV -l "7Li0.60 6Li0.40" -t 1000tfu
 ~~~~
 
 You can get more verbose output with the -v parameter (or two)
 ~~~~
-get_stop 4He 2MeV -l "7Li0.60 6Li0.40" -t 1000tfu -v -v
+jibaltool stop 4He 2MeV -l "7Li0.60 6Li0.40" -t 1000tfu -v -v
 ~~~~
 
-## Using the jibal library with your own programs
+## Using the JIBAL library with your own programs
 
 Using CMake is preferred, see directory [demo](demo) for an example of a C++ program using JIBAL.
 
