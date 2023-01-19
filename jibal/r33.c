@@ -273,6 +273,7 @@ r33_file *r33_file_read(const char *filename) {
             break;
         }
     }
+    free(line);
     /* TODO: check that all required headers are given.. or don't, because they probably aren't. This is not a validator. */
     if(state != R33_PARSE_STATE_END) {
         fprintf(stderr, "Reading file \"%s\" was not completed successfully.\n", filename);

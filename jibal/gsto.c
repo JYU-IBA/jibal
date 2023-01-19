@@ -83,8 +83,8 @@ const char *jibal_gsto_file_source(const gsto_file_t *file) {
     return file->source;
 }
 
-void jibal_gsto_file_free(gsto_file_t *file) {
-    size_t i;
+void jibal_gsto_file_free_data(gsto_file_t *file) {
+    int i;
     if(file->data) {
         for(i = 0; i < file->n_comb; i++) {
             if(file->data[i]) {
@@ -92,11 +92,24 @@ void jibal_gsto_file_free(gsto_file_t *file) {
             }
         }
         free(file->data);
+        file->data = NULL;
     }
+}
+
+void jibal_gsto_file_free(gsto_file_t *file) {
+    size_t i;
+    if(!file) {
+        return;
+    }
+    jibal_gsto_file_free_data(file);
     free(file->em);
+    file->em = NULL;
     free(file->name);
+    file->name = NULL;
     free(file->source);
+    file->source = NULL;
     free(file->filename);
+    file->filename = NULL;
 }
 
 void jibal_gsto_free(jibal_gsto *workspace) {
@@ -457,9 +470,7 @@ size_t jibal_gsto_file_get_data_index(const gsto_file_t *file, int Z1, int Z2) {
 double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2) {
     size_t i = jibal_gsto_file_get_data_index(file, Z1, Z2);
     assert(i < file->n_comb);
-    if(file->data[i]) {
-        free(file->data[i]);
-    }
+    free(file->data[i]);
     file->data[i] = calloc(file->xpoints, sizeof(double));
     return file->data[i];
 }
@@ -598,7 +609,7 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
                 file->type = jibal_option_get_value(gsto_stopping_types, columns[1]);
                 break;
             case GSTO_HEADER_SOURCE:
-                free(file->source); /* If we do multiple passes (e.g. first headers only) this frees previous allocation by strdup() */
+                free(file->source);
                 file->source = strdup(columns[1]);
                 break;
             case GSTO_HEADER_FORMAT:
@@ -682,14 +693,13 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
         fclose(file->fp);
         return file->valid;
     }
-    if(file->data) {
-        free(file->data);
-    }
+
+    jibal_gsto_file_free_data(file);
     file->data = calloc(file->n_comb, sizeof(double *));
-    if(file->em) {
-        free(file->em);
-    }
+
+    free(file->em);
     file->em = jibal_gsto_em_table(file);
+
     if(!file->em) {
         fprintf(stderr, "WARNING: Could not make E/m table for file %s\n", file->name);
         file->valid = FALSE;
