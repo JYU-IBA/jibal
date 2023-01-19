@@ -46,6 +46,7 @@ typedef struct {
     int A; /* A=Z+N */
     double mass;
     double abundance; /* Do not change this. It is not a concentration. */
+    size_t i; /* This isotope is the ith isotope in jibal->isotopes (calculated when loading), numbering starts from zero */
 } jibal_isotope; /* All jibal_isotopes are supposed to be static data */
 
 typedef struct {

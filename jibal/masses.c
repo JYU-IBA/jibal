@@ -61,8 +61,8 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
     }
     char *line = NULL;
     size_t line_size = 0;
-    size_t n_alloc=JIBAL_MASSES_ISOTOPES_INITIAL_ALLOC;
-    jibal_isotope *isotopes=malloc(sizeof(jibal_isotope)*n_alloc);
+    size_t n_alloc = JIBAL_MASSES_ISOTOPES_INITIAL_ALLOC;
+    jibal_isotope *isotopes = calloc(n_alloc, sizeof(jibal_isotope));
     size_t n = 0;
     while(getline(&line, &line_size, in_file) > 0) {
         line_split=line; /* strsep will screw up line_split, reset for every new line */
@@ -85,6 +85,7 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
                                 strtoimax(columns[4], NULL, 10), 
                                 strtod(columns[5], NULL),
                                 name);
+        isotopes[n].i = n;
         n++;
     }
     isotopes = realloc(isotopes, sizeof(jibal_isotope) * (n+1));
@@ -99,9 +100,11 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
 
 size_t jibal_isotopes_n(const jibal_isotope *isotopes) {
     size_t n_isotopes = 0;
-    const jibal_isotope *isotope;
-    for(isotope = isotopes; isotope->A != 0; isotope++) {
-        n_isotopes++;
+    if(isotopes) {
+        const jibal_isotope *isotope;
+        for(isotope = isotopes; isotope->A != 0; isotope++) {
+            n_isotopes++;
+        }
     }
     return n_isotopes;
 }
