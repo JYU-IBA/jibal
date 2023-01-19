@@ -17,8 +17,8 @@
 #endif
 #include "jibal_stragg.h"
 
-extern inline size_t jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2);
-extern inline const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2);
+extern inline size_t jibal_gsto_table_get_index(const jibal_gsto *workspace, int Z1, int Z2);
+extern inline const double *jibal_gsto_file_get_data(const gsto_file_t *file, int Z1, int Z2);
 
 const char *gsto_get_header_string(const jibal_option *header, int val) {
     const jibal_option *h;
@@ -79,7 +79,7 @@ jibal_gsto *gsto_allocate(int Z1_max, int Z2_max) {
     return workspace;
 }
 
-const char *jibal_gsto_file_source(gsto_file_t *file) {
+const char *jibal_gsto_file_source(const gsto_file_t *file) {
     return file->source;
 }
 
@@ -121,7 +121,7 @@ void jibal_gsto_free(jibal_gsto *workspace) {
     }
 }
 
-int jibal_gsto_file_has_combination(gsto_file_t *file, int Z1, int Z2) {
+int jibal_gsto_file_has_combination(const gsto_file_t *file, int Z1, int Z2) {
     if(file->Z1_min == JIBAL_ANY_Z && file->Z2_min == JIBAL_ANY_Z) {
         return 1;
     }
@@ -309,8 +309,7 @@ void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, const void *val) { /*
     }
 }
 
-void jibal_gsto_fprint_file(FILE *file_out, jibal_gsto *workspace, gsto_file_t *file, gsto_data_format format, int
-Z1_min, int Z1_max, int Z2_min, int Z2_max) {
+void jibal_gsto_fprint_file(FILE *file_out, const jibal_gsto *workspace, const gsto_file_t *file, gsto_data_format format, int Z1_min, int Z1_max, int Z2_min, int Z2_max) {
     int Z1, Z2;
     /* TODO: this is an absolute mess! We have to consider the Z1, Z2 range we are given, the Z1, Z2 range of the
      * file, and also the global Z1, Z2 range (from workspace), since only that data can ever be loaded!
@@ -397,7 +396,7 @@ Z1_min, int Z1_max, int Z2_min, int Z2_max) {
     }
     for (Z1=Z1_min; Z1 <= Z1_max  && Z1 <= workspace->Z1_max; Z1++) {
         for (Z2 = Z2_min; Z2 <= Z2_max && Z2 <= workspace->Z2_max; Z2++) {
-            const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
+            const double *data = jibal_gsto_file_get_data(file, Z1, Z2);
             if(!data) {
                 fprintf(stderr, "Error: no data for Z1=%i and Z2=%i in %s.\n", Z1, Z2, file->name);
                 return;
@@ -429,7 +428,7 @@ Z1_min, int Z1_max, int Z2_min, int Z2_max) {
     }
 }
 
-size_t jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2) {
+size_t jibal_gsto_file_get_data_index(const gsto_file_t *file, int Z1, int Z2) {
     if(file->Z1_min == JIBAL_ANY_Z) {
         if(file->Z2_min == JIBAL_ANY_Z) {
             return 0; /* Only one index is possible Z1=any, Z2=any */
@@ -803,7 +802,7 @@ int jibal_gsto_load_all(jibal_gsto *workspace) { /* For every file, load combina
     return n_success;
 }
 
-int jibal_gsto_file_count_assignments(jibal_gsto *workspace, gsto_file_t *file) {
+int jibal_gsto_file_count_assignments(const jibal_gsto *workspace, gsto_file_t *file) {
     int Z1, Z2;
     int assignments=0;
     for (Z1=1; Z1 <= workspace->Z1_max; Z1++) {
@@ -816,7 +815,7 @@ int jibal_gsto_file_count_assignments(jibal_gsto *workspace, gsto_file_t *file) 
     return assignments;
 }
 
-int jibal_gsto_print_files(jibal_gsto *workspace, int used_only) {
+int jibal_gsto_print_files(const jibal_gsto *workspace, int used_only) {
     size_t i;
     int assignments;
     gsto_file_t *file;
@@ -888,7 +887,7 @@ int jibal_gsto_print_files(jibal_gsto *workspace, int used_only) {
     return 0;
 }
 
-int jibal_gsto_print_assignments(jibal_gsto *workspace) {
+int jibal_gsto_print_assignments(const jibal_gsto *workspace) {
     int Z1, Z2;
     fprintf(stderr, "\nList of assigned stopping and straggling files:\n");
     for (Z1=1; Z1 <= workspace->Z1_max; Z1++) {
@@ -1105,7 +1104,7 @@ double jibal_gsto_stop_nuclear_universal(double E, int Z1, double m1, int Z2, do
     return S;
 }
 
-gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2) {
+gsto_file_t *jibal_gsto_get_assigned_file(const jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2) {
     if(Z1 > workspace->Z1_max || Z2 > workspace->Z2_max) {
         return NULL; /* Z1 or Z2 out of range of our workspace */
     }
@@ -1119,7 +1118,7 @@ gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, gsto_stopping_t
     return NULL;
 }
 
-gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name) {
+gsto_file_t *jibal_gsto_get_file(const jibal_gsto *workspace, const char *name) {
     size_t i;
     gsto_file_t *file;
     for(i = 0; i < workspace->n_files; i++) {
@@ -1248,7 +1247,7 @@ fprintf(stderr, "em = %g, lo=%lu, residual=%e m/s (%.2lf%% of bin)\n", em
     return lo;
 }
 
-double jibal_gsto_get_em(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2, double em) {
+double jibal_gsto_get_em(const jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2, double em) {
     gsto_file_t *file = jibal_gsto_get_assigned_file(workspace, type, Z1, Z2);
     if(!file || !file->data) {
         return 0.0;

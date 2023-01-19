@@ -1,12 +1,28 @@
-#ifndef _JIBAL_GSTO_H_
-#define _JIBAL_GSTO_H_
+/*
+    Jyväskylä Ion Beam Analysis Library (JIBAL)
+    Copyright (C) 2020 - 2023 Jaakko Julin <jaakko.julin@jyu.fi>
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+#ifndef JIBAL_GSTO_H
+#define JIBAL_GSTO_H
 
 #include <stdio.h>
 #include <jibal_masses.h>
 #include <jibal_option.h>
 
 #define GSTO_STR_NONE JIBAL_OPTION_STR_NONE
-
 
 typedef enum {
     GSTO_STO_NONE=0,
@@ -194,20 +210,16 @@ typedef struct {
     int extrapolate; /* boolean */
 } jibal_gsto;
 
-
-
 #include <jibal_masses.h>
 #include <jibal_material.h>
 #include <jibal_layer.h>
-
-
 
 jibal_gsto *jibal_gsto_init(const jibal_element *elements, int Z_max, const char *files_file_name,
                             const char *assignments_file_name);
 int jibal_gsto_read_settings_file(jibal_gsto *workspace, const char *filename);
 gsto_assignment *jibal_gsto_read_assignments_file(jibal_gsto *workspace, const char *filename);
 int jibal_gsto_add_file(jibal_gsto *workspace, jibal_element *elements, const char *name, const char *filename);
-int jibal_gsto_file_has_combination(gsto_file_t *file, int Z1, int Z2);
+int jibal_gsto_file_has_combination(const gsto_file_t *file, int Z1, int Z2);
 int jibal_gsto_assign(jibal_gsto *workspace, int Z1, int Z2, gsto_file_t *file);
 void jibal_gsto_assign_clear_all(jibal_gsto *workspace);
 int jibal_gsto_assign_range(jibal_gsto *workspace, int Z1_min, int Z1_max, int Z2_min, int Z2_max, gsto_file_t *file);
@@ -215,10 +227,10 @@ int jibal_gsto_assign_material(jibal_gsto *workspace, const jibal_isotope *incid
         gsto_file_t *file);
 int jibal_gsto_auto_assign(jibal_gsto *workspace, int Z1, int Z2);
 int jibal_gsto_auto_assign_material(jibal_gsto *workspace, const jibal_isotope *incident, jibal_material *target);
-int  jibal_gsto_file_count_assignments(jibal_gsto *workspace, gsto_file_t *file);
-int jibal_gsto_print_files(jibal_gsto *workspace, int used_only);
-int jibal_gsto_print_assignments(jibal_gsto *workspace);
-const char *jibal_gsto_file_source(gsto_file_t *file);
+int  jibal_gsto_file_count_assignments(const jibal_gsto *workspace, gsto_file_t *file);
+int jibal_gsto_print_files(const jibal_gsto *workspace, int used_only);
+int jibal_gsto_print_assignments(const jibal_gsto *workspace);
+const char *jibal_gsto_file_source(const gsto_file_t *file);
 void jibal_gsto_file_free(gsto_file_t *file);
 void jibal_gsto_free(jibal_gsto *workspace);
 
@@ -232,29 +244,29 @@ int jibal_gsto_load_all(jibal_gsto *workspace);
 jibal_gsto *jibal_gsto_allocate(int Z1_max, int Z2_max);
 int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file);
 int jibal_gsto_load_binary_file(jibal_gsto *workspace, gsto_file_t *file);
-void jibal_gsto_fprint_file(FILE *file_out, jibal_gsto *workspace, gsto_file_t *file, gsto_data_format format, int Z1_min, int Z1_max, int Z2_min, int Z2_max);
+void jibal_gsto_fprint_file(FILE *file_out, const jibal_gsto *workspace, const gsto_file_t *file, gsto_data_format format, int Z1_min, int Z1_max, int Z2_min, int Z2_max);
 
-size_t jibal_gsto_file_get_data_index(gsto_file_t *file, int Z1, int Z2);
+size_t jibal_gsto_file_get_data_index(const gsto_file_t *file, int Z1, int Z2);
 void jibal_gsto_file_calculate_ncombs(gsto_file_t *file);
 double *jibal_gsto_file_allocate_data(gsto_file_t *file, int Z1, int Z2);
-gsto_file_t *jibal_gsto_get_assigned_file(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2);
-gsto_file_t *jibal_gsto_get_file(jibal_gsto *workspace, const char *name);
+gsto_file_t *jibal_gsto_get_assigned_file(const jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2);
+gsto_file_t *jibal_gsto_get_file(const jibal_gsto *workspace, const char *name);
 double jibal_gsto_em_from_file_units(double x, const gsto_file_t *file);
 double *jibal_gsto_em_table(const gsto_file_t *file);
 int jibal_gsto_velocity_to_index(const gsto_file_t *file, double v);
 void jibal_gsto_calculate_speedups(gsto_file_t *file);
 void jibal_gsto_convert_file_to_SI(gsto_file_t *file);
-double jibal_gsto_get_em(jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2, double em);
+double jibal_gsto_get_em(const jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2, double em);
 
 void jibal_gsto_fprint_header_property(FILE *f, gsto_header_type h, int val);
 void jibal_gsto_fprint_header_int(FILE *f, gsto_header_type h, int i);
 void jibal_gsto_fprint_header_string(FILE *f, gsto_header_type h, const char *str);
 void jibal_gsto_fprint_header_scientific(FILE *f, gsto_header_type h, double val);
 void jibal_gsto_fprint_header(FILE *f, gsto_header_type h, const void *val);
-inline size_t jibal_gsto_table_get_index(jibal_gsto *workspace, int Z1, int Z2) {
+inline size_t jibal_gsto_table_get_index(const jibal_gsto *workspace, int Z1, int Z2) {
     return (workspace->Z2_max * (Z1 - 1) + (Z2 - 1));
 }
-inline const double *jibal_gsto_file_get_data(gsto_file_t *file, int Z1, int Z2) {
+inline const double *jibal_gsto_file_get_data(const gsto_file_t *file, int Z1, int Z2) {
     return file->data[jibal_gsto_file_get_data_index(file, Z1, Z2)];
 }
-#endif /* _JIBAL_GSTO_H_ */
+#endif /* JIBAL_GSTO_H */
