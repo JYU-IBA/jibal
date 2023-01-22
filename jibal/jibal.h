@@ -25,7 +25,7 @@
 #include <jibal_material.h>
 #include <jibal_gsto.h>
 
-typedef enum {
+typedef enum jibal_error {
     JIBAL_ERROR_NONE = 0,
     JIBAL_ERROR_CONFIG = 1,
     JIBAL_ERROR_UNITS = 2,

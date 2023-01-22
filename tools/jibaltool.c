@@ -275,8 +275,8 @@ int print_elements(jibaltool_global *global, int argc, char **argv) {
     FILE *out=jibaltool_open_output(global);
     int Z_max = jibal_elements_Zmax(global->jibal->elements);
     for(Z=0; Z <= Z_max; Z++) {
-        jibal_element *e=&global->jibal->elements[Z];
-        fprintf(out, "%2s %3i %2lu %2lu %9.5lf\n", e->name, e->Z, jibal_element_number_of_isotopes(e, 0.0),
+        const jibal_element *e = &(global->jibal->elements[Z]);
+        fprintf(out, "%2s %3i %2zu %2zu %9.5lf\n", e->name, e->Z, jibal_element_number_of_isotopes(e, 0.0),
                 jibal_element_number_of_isotopes(e, ABUNDANCE_THRESHOLD), e->avg_mass/C_U);
     }
     jibaltool_close_output(out);
