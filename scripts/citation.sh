@@ -1,3 +1,10 @@
+#!/bin/bash
+#This script will generate CITATION.cff
+citationfile="../CITATION.cff"
+versionfile="../version.txt"
+today=$(date "+%Y-%m-%d")
+read version < "$versionfile"
+cat <<END  > "$citationfile"
 cff-version: 1.2.0
 authors:
  - family-names: "Julin"
@@ -6,6 +13,7 @@ authors:
 title: "Jyväskylä Ion Beam Analysis Library (JIBAL)"
 repository-code: "https://github.com/JYU-IBA/jibal"
 license: GPL-2.0-or-later
-version: 0.3.9
+version: $version
 doi: 10.5281/zenodo.5227133
-date-released: 2023-01-22
+date-released: $today
+END

@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
+include(version.cmake)
 if(WIN32 AND DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
       CACHE STRING "")
@@ -8,12 +9,11 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 project(Jibal
-        VERSION 0.3.9
+        VERSION "${BUILD_VERSION}"
         DESCRIPTION "JIBAL - Jyväskylä ion beam analysis library"
         LANGUAGES C
         )
 string(TIMESTAMP timestamp "%Y-%m-%d" UTC)
-configure_file(CITATION.cff.in CITATION.cff @ONLY)
 set(default_build_type "Release")
 #if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
 #  set(default_build_type "Debug")
