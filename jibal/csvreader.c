@@ -321,9 +321,9 @@ jibal_csvreader_settings *jibal_csvreader_settings_by_filename(const char *filen
     size_t l = strlen(filename);
     const size_t suffix_len = 4; /* including "." */
     if(l > suffix_len) {
-        if(strncasecmp(filename + l - suffix_len, ".csv", 4) == 0) {
+        if(strncmp(filename + l - suffix_len, ".csv", 4) == 0) {
             return jibal_csvreader_settings_csv();
-        } else if(strncasecmp(filename + l - suffix_len, ".tsv", 4) == 0) {
+        } else if(strncmp(filename + l - suffix_len, ".tsv", 4) == 0) {
             return jibal_csvreader_settings_tsv();
         }
     }
