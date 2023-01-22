@@ -1,6 +1,7 @@
 #include "win_compat.h"
 #ifdef WIN32
 #include <string.h>
+
 char *strsep(char **stringp, const char *delim) {
 	char *start= *stringp;
 	char *p;
@@ -15,6 +16,9 @@ char *strsep(char **stringp, const char *delim) {
 	}
 	return start;
 }
+
+#define strcasecmp _stricmp
+#define strncasecmp _strnicmp
 
 #include <stdlib.h>
 #define WIN32_LEAN_AND_MEAN
