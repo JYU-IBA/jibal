@@ -1,7 +1,4 @@
-#find_package(PkgConfig)
-
-find_package(GSL)
-#include(FindGSL) #GSL is a special snowflake.
+find_package(GSL 2.6 REQUIRED)
 if(NOT GSL_FOUND)
     message(FATAL_ERROR "GSL not found")
 endif()

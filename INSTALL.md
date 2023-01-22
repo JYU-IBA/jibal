@@ -4,10 +4,10 @@
 - Microsoft Windows 8.1 or newer, tested on Windows 10  **OR**
 - Some sane Linux distribution (Arch-based, Debian-based, anything really) **OR**
 - BSD, maybe? **OR**
-- macOS, something relatively recent probably (developer uses Big Sur) **AND**
+- macOS, something relatively recent probably (developer uses Ventura) **AND**
 - Almost any C compiler (GCC, Clang, MSVC >= 2015) with C99 support **AND**
-- GNU Scientific Library (GSL) >= 2.4  **AND**
-- CMake >= 3.13, older versions might work on some systems too
+- GNU Scientific Library (GSL) >= 2.6  **AND**
+- CMake >= 3.15, older versions might work on some systems too
 - Git
 
 ## Installation instructions for Linux / MacOS (also see MacOS specific instructions below):
@@ -44,11 +44,12 @@
 ## Installation instructions for Microsoft Windows 10:
 
 1. Install Build tools for [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/)
-    - note that full MSVC is not necessary, only the build tools!
+    - note that full MSVC is not necessary, only the build tools! 
+    - MSVC 2022 is not tested, might work
     - also earlier versions (MSVC 2017 and MSVC 2015) can be installed using the same installer
     - other compilers that work with CMake should work too, but are not tested on Windows
 2. Install [CMake](https://cmake.org/download/)
-    - Latest stable is always preferred (3.19.6 at the time of writing this)
+    - Latest stable is always preferred (3.25.1 at the time of writing this)
     - Allow the installer to add CMake to PATH for convenience
 3. Install [Git](https://git-scm.com/download/win)
     - Other tools, e.g. GitHub Desktop can be used too
@@ -65,30 +66,30 @@
     - Alternatively use *x86-windows* to compile 32-bit libraries. This is not recommended.
     - Use *x64 Native Tools Command Prompt for VS2019* if you get errors related to x86 vs x64 platform issues
 5. Clone JIBAL repository (this one)
-6. Build (from command line)
-    - Set up your MSVC environment by running the vcvars64.bat (or opening the *x64 Native Tools Command Prompt for VS2019*)
-    - Run the following (from wherever JIBAL is cloned to):
+   6. Build (from command line)
+       - Set up your MSVC environment by running the vcvars64.bat (or opening the *x64 Native Tools Command Prompt for VS2019*)
+       - Run the following (from wherever JIBAL is cloned to):
     
-          mkdir build
-          cd build
-          cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake ../
+             mkdir build
+             cd build
+             cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake ../
           
-    - We use the `-G` option to select the MSVC compiler version. It's not strictly necessary. Use *Visual Studio 15 2017* for  MSVC 2017. Older versions are not supported.
-    - It may not be necessary to specify `$CMAKE_TOOLCHAIN_FILE$` explicitly either if you followed the instructions
-    - Run the following to build the library
+       - We use the `-G` option to select creation of the MSVC files and to pick the version explicitly. It's not strictly necessary.
+       - It may not be necessary to specify `$CMAKE_TOOLCHAIN_FILE$` explicitly either if you followed the instructions
+       - Run the following to build the library
     
-          cmake --build . --target ALL_BUILD --config Release
+             cmake --build . --target ALL_BUILD --config Release
           
-    - You can make an installer, it requires [WiX](https://wixtoolset.org/), run the following:
+       - You can make an installer, it requires [WiX](https://wixtoolset.org/), run the following:
          
-          cmake --build . --target PACKAGE --config Release
+             cmake --build . --target PACKAGE --config Release
           
-    - Alternatively you may use the vcxproj files with Visual Studio or use *msbuild*:
+       - Alternatively you may use the vcxproj files with Visual Studio or use *msbuild*:
    
-          msbuild PACKAGE.vcxproj
+             msbuild PACKAGE.vcxproj
           
-    - You can install it like any other msi installer, for quick deployment run this:
+       - You can install it like any other msi installer, for quick deployment run this:
         
-        msiexec /i Jibal-0.X.X-win64.msi /qb
+             msiexec /i Jibal-0.X.X-win64.msi /qb
         
         
