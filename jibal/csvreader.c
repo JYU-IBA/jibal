@@ -3,6 +3,9 @@
 #include <string.h>
 #include "jibal_units.h"
 #include "jibal_generic.h"
+#ifdef WIN32
+#include "win_compat.h"
+#endif
 #include "jibal_csvreader.h"
 
 jibal_csvreader *jibal_csvreader_init(const char *filename, const jibal_csvreader_settings *settings, const jibal_csvreader_colspec *colspec) {
