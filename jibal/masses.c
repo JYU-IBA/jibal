@@ -91,7 +91,7 @@ jibal_isotope *jibal_isotopes_load(const char *filename) {
     isotopes = realloc(isotopes, sizeof(jibal_isotope) * (n+1));
     isotope_set(isotopes+n, 0, 0, 0, 0.0, "");
 #ifdef DEBUG
-    fprintf(stderr, "Loaded %lu isotopes from %s\n", n, filename);
+    fprintf(stderr, "Loaded %zu isotopes from %s\n", n, filename);
 #endif
     fclose(in_file);
     free(line);
@@ -186,7 +186,7 @@ jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
             elements[Z].isotopes=calloc(elements[Z].n_isotopes, sizeof(jibal_isotope *));
         }
 #ifdef DEBUG
-        fprintf(stderr, "Element %i, name %s, %lu isotopes\n", Z, elements[Z].name, elements[Z].n_isotopes);
+        fprintf(stderr, "Element %i, name %s, %zu isotopes\n", Z, elements[Z].name, elements[Z].n_isotopes);
 #endif
     }
     for(isotope=isotopes; isotope->A != 0; isotope++) { /* Copy pointers to isotopes */
@@ -197,7 +197,7 @@ jibal_element *jibal_elements_populate(const jibal_isotope *isotopes) {
         for(i = 0; i < e->n_isotopes && e->isotopes[i] != NULL; i++); /* Find next free slot */
         e->isotopes[i]=isotope; /* Shallow copy */
 #ifdef DEBUG
-        fprintf(stderr, "Element %i isotope %lu is A=%i\n", isotope->Z, i, isotope->A);
+        fprintf(stderr, "Element %i isotope %zu is A=%i\n", isotope->Z, i, isotope->A);
 #endif
     }
     for(Z=0; Z <= Z_max; Z++) {
@@ -308,7 +308,7 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A) {
     }
     size_t i, j=0, n;
 #ifdef DEBUG
-    fprintf(stderr, "Trying to figure out based on A=%i how many of the %lu isotopes to include.\n", A, element->n_isotopes);
+    fprintf(stderr, "Trying to figure out based on A=%i how many of the %zu isotopes to include.\n", A, element->n_isotopes);
 #endif
     switch (A) {
         case JIBAL_ALL_ISOTOPES:
@@ -322,7 +322,7 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A) {
             break;
     }
 #ifdef DEBUG
-    fprintf(stderr, "The answer is %lu isotopes\n", n);
+    fprintf(stderr, "The answer is %zu isotopes\n", n);
 #endif
     jibal_element *e=jibal_element_new(element->name, element->Z, n);
     for(i = 0; i < element->n_isotopes; i++) {
@@ -345,7 +345,7 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A) {
                     e->isotopes[j] = element->isotopes[i];
                     e->concs[j] = element->isotopes[i]->abundance;
 #ifdef DEBUG
-                    fprintf(stderr, "Assigned isotope %lu from isotope %lu (element %s), abundance %.6f\n", j, i, element->name, element->isotopes[i]->abundance);
+                    fprintf(stderr, "Assigned isotope %zu from isotope %zu (element %s), abundance %.6f\n", j, i, element->name, element->isotopes[i]->abundance);
 #endif
                     j++;
                 }
@@ -361,7 +361,7 @@ jibal_element *jibal_element_copy(const jibal_element *element, int A) {
         }
     }
 #ifdef DEBUG
-    fprintf(stderr, "Found %lu isotopes out of %lu\n", j, n);
+    fprintf(stderr, "Found %zu isotopes out of %zu\n", j, n);
 #endif
     if(j == n) { /* We found all the isotopes we were looking for */
         jibal_element_normalize(e);

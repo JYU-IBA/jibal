@@ -84,7 +84,7 @@ const char *jibal_gsto_file_source(const gsto_file_t *file) {
 }
 
 void jibal_gsto_file_free_data(gsto_file_t *file) {
-    int i;
+    size_t i;
     if(file->data) {
         for(i = 0; i < file->n_comb; i++) {
             if(file->data[i]) {
@@ -97,7 +97,6 @@ void jibal_gsto_file_free_data(gsto_file_t *file) {
 }
 
 void jibal_gsto_file_free(gsto_file_t *file) {
-    size_t i;
     if(!file) {
         return;
     }
@@ -501,7 +500,7 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
                                             (Z2 - previous_Z2 - 1)); /* Not sure if correct, but it works. */
                 }
 #ifdef DEBUG
-                fprintf(stderr, "Skipping %lu*(%i*%i+%i)=%lu lines.\n", file->xpoints, Z1-previous_Z1, file->Z1_max-file->Z2_min+1, Z2-previous_Z2-1, skip);
+                fprintf(stderr, "Skipping %zu*(%i*%i+%i)=%zu lines.\n", file->xpoints, Z1-previous_Z1, file->Z1_max-file->Z2_min+1, Z2-previous_Z2-1, skip);
                 actually_skipped=0;
 #endif
 
@@ -525,7 +524,7 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
                     return 0;
                 for(i = 0; i < file->xpoints; i++) {
                     if(getline(&line, &line_size, file->fp) <= 0) {
-                        fprintf(stderr, "ERROR: File %s ended prematurely when reading Z1=%i Z2=%i stopping point=%lu/%lu"
+                        fprintf(stderr, "ERROR: File %s ended prematurely when reading Z1=%i Z2=%i stopping point=%zu/%zu"
                                         ".\n", file->filename, Z1, Z2, i+1, file->xpoints);
                         file->valid = FALSE;
                         break;
@@ -535,7 +534,7 @@ int jibal_gsto_load_ascii_file(jibal_gsto *workspace, gsto_file_t *file) {
                         i--;
                     } else {
 #ifdef DEBUG
-                        fprintf(stderr, "Loading stopping [%i][%i][%lu] from line %i.\n", Z1, Z2, i, file->lineno);
+                        fprintf(stderr, "Loading stopping [%i][%i][%zu] from line %i.\n", Z1, Z2, i, file->lineno);
 #endif
                         line[strcspn(line, "\r\n")] = 0;  /* Strip newlines */
                         char *end;
@@ -839,7 +838,7 @@ int jibal_gsto_print_files(const jibal_gsto *workspace, int used_only) {
         if(used_only && !assignments) {
             continue;
         }
-        fprintf(stderr, "%lu: %s,\n", i+1, file->name);
+        fprintf(stderr, "%zu: %s,\n", i+1, file->name);
         fprintf(stderr, "\ttype: %s\n", gsto_get_header_string(gsto_stopping_types, file->type));
         fprintf(stderr, "\tfilename: %s\n", file->filename);
         if(file->source) {
@@ -860,7 +859,7 @@ int jibal_gsto_print_files(const jibal_gsto *workspace, int used_only) {
             fprintf(stderr, "\t%i (%s) <= Z2 <= %i (%s),\n", file->Z2_min, jibal_element_name(workspace->elements, file->Z2_min),
                     file->Z2_max, jibal_element_name(workspace->elements, file->Z2_max));
         }
-        fprintf(stderr, "\tx-points=%lu\n", file->xpoints);
+        fprintf(stderr, "\tx-points=%zu\n", file->xpoints);
         fprintf(stderr, "\tx-scale=%s\n", gsto_get_header_string(gsto_xscales, file->xscale));
         if(file->xunit == file->xunit_original) {
             fprintf(stderr, "\tx-unit=%s\n", gsto_get_header_string(gsto_xunits, file->xunit_original));
@@ -1163,7 +1162,7 @@ double *jibal_gsto_em_table(const gsto_file_t *file) { /* Note: for internal use
     size_t i;
     double x;
 #ifdef DEBUG
-    fprintf(stderr, "Making velocity table, %lu points, xmin=%g, xmax=%g, xscale=%i, xunit=%i\n", file->xpoints,
+    fprintf(stderr, "Making velocity table, %zu points, xmin=%g, xmax=%g, xscale=%i, xunit=%i\n", file->xpoints,
             file->xmin, file->xmax, file->xscale, file->xunit);
 #endif
     for (i = 0; i < file->xpoints; i++) {
@@ -1240,7 +1239,7 @@ int jibal_gsto_em_to_index(const gsto_file_t *file, double em) { /* Returns the 
             }
     }
 #ifdef DEBUG_VERBOSE
-fprintf(stderr, "em = %g, lo=%lu, residual=%e m/s (%.2lf%% of bin)\n", em
+fprintf(stderr, "em = %g, lo=%zu, residual=%e m/s (%.2lf%% of bin)\n", em
             lo, em - file->em[lo], 100.0*(em - file->em[lo])/(file->em[lo+1] - file->em[lo]));
 #endif
 #ifdef GSTO_VELOCITY_BIN_CHECK_STRICT /* Note: due to floating point issues this is too strict */

@@ -132,10 +132,10 @@ void jibal_material_normalize(jibal_material *material) {
 
 void jibal_material_print(FILE *stream, jibal_material *material) {
     size_t i, j;
-    fprintf(stream, "Material %s has %lu elements.\n", material->name, material->n_elements);
+    fprintf(stream, "Material %s has %zu elements.\n", material->name, material->n_elements);
     for(i=0; i < material -> n_elements; i++) {
         jibal_element *element = &material->elements[i];
-        fprintf(stream, "    %2lu. %s (Z=%i): %9.5f%%  with %lu isotopes (avg mass %g u):\n", i+1, element->name, element->Z, material->concs[i]/C_PERCENT, element->n_isotopes, element->avg_mass/C_U);
+        fprintf(stream, "    %2lu. %s (Z=%i): %9.5f%%  with %zu isotopes (avg mass %g u):\n", i+1, element->name, element->Z, material->concs[i]/C_PERCENT, element->n_isotopes, element->avg_mass/C_U);
         for(j=0; j < element->n_isotopes; j++) {
             const jibal_isotope *isotope = element->isotopes[j];
             fprintf(stream, "      %2lu. %5s: %9.5lf%%  (A=%i, mass=%g u, abundance=%.5lf%%)\n", j+1, isotope->name, element->concs[j]/C_PERCENT,

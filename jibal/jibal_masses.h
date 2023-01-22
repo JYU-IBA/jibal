@@ -39,7 +39,7 @@
 typedef char isotope_name[JIBAL_ISOTOPE_NAME_LENGTH]; /* These should be null terminated */
 typedef char element_name[JIBAL_ISOTOPE_NAME_LENGTH];
 
-typedef struct {
+typedef struct jibal_isotope {
     isotope_name name; /* "AAAXx eg. 239Pu" */
     int N;
     int Z;

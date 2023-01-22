@@ -94,7 +94,7 @@ char *jibal_status_string(const jibal *jibal) {
             n_natural_isotopes++;
         n_isotopes++;
     }
-    ret = asprintf(&str, "JIBAL %s: %i units, %i elements, %i isotopes, %i isotopes with abundance > %g, %lu GSTO files.\n",
+    ret = asprintf(&str, "JIBAL %s: %i units, %i elements, %i isotopes, %i isotopes with abundance > %g, %zu GSTO files.\n",
             jibal_version(),
             jibal_units_count(jibal->units),
             jibal_elements_Zmax(jibal->elements),
