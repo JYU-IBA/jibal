@@ -23,6 +23,7 @@
 int jibal_isdigit(char c);
 FILE *jibal_fopen(const char *filename, const char *mode); /* opens file and returns file pointer (like fopen()), returns NULL if fails, stderr if filename is NULL, stdout if filename is "-" */
 void jibal_fclose(FILE *f); /* fclose() unless f is either stdin, stdout or stderr */
+char *jibal_strsep(char **stringp, const char *delim); /* Just regular strsep */
 char *jibal_strsep_with_quotes(char **stringp, const char *delim);
 char *jibal_remove_double_quotes(char *s);
 #endif // JIBAL_GENERIC_H

@@ -43,13 +43,28 @@ char *jibal_remove_double_quotes(char *s) {
     return s;
 }
 
+char *jibal_strsep(char **stringp, const char *delim) {
+    char *start= *stringp;
+    char *p;
+
+    p = (start != NULL) ? strpbrk(start, delim) : NULL;
+
+    if(p==NULL) {
+        *stringp=NULL;
+    } else {
+        *p = '\0';
+        *stringp=p+1;
+    }
+    return start;
+}
+
 char *jibal_strsep_with_quotes(char **stringp, const char *delim) {
     char *s = *stringp;
     if(!s) {
         return NULL;
     }
     if(*s != '"') {
-        return strsep(stringp, delim);
+        return jibal_strsep(stringp, delim);
     }
     *s = '\0'; /* Replace initial quote with a terminator */
     char *end = s + 1;
