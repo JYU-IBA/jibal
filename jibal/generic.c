@@ -67,13 +67,14 @@ char *jibal_strsep_with_quotes(char **stringp, const char *delim) {
         if(*end == '\0') {
             *stringp = NULL;
         } else {
-            *stringp = end;
             for(const char *d = delim; *d; d++) { /* Find out if there is a delimeter after the final quote... */
                 if(*end == *d) {
-                    (*stringp)++; /* ...and skip over it */
+                    *end = '\0'; /* Set it to zero */
+                    end++; /* ...and skip over it */
                     break;
                 }
             }
+            *stringp = end;
         }
         return jibal_remove_double_quotes(s + 1); /* Returns the original token, but skipping over the initial quote and unescaping double quotes */
     } else { /* No terminating quote found, the initial quote has been replaced with a terminator so this should look like an empty field. */
