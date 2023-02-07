@@ -153,7 +153,7 @@ static const jibal_option gsto_headers[] = {
         {NULL, 0}
 };
 
-typedef struct {
+typedef struct gsto_file {
     int valid;
     int lineno; /* Keep track of how many lines read */
     /* file contains stopping for Z1 = Z1_min .. Z1_max inclusive in Z2 = Z2_min .. Z2_max inclusive i.e. (Z1_max-Z1_min+1)*(Z2_max-Z2_min+1) combinations */
@@ -170,8 +170,6 @@ typedef struct {
     double xmin_speedup; /* xmin or log10(xmin) */
     double xdiv; /* speedup variable, calculated from xpoints, xmin and xmax */
     double *em; /* Array of energy/mass (size: xpoints). In SI units! */
-    int em_index_accel; /* Store the energy/mass bin (of the array above) that was last found in an attempt to
- * accelerate successive seeks */
     gsto_stopping_xscale xscale; /* The scale specifies how stopping points are spread between min and max (linear, log...) */
     gsto_xunit xunit; /* Stopping as a function of what? Can be converted (to SI) or not! */
     gsto_xunit xunit_original; /* As it was read. */
@@ -179,8 +177,7 @@ typedef struct {
     gsto_stounit stounit_original;
     gsto_straggunit straggunit; /* Straggling unit */
     gsto_straggunit straggunit_original;
-    gsto_stopping_type type; /* does this file contain nuclear, electronic or total stopping? TODO: only electronic
- * makes sense, remove others */
+    gsto_stopping_type type; /* does this file contain nuclear, electronic or total stopping? */
     gsto_data_format data_format; /* What does the data look like (after headers) */
     FILE *fp;
     char *name; /* Descriptive name of the file, from the settings file */
@@ -189,13 +186,13 @@ typedef struct {
     double **data; /* Data is stored here. Array of pointers. Access with functions. */
 } gsto_file_t;
 
-typedef struct {
+typedef struct gsto_assignment {
     int Z1;
     int Z2;
     gsto_file_t *file;
 } gsto_assignment;
 
-typedef struct {
+typedef struct jibal_gsto {
     const jibal_element *elements;
     int Z1_max;
     int Z2_max;

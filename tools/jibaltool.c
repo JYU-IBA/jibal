@@ -133,7 +133,7 @@ int extract_stop_material(jibaltool_global *global, int argc, char **argv) {
         fprintf(stderr, "%s is not a valid material formula.\n", argv[1]);
         return -1;
     }
-    gsto_file_t *file=jibal_gsto_get_file(jibal->gsto, global->stopfile);
+    gsto_file_t *file = jibal_gsto_get_file(jibal->gsto, global->stopfile);
     if(!file) {
         fprintf(stderr, "No such stopping file: %s\n", global->stopfile);
         return -1;

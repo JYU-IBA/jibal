@@ -725,7 +725,6 @@ int jibal_gsto_load(jibal_gsto *workspace, int headers_only, gsto_file_t *file) 
 void jibal_gsto_calculate_speedups(gsto_file_t *file) {
     file->xmin_speedup = 0.0;
     file->xdiv = 0.0;
-    file->em_index_accel = 0;
     switch (file->xscale) {
         case GSTO_XSCALE_LINEAR:
             file->xmin_speedup = file->xmin;
@@ -1256,40 +1255,32 @@ fprintf(stderr, "em = %g, lo=%zu, residual=%e m/s (%.2lf%% of bin)\n", em
 }
 
 double jibal_gsto_get_em(const jibal_gsto *workspace, gsto_stopping_type type, int Z1, int Z2, double em) {
-    gsto_file_t *file = jibal_gsto_get_assigned_file(workspace, type, Z1, Z2);
-    if(!file || !file->data) {
-        return 0.0;
-    }
+    const gsto_file_t *file = jibal_gsto_get_assigned_file(workspace, type, Z1, Z2);
+    assert(file);
+    assert(file->data);
 #ifdef DEBUG_VERBOSE
     fprintf(stderr, "jibal_gsto_get_em(%p, type = %i, Z1 = %i, Z2 = %i, em = %e (%g keV/u)). File is %s.\n", (void *)workspace, type, Z1, Z2, em, em/(C_KEV/C_U), file->name);
 #endif
-    const double *data=jibal_gsto_file_get_data(file, Z1, Z2);
+    const double *data = jibal_gsto_file_get_data(file, Z1, Z2);
     assert(data);
-    int lo;
-    if(file->em[file->em_index_accel] <= em && em < file->em[file->em_index_accel+1]) {
-        lo = file->em_index_accel;
-    } else {
-        lo = jibal_gsto_em_to_index(file, em);
-        if (lo < 0) { /* Out of bounds */
-            if(workspace->extrapolate) {
-                if(em >= 0 && em <= file->em[0]) {
-                    return jibal_linear_interpolation(0.0, file->em[0], 0.0, data[0], em);
-                    /* Linear interpolation from (0, 0) to lowest real data point */
-                }
-                if(em >= file->em[file->xpoints - 1]) {
-                    return data[file->xpoints - 1];
-                }
+    int lo = jibal_gsto_em_to_index(file, em);
+    if(lo < 0) { /* Out of bounds */
+        if(workspace->extrapolate) {
+            if(em >= 0 && em <= file->em[0]) {
+                return jibal_linear_interpolation(0.0, file->em[0], 0.0, data[0], em);
+                /* Linear interpolation from (0, 0) to the lowest real data point */
             }
-            return 0.0;
+            if(em >= file->em[file->xpoints - 1]) {
+                return data[file->xpoints - 1];
+            }
         }
-        file->em_index_accel = lo;
+        return 0.0;
     }
     double out = jibal_linear_interpolation(file->em[lo], file->em[lo+1], data[lo], data[lo+1], em);
     if(file->straggunit == GSTO_STRAGG_UNIT_BOHR) {
         assert(type == GSTO_STO_STRAGG);
         out *= jibal_stragg_bohr(Z1, Z2);
-    }
-    if(file->stounit == GSTO_STO_UNIT_EV15CM2) {
+    } else if(file->stounit == GSTO_STO_UNIT_EV15CM2) {
         assert(type == GSTO_STO_ELE);
         out *= C_EV_TFU;
     }
