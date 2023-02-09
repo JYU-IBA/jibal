@@ -1,7 +1,7 @@
-#include <jibal.h>
 #include <jibal_stragg.h>
 #include "jibal_stop.h"
 
+extern inline double jibal_stragg_bohr(int Z1, int Z2);
 
 double jibal_stragg(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E) {
     size_t i;
@@ -13,12 +13,6 @@ double jibal_stragg(jibal_gsto *workspace, const jibal_isotope *incident, const 
         sum += target->concs[i]*jibal_gsto_get_em(workspace, GSTO_STO_STRAGG, Z1, Z2, em);
     }
     return sum;
-}
-
-double jibal_stragg_bohr(int Z1, int Z2) {
-    //const double bohr = 4.0 * C_PI * pow4(C_E) / pow2(4.0 * C_PI * C_EPSILON0);
-    static const double bohr = C_BOHR_STRAGG;
-    return  Z1 * Z1 * Z2 * bohr;
 }
 
 double jibal_layer_energy_loss_with_straggling(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_layer *layer, double E_0, double factor, double *S) {

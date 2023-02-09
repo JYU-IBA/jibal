@@ -3,7 +3,7 @@
 
 /*
     JIBAL - Library for ion beam analysis
-    Copyright (C) 2020 Jaakko Julin <jaakko.julin@jyu.fi>
+    Copyright (C) 2020 - 2023 Jaakko Julin <jaakko.julin@jyu.fi>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 #include <jibal_material.h>
 
 double jibal_stragg(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_material *target, double E);
-double jibal_stragg_bohr(int Z1, int Z2);
+inline double jibal_stragg_bohr(int Z1, int Z2) {return  Z1 * Z1 * Z2 * C_BOHR_STRAGG;}
 double jibal_layer_energy_loss_with_straggling(jibal_gsto *workspace, const jibal_isotope *incident, const jibal_layer *layer, double E_0, double factor, double *S);
 
 #endif // _JIBAL_STRAGG_H_

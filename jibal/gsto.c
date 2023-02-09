@@ -1306,3 +1306,20 @@ int jibal_gsto_auto_assign_material(jibal_gsto *workspace, const jibal_isotope *
     }
     return 1; /* Success */
 }
+
+double jibal_gsto_xunit_to_energy(gsto_xunit xunit, double value, double mass) {
+    switch(xunit) {
+        case GSTO_X_UNIT_NONE:
+            return 0.0;
+        case GSTO_X_UNIT_M_S:
+            return jibal_energy(value, mass);
+        case GSTO_X_UNIT_J_KG:
+            return value * mass;
+        case GSTO_X_UNIT_KEV_U:
+            return value * (C_KEV/C_U) * mass;
+        case GSTO_X_UNIT_MEV_U:
+            return value * (C_MEV/C_U) * mass;
+        default:
+            0.0;
+    }
+}

@@ -266,4 +266,6 @@ inline size_t jibal_gsto_table_get_index(const jibal_gsto *workspace, int Z1, in
 inline const double *jibal_gsto_file_get_data(const gsto_file_t *file, int Z1, int Z2) {
     return file->data[jibal_gsto_file_get_data_index(file, Z1, Z2)];
 }
+int jibal_gsto_em_to_index(const gsto_file_t *file, double em);
+double jibal_gsto_xunit_to_energy(gsto_xunit xunit, double value, double mass); /* Convert value in xunit to energy (J) if mass is mass (in kg) */
 #endif /* JIBAL_GSTO_H */
