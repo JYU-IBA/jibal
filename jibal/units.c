@@ -84,10 +84,11 @@ int jibal_units_print(FILE *out, const jibal_units *units) {
 double jibal_units_get(const jibal_units *units, char type, const char *name) {
     if(name == NULL) /* Not allowed */
         return 0.0;
-    if(*name == '\0') /* Empty. */
-        return 1.0;
-    while(*name == ' ') {
+    while(*name == ' ') { /* Skip over leading spaces (there is often one space between number and unit!) */
         name++;
+    }
+    if(*name == '\0') { /* Empty, no unit, assume SI. */
+        return 1.0;
     }
     while(units) {
         if(type && (units->type != type)) {
@@ -144,7 +145,7 @@ double jibal_units_get(const jibal_units *units, char type, const char *name) {
         }
         units=units->next;
     }
-    return 1.0; /* Actually we should fail maybe with NaN? */
+    return nan(0);
 }
 
 double jibal_get_val(const jibal_units *units, char type, const char *value) {
@@ -156,6 +157,58 @@ double jibal_get_val(const jibal_units *units, char type, const char *value) {
     x *= jibal_units_get(units, type, end);
     return x;
 }
+
+int jibal_unit_convert(const jibal_units *units, char type, const char *str, double *out) {
+    if(!str) { /* Null pointer passed, fail */
+        return UNIT_CONVERSION_ERROR_NULL_POINTER;
+    }
+    while(*str == ' ') { /* Skip initial space */
+        str++;
+    }
+    if(*str == '\0') { /* No value, fail */
+        return UNIT_CONVERSION_ERROR_NO_VALUE;
+    }
+    char *end;
+    double x = strtod(str, &end); /* Perform double conversion */
+    if(!isfinite(x)) { /* Crappy number */
+        return UNIT_CONVERSION_ERROR_VALUE_IS_NOT_FINITE;
+    }
+    if(end == str) { /* No conversion, this *could* happen if just a bare unit is given */
+        x = 1.0;
+    }
+    while(*end == ' ') { /* Skip over spaces after converted value */
+        end++;
+    }
+    if(*end == '\0') { /* No unit, partial success */
+        *out = x;
+        return UNIT_CONVERSION_SUCCESS_WITHOUT_UNIT;
+    }
+    x *= jibal_units_get(units, type, end);
+    if(isnan(x)) { /* A unit was given, but we didn't recognize it. Fail. */
+        return UNIT_CONVERSION_ERROR_UNRECOGNIZED_UNIT;
+    }
+    *out = x;
+    return UNIT_CONVERSION_SUCCESS_WITH_UNIT;
+}
+
+const char *jibal_unit_conversion_error_string(int error) {
+    switch(error) {
+        case UNIT_CONVERSION_SUCCESS_WITH_UNIT:
+        case UNIT_CONVERSION_SUCCESS_WITHOUT_UNIT:
+            return "success";
+        case UNIT_CONVERSION_ERROR_NULL_POINTER:
+            return "null pointer passed";
+        case UNIT_CONVERSION_ERROR_NO_VALUE:
+            return "no value";
+        case UNIT_CONVERSION_ERROR_VALUE_IS_NOT_FINITE:
+            return "value is not finite";
+        case UNIT_CONVERSION_ERROR_UNRECOGNIZED_UNIT:
+            return "unrecognized unit";
+        default:
+            return "unknown error";
+    }
+}
+
 
 void jibal_units_free(jibal_units *units) {
     if(!units)

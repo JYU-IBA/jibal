@@ -63,6 +63,10 @@ char *jibal_strsep_with_quotes(char **stringp, const char *delim) {
     if(!s) {
         return NULL;
     }
+    if(*s == '#') {
+        *stringp = NULL;
+        return NULL;
+    }
     if(*s != '"') {
         return jibal_strsep(stringp, delim);
     }

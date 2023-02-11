@@ -106,6 +106,13 @@
 #define UNIT_TYPE_SOLID_ANGLE 'O'
 #define UNIT_TYPE_DENSITY 'D'
 
+#define UNIT_CONVERSION_SUCCESS_WITH_UNIT (1)
+#define UNIT_CONVERSION_SUCCESS_WITHOUT_UNIT (0)
+#define UNIT_CONVERSION_ERROR_NULL_POINTER (-1)
+#define UNIT_CONVERSION_ERROR_NO_VALUE (-2)
+#define UNIT_CONVERSION_ERROR_VALUE_IS_NOT_FINITE (-3)
+#define UNIT_CONVERSION_ERROR_UNRECOGNIZED_UNIT (-4)
+
 typedef struct jibal_units {
     double f; /*!< Factor, i.e. this unit in Si units (e.g. 1.66e-27 for the atomic mass unit) */
     char type; /*!< Physically relevant type, use defines above. UNIT_TYPE_MASS for a unit of mass. */
@@ -127,5 +134,7 @@ int jibal_units_print(FILE *out, const jibal_units *units);
  */
 double jibal_units_get(const jibal_units *units, char type, const char *name);
 double jibal_get_val(const jibal_units *units, char type, const char *value);
+int jibal_unit_convert(const jibal_units *units, char type, const char *str, double *out); /* Places converted value to out and returns 1 on success (if unit was given) 0 on success (no unit), doesn't touch out if fails and returns negative numbers */
+const char *jibal_unit_conversion_error_string(int error);
 void jibal_units_free(jibal_units *units);
 #endif /* _JIBAL_UNITS_H_ */
