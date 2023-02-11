@@ -52,6 +52,8 @@ typedef enum {
 typedef struct {
     jibal_config_var_type type;
     const char *name;
+    const char *unit; /* for JIBAL_CONFIG_VAR_UNIT */
+    char unit_type; /* preferred unit, can't be changed (const), but no allocation issues */
     void *variable; /* this is the pointer to data. We don't free these, so memory must be allocated for the duration of use. Note that for strings variable is supposed to be char ** and we allocate new char * (and free old ones) as is necessary. */
     const jibal_option *option_list; /* Only used with type == JIBAL_CONFIG_VAR_OPTION */
 } jibal_config_var;
@@ -84,7 +86,6 @@ int jibal_config_file_write(const jibal_config_file *cf, const char *filename);
 int jibal_config_file_var_set(jibal_config_file *cf, const char *var, const char *val);
 int jibal_config_var_set(const jibal_units *units, jibal_config_var *var, const char *val, const char *filename);
 const jibal_config_var *jibal_config_var_find(jibal_config_var *var, const char *str);
-
 int jibal_path_is_absolute(const char *path);
 char *jibal_path_cleanup(char *path);
 #endif /* JIBAL_CONFIG_H */

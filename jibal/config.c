@@ -44,18 +44,18 @@ char *make_path_and_check_if_exists(const char *directory, const char *file) {
 
 jibal_config_var *make_config_vars(jibal_config *config) { /* Makes a structure that defines config options. Used
  * when config files are read and written. Default values should be handled elsewhere. */
-    const jibal_config_var vars[]={
-            {JIBAL_CONFIG_VAR_PATH, "datadir", &config->datadir, NULL},
-            {JIBAL_CONFIG_VAR_PATH, "userdatadir", &config->userdatadir, NULL},
-            {JIBAL_CONFIG_VAR_PATH, "masses_file", &config->masses_file, NULL},
-            {JIBAL_CONFIG_VAR_PATH, "abundances_file", &config->abundances_file, NULL},
-            {JIBAL_CONFIG_VAR_PATH, "files_file", &config->files_file, NULL},
-            {JIBAL_CONFIG_VAR_PATH, "assignments_file", &config->assignments_file, NULL},
-            {JIBAL_CONFIG_VAR_INT, "Z_max", &config->Z_max, NULL},
-            {JIBAL_CONFIG_VAR_BOOL, "extrapolate", &config->extrapolate, NULL},
-            {JIBAL_CONFIG_VAR_OPTION, "rbs_cross_section", &config->cs_rbs, jibal_cs_types},
-            {JIBAL_CONFIG_VAR_OPTION, "erd_cross_section", &config->cs_erd, jibal_cs_types},
-            {0, 0, NULL, NULL}
+    const jibal_config_var vars[] = {
+            {JIBAL_CONFIG_VAR_PATH,   "datadir",           0, 0, &config->datadir,          NULL},
+            {JIBAL_CONFIG_VAR_PATH,   "userdatadir",       0, 0, &config->userdatadir,      NULL},
+            {JIBAL_CONFIG_VAR_PATH,   "masses_file",       0, 0, &config->masses_file,      NULL},
+            {JIBAL_CONFIG_VAR_PATH,   "abundances_file",   0, 0, &config->abundances_file,  NULL},
+            {JIBAL_CONFIG_VAR_PATH,   "files_file",        0, 0, &config->files_file,       NULL},
+            {JIBAL_CONFIG_VAR_PATH,   "assignments_file",  0, 0, &config->assignments_file, NULL},
+            {JIBAL_CONFIG_VAR_INT,    "Z_max",             0, 0, &config->Z_max,            NULL},
+            {JIBAL_CONFIG_VAR_BOOL,   "extrapolate",       0, 0, &config->extrapolate,      NULL},
+            {JIBAL_CONFIG_VAR_OPTION, "rbs_cross_section", 0, 0, &config->cs_rbs, jibal_cs_types},
+            {JIBAL_CONFIG_VAR_OPTION, "erd_cross_section", 0, 0, &config->cs_erd, jibal_cs_types},
+            {0,                       0,                   0, 0, NULL,                      NULL}
     }; /* null terminated, we use .type == 0 to stop a loop */
     int n_vars;
     for(n_vars = 0; vars[n_vars].type != 0; n_vars++);
@@ -537,6 +537,7 @@ int jibal_config_var_set(const jibal_units *units, jibal_config_var *var, const 
     if(var->variable == NULL) { /* No data pointer has been set */
         return 1;
     }
+    char *end;
     switch(var->type) {
         case JIBAL_CONFIG_VAR_NONE:
             return 1;
@@ -575,13 +576,14 @@ int jibal_config_var_set(const jibal_units *units, jibal_config_var *var, const 
             *((int *)var->variable)=!strcmp(val, "true"); /* exactly "true" is 1, everything else is 0 */
             break;
         case JIBAL_CONFIG_VAR_INT:
-            *((int *)var->variable)=(int)strtol(val, NULL, 0); /* Unsafe for large integers */
+            *((int *)var->variable)=(int)strtol(val, &end, 0); /* Unsafe for large integers */
             break;
         case JIBAL_CONFIG_VAR_DOUBLE:
-            *((double *)var->variable)=strtod(val, NULL);
+            *((double *)var->variable)=strtod(val, &end);
             break;
-        case JIBAL_CONFIG_VAR_UNIT:
-            *((double *)var->variable)=jibal_get_val(units, 0, val);
+        case JIBAL_CONFIG_VAR_UNIT: /* TODO: error checking */
+            strtod(val, &end);
+            *((double *)var->variable) = jibal_get_val(units, var->unit_type, val);
             break;
         case JIBAL_CONFIG_VAR_OPTION:
             *((int *)var->variable)=jibal_option_get_value(var->option_list, val);

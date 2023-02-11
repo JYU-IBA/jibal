@@ -81,6 +81,24 @@ int jibal_units_print(FILE *out, const jibal_units *units) {
     return 0;
 }
 
+char jibal_unit_type_get(const jibal_units *units, const char *name) {
+    if(name == NULL) /* Not allowed */
+        return 0;
+    while(*name == ' ') {
+        name++;
+    }
+    while(units) {
+        if(strcmp(units->name, name) == 0) {
+            return units->type;
+        }
+        if(strcmp(units->name, name + 1) == 0) { /* Last letters match, first letter might be a SI prefix */
+            return units->type;
+        }
+        units = units->next;
+    }
+    return 0;
+}
+
 double jibal_units_get(const jibal_units *units, char type, const char *name) {
     if(name == NULL) /* Not allowed */
         return 0.0;

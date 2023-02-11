@@ -132,6 +132,7 @@ int jibal_units_print(FILE *out, const jibal_units *units);
  @param type Type of unit (see defines)
  @param name Name of the unit
  */
+char jibal_unit_type_get(const jibal_units *units, const char *name);
 double jibal_units_get(const jibal_units *units, char type, const char *name);
 double jibal_get_val(const jibal_units *units, char type, const char *value);
 int jibal_unit_convert(const jibal_units *units, char type, const char *str, double *out); /* Places converted value to out and returns 1 on success (if unit was given) 0 on success (no unit), doesn't touch out if fails and returns negative numbers */
