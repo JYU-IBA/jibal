@@ -235,6 +235,8 @@ int extract(jibaltool_global *global, int argc, char **argv) {
 }
 
 int print_gstofiles(jibaltool_global *global, int argc, char **argv) {
+    (void) argc;
+    (void) argv;
     if(jibal_gsto_print_files(global->jibal->gsto, FALSE) != 0) {
         fprintf(stderr, "Current configuration for files is in %s\n", global->jibal->config->files_file);
     }
@@ -271,6 +273,8 @@ int print_isotopes(jibaltool_global *global, int argc, char **argv) {
 }
 
 int print_elements(jibaltool_global *global, int argc, char **argv) {
+    (void) argc;
+    (void) argv;
     int Z;
     FILE *out=jibaltool_open_output(global);
     int Z_max = jibal_elements_Zmax(global->jibal->elements);
@@ -284,6 +288,8 @@ int print_elements(jibaltool_global *global, int argc, char **argv) {
 }
 
 int print_config(jibaltool_global *global, int argc, char **argv) {
+    (void) argc;
+    (void) argv;
     jibal_config_write_to_file(global->jibal->units, global->jibal->config, global->outfilename);
     return 0;
 }
@@ -298,7 +304,9 @@ void print_commands(FILE *f, const struct command *commands) {
 }
 
 int print_status(jibaltool_global *global, int argc, char **argv) {
-    FILE *out=jibaltool_open_output(global);
+    (void) argc;
+    (void) argv;
+    FILE *out = jibaltool_open_output(global);
     jibal_status_print(out, global->jibal);
     jibaltool_close_output(out);
     return 0;
@@ -339,8 +347,8 @@ int print_cs(jibaltool_global *global, int argc, char **argv) {
         fprintf(stderr, "Error in creating material from expression %s\n", argv[1]);
         return EXIT_FAILURE;
     }
-    double theta = jibal_get_val(jibal->units, UNIT_TYPE_ANGLE, argv[2]);
-    double E = jibal_get_val(jibal->units, UNIT_TYPE_ENERGY, argv[3]);
+    double theta = jibal_get_val(jibal->units, JIBAL_UNIT_TYPE_ANGLE, argv[2]);
+    double E = jibal_get_val(jibal->units, JIBAL_UNIT_TYPE_ENERGY, argv[3]);
 
     double cs_rbs = 0.0;
     double cs_erd = 0.0;
@@ -442,12 +450,12 @@ int print_kin(jibaltool_global *global, int argc, char **argv) {
         fprintf(stderr, "There is no isotope %s in my database.\n", argv[1]);
         return -1;
     }
-    double angle = jibal_get_val(jibal->units, UNIT_TYPE_ANGLE, argv[2]); /* RBS */
+    double angle = jibal_get_val(jibal->units, JIBAL_UNIT_TYPE_ANGLE, argv[2]); /* RBS */
     if(angle < 0.0 || angle > 180.0*C_DEG) {
         fprintf(stderr, "Please give an angle in range of [0, 180 deg]. You gave %g deg.\n", angle/C_DEG);
         return EXIT_FAILURE;
     }
-    double E = jibal_get_val(jibal->units, UNIT_TYPE_ENERGY, argv[3]);
+    double E = jibal_get_val(jibal->units, JIBAL_UNIT_TYPE_ENERGY, argv[3]);
     if(E < 0.0 || E > 10000.0*C_MEV) { /* I guess 10 GeV is quite high */
         fprintf(stderr, "Please check the energy (give a unit if you like to, e.g. \"2.0MeV\"). You gave %g MeV.\n",
                 E / C_MEV);

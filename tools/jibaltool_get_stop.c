@@ -62,7 +62,7 @@ int jibaltool_get_stop_read_options(get_stop_global *global, int *argc, char ***
                 break;
             case 't':
                 if (global->n_layers) {
-                    global->target[global->n_layers - 1]->thickness = jibal_get_val(global->jibal->units, UNIT_TYPE_LAYER_THICKNESS, optarg);
+                    global->target[global->n_layers - 1]->thickness = jibal_get_val(global->jibal->units, JIBAL_UNIT_TYPE_LAYER_THICKNESS, optarg);
                 } else {
                     fprintf(stderr, "Layer thickness %s given, but there is no layer.\n", optarg);
                 }
@@ -123,7 +123,7 @@ int print_stop(jibaltool_global *global, int argc, char **argv) {
         fprintf(stderr, "No such isotope: %s\n", argv[0]);
         return EXIT_FAILURE;
     }
-    E=jibal_get_val(jibal->units, UNIT_TYPE_ENERGY, argv[1]);
+    E=jibal_get_val(jibal->units, JIBAL_UNIT_TYPE_ENERGY, argv[1]);
     if(g.verbose > 0) {
         fprintf(stderr, "Z1 = %i\n", g.incident->Z);
         fprintf(stderr, "m1 = %g u\n", g.incident->mass / C_U);
@@ -157,9 +157,9 @@ int print_stop(jibaltool_global *global, int argc, char **argv) {
             print_stopping_range(jibal, &g, material, E, E, E);
         } else if(argc == 4) {
             double E_low, E_step, E_high;
-            E_low=E;
-            E_step=jibal_get_val(jibal->units, UNIT_TYPE_ENERGY, argv[2]);
-            E_high=jibal_get_val(jibal->units, UNIT_TYPE_ENERGY, argv[3]);
+            E_low = E;
+            E_step = jibal_get_val(jibal->units, JIBAL_UNIT_TYPE_ENERGY, argv[2]);
+            E_high = jibal_get_val(jibal->units, JIBAL_UNIT_TYPE_ENERGY, argv[3]);
             fprintf(stderr, "E_low = %g keV\n", E_low/C_KEV);
             fprintf(stderr, "E_step = %g keV\n", E_step/C_KEV);
             fprintf(stderr, "E_high = %g keV\n", E_high/C_KEV);

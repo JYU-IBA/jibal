@@ -92,19 +92,21 @@
 #define C_BARN (1.0e-28)
 #define C_MB_SR (1.0e-3*C_BARN) /* millibarns/sr */
 
-#define UNIT_TYPE_ANY 0
-#define UNIT_TYPE_ENERGY 'E'
-#define UNIT_TYPE_ANGLE 'A'
-#define UNIT_TYPE_DISTANCE 'L'
-#define UNIT_TYPE_MASS 'M'
-#define UNIT_TYPE_LAYER_THICKNESS 'X'
-#define UNIT_TYPE_TIME 'T'
-#define UNIT_TYPE_CHARGE 'Q'
-#define UNIT_TYPE_VOLTAGE 'U'
-#define UNIT_TYPE_CURRENT 'I'
-#define UNIT_TYPE_MAGNETIC_FIELD 'B' /* aka flux density */
-#define UNIT_TYPE_SOLID_ANGLE 'O'
-#define UNIT_TYPE_DENSITY 'D'
+typedef enum jibal_unit_type {
+    JIBAL_UNIT_TYPE_ANY = 0,
+    JIBAL_UNIT_TYPE_ENERGY = 'E',
+    JIBAL_UNIT_TYPE_ANGLE = 'A',
+    JIBAL_UNIT_TYPE_DISTANCE = 'L',
+    JIBAL_UNIT_TYPE_MASS = 'M',
+    JIBAL_UNIT_TYPE_LAYER_THICKNESS = 'X',
+    JIBAL_UNIT_TYPE_TIME = 'T',
+    JIBAL_UNIT_TYPE_CHARGE = 'Q',
+    JIBAL_UNIT_TYPE_VOLTAGE = 'U',
+    JIBAL_UNIT_TYPE_CURRENT = 'I',
+    JIBAL_UNIT_TYPE_MAGNETIC_FIELD = 'B', /* aka flux density */
+    JIBAL_UNIT_TYPE_SOLID_ANGLE = 'O',
+    JIBAL_UNIT_TYPE_DENSITY = 'D'
+} jibal_unit_type;
 
 #define UNIT_CONVERSION_SUCCESS_WITH_UNIT (1)
 #define UNIT_CONVERSION_SUCCESS_WITHOUT_UNIT (0)
@@ -115,27 +117,19 @@
 
 typedef struct jibal_units {
     double f; /*!< Factor, i.e. this unit in Si units (e.g. 1.66e-27 for the atomic mass unit) */
-    char type; /*!< Physically relevant type, use defines above. UNIT_TYPE_MASS for a unit of mass. */
+    jibal_unit_type type;
     char *name; /*!< E.g. "u" */
     struct jibal_units *next; /*!< Linked list */
 } jibal_units;
 
 jibal_units *jibal_units_add(jibal_units *units, double f, char type, char *name);
-jibal_units *jibal_units_default();
+jibal_units *jibal_units_default(void);
 int jibal_units_count(const jibal_units *units);
 int jibal_units_print(FILE *out, const jibal_units *units);
-
-/*!
- Get a unit
- 
- @param units Linked list of units
- @param type Type of unit (see defines)
- @param name Name of the unit
- */
-char jibal_unit_type_get(const jibal_units *units, const char *name);
-double jibal_units_get(const jibal_units *units, char type, const char *name);
-double jibal_get_val(const jibal_units *units, char type, const char *value);
-int jibal_unit_convert(const jibal_units *units, char type, const char *str, double *out); /* Places converted value to out and returns 1 on success (if unit was given) 0 on success (no unit), doesn't touch out if fails and returns negative numbers */
+jibal_unit_type jibal_unit_type_get(const jibal_units *units, const char *name);
+double jibal_units_get(const jibal_units *units, jibal_unit_type type, const char *name);
+double jibal_get_val(const jibal_units *units, jibal_unit_type type, const char *value);
+int jibal_unit_convert(const jibal_units *units, jibal_unit_type type, const char *str, double *out); /* Places converted value to out and returns 1 on success (if unit was given) 0 on success (no unit), doesn't touch out if fails and returns negative numbers */
 const char *jibal_unit_conversion_error_string(int error);
 void jibal_units_free(jibal_units *units);
 #endif /* _JIBAL_UNITS_H_ */

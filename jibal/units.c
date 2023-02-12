@@ -39,27 +39,26 @@ jibal_units *jibal_units_add(jibal_units *units, double f, char type, char *name
     return first;
 }
 
-jibal_units *jibal_units_default() {
+jibal_units *jibal_units_default(void) {
     jibal_units *units=NULL;
-    units=jibal_units_add(units, 1.0, UNIT_TYPE_DISTANCE, "m");
-    units=jibal_units_add(units, 1.0, UNIT_TYPE_ENERGY, "J");
-    units=jibal_units_add(units, C_E, UNIT_TYPE_ENERGY, "eV");
-    units=jibal_units_add(units, 1.0e-3, UNIT_TYPE_MASS, "g"); /* SI is kg, but we handle prefixes separately */
-    units=jibal_units_add(units, C_U, UNIT_TYPE_MASS, "u");
-    units=jibal_units_add(units, 1.0, UNIT_TYPE_ANGLE, "rad");
-    units=jibal_units_add(units, C_DEG, UNIT_TYPE_ANGLE, "deg");
-    units=jibal_units_add(units, C_TFU, UNIT_TYPE_LAYER_THICKNESS, "tfu");
-    units=jibal_units_add(units, 1.0, UNIT_TYPE_TIME, "s");
-    units=jibal_units_add(units, 1.0, UNIT_TYPE_CHARGE, "C");
-    units=jibal_units_add(units, C_E, UNIT_TYPE_CHARGE, "e");
-    units=jibal_units_add(units, 1.0, UNIT_TYPE_VOLTAGE, "V");
-    units=jibal_units_add(units, 1.0, UNIT_TYPE_CURRENT, "A");
-    units=jibal_units_add(units, 1.0, UNIT_TYPE_MAGNETIC_FIELD, "T");
-    units=jibal_units_add(units, 1.0e-4, UNIT_TYPE_MAGNETIC_FIELD, "G");
-    units=jibal_units_add(units, 1.0, UNIT_TYPE_SOLID_ANGLE, "sr");
-    units=jibal_units_add(units, 1.0e-3, UNIT_TYPE_DENSITY, "g/m3"); /* We should probably parse units better to avoid units like these */
-    units=jibal_units_add(units, 1000.0, UNIT_TYPE_DENSITY, "g/cm3"); /* We should probably parse units better to avoid units like these */
-
+    units=jibal_units_add(units, 1.0, JIBAL_UNIT_TYPE_DISTANCE, "m");
+    units=jibal_units_add(units, 1.0, JIBAL_UNIT_TYPE_ENERGY, "J");
+    units=jibal_units_add(units, C_E, JIBAL_UNIT_TYPE_ENERGY, "eV");
+    units=jibal_units_add(units, 1.0e-3, JIBAL_UNIT_TYPE_MASS, "g"); /* SI is kg, but we handle prefixes separately */
+    units=jibal_units_add(units, C_U, JIBAL_UNIT_TYPE_MASS, "u");
+    units=jibal_units_add(units, 1.0, JIBAL_UNIT_TYPE_ANGLE, "rad");
+    units=jibal_units_add(units, C_DEG, JIBAL_UNIT_TYPE_ANGLE, "deg");
+    units=jibal_units_add(units, C_TFU, JIBAL_UNIT_TYPE_LAYER_THICKNESS, "tfu");
+    units=jibal_units_add(units, 1.0, JIBAL_UNIT_TYPE_TIME, "s");
+    units=jibal_units_add(units, 1.0, JIBAL_UNIT_TYPE_CHARGE, "C");
+    units=jibal_units_add(units, C_E, JIBAL_UNIT_TYPE_CHARGE, "e");
+    units=jibal_units_add(units, 1.0, JIBAL_UNIT_TYPE_VOLTAGE, "V");
+    units=jibal_units_add(units, 1.0, JIBAL_UNIT_TYPE_CURRENT, "A");
+    units=jibal_units_add(units, 1.0, JIBAL_UNIT_TYPE_MAGNETIC_FIELD, "T");
+    units=jibal_units_add(units, 1.0e-4, JIBAL_UNIT_TYPE_MAGNETIC_FIELD, "G");
+    units=jibal_units_add(units, 1.0, JIBAL_UNIT_TYPE_SOLID_ANGLE, "sr");
+    units=jibal_units_add(units, 1.0e-3, JIBAL_UNIT_TYPE_DENSITY, "g/m3"); /* We should probably parse units better to avoid units like these */
+    units=jibal_units_add(units, 1000.0, JIBAL_UNIT_TYPE_DENSITY, "g/cm3"); /* We should probably parse units better to avoid units like these */
     return units;
 }
 
@@ -81,7 +80,7 @@ int jibal_units_print(FILE *out, const jibal_units *units) {
     return 0;
 }
 
-char jibal_unit_type_get(const jibal_units *units, const char *name) {
+jibal_unit_type jibal_unit_type_get(const jibal_units *units, const char *name) {
     if(name == NULL) /* Not allowed */
         return 0;
     while(*name == ' ') {
@@ -99,7 +98,7 @@ char jibal_unit_type_get(const jibal_units *units, const char *name) {
     return 0;
 }
 
-double jibal_units_get(const jibal_units *units, char type, const char *name) {
+double jibal_units_get(const jibal_units *units, jibal_unit_type type, const char *name) {
     if(name == NULL) /* Not allowed */
         return 0.0;
     while(*name == ' ') { /* Skip over leading spaces (there is often one space between number and unit!) */
@@ -166,7 +165,7 @@ double jibal_units_get(const jibal_units *units, char type, const char *name) {
     return nan(0);
 }
 
-double jibal_get_val(const jibal_units *units, char type, const char *value) {
+double jibal_get_val(const jibal_units *units, jibal_unit_type type, const char *value) {
     char *end;
     double x=strtod(value, &end);
     if(end == value) { /* No conversion, could happen if just a bare unit is given */
@@ -176,7 +175,7 @@ double jibal_get_val(const jibal_units *units, char type, const char *value) {
     return x;
 }
 
-int jibal_unit_convert(const jibal_units *units, char type, const char *str, double *out) {
+int jibal_unit_convert(const jibal_units *units, jibal_unit_type type, const char *str, double *out) {
     if(!str) { /* Null pointer passed, fail */
         return UNIT_CONVERSION_ERROR_NULL_POINTER;
     }
