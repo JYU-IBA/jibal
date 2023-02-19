@@ -67,6 +67,9 @@ const char *parse_element(const char *start, const char **end_ptr, int *A_out, c
 }
 
 jibal_material *jibal_material_create(jibal_element *elements, const char *formula) {
+    if(!elements || !formula) {
+        return NULL;
+    }
     jibal_material *material=malloc(sizeof(jibal_material));
     material->n_elements = 0;
     material->name=strdup(formula); /* Default name is the formula */
@@ -117,6 +120,9 @@ jibal_material *jibal_material_create(jibal_element *elements, const char *formu
     return material;
 }
 void jibal_material_normalize(jibal_material *material) {
+    if(!material) {
+        return;
+    }
     double sum=0.0;
     size_t i;
     for(i=0; i < material->n_elements; i++) {
@@ -131,6 +137,9 @@ void jibal_material_normalize(jibal_material *material) {
 }
 
 void jibal_material_print(FILE *stream, jibal_material *material) {
+    if(!material) {
+        return;
+    }
     size_t i, j;
     fprintf(stream, "Material %s has %zu elements.\n", material->name, material->n_elements);
     for(i=0; i < material -> n_elements; i++) {
@@ -159,8 +168,10 @@ void jibal_material_free(jibal_material *material) {
 }
 
 jibal_material *jibal_material_copy(const jibal_material *material) {
+    if(!material) {
+        return NULL;
+    }
     jibal_material *out = malloc(sizeof(jibal_material));
-    //*out = *material;
     out->n_elements = material->n_elements;
     out->name = strdup(material->name);
     out->elements = calloc(material->n_elements, sizeof(jibal_element));
