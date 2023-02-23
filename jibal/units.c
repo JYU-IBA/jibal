@@ -162,7 +162,7 @@ double jibal_units_get(const jibal_units *units, jibal_unit_type type, const cha
         }
         units=units->next;
     }
-    return nan(0);
+    return nan("");
 }
 
 double jibal_get_val(const jibal_units *units, jibal_unit_type type, const char *value) {
