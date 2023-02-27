@@ -1320,6 +1320,6 @@ double jibal_gsto_xunit_to_energy(gsto_xunit xunit, double value, double mass) {
         case GSTO_X_UNIT_MEV_U:
             return value * (C_MEV/C_U) * mass;
         default:
-            0.0;
+            return 0.0;
     }
 }
