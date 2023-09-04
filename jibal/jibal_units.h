@@ -83,8 +83,10 @@
 #define C_MU0  (2*C_ALPHA*C_H/(C_E*C_E*C_C))  /* vacuum permeability */
 #define C_EPSILON0 (1.0/(C_MU0*C_C2)) /* vacuum permittivity */
 #define C_ME (9.1093837015e-31) /* electron mass, kg */
+#define C_COULOMB (1.0/(4.0*C_PI*C_EPSILON0)) /* Coulomb constant */
 #define C_BOHR_RADIUS (C_HBAR/(C_ALPHA*C_ME*C_C)) /* Bohr radius */
-#define C_BOHR_STRAGG (4.0 * C_PI * C_E*C_E*C_E*C_E / (4.0 * C_PI * C_EPSILON0) / (4.0 * C_PI * C_EPSILON0));
+#define C_BOHR_VELOCITY (C_COULOMB * C_E * C_E / C_HBAR) /* Bohr velocity, 2.19e6 m/s */
+#define C_BOHR_STRAGG (4.0 * C_PI * C_E * C_E * C_E * C_E / (4.0 * C_PI * C_EPSILON0) / (4.0 * C_PI * C_EPSILON0));
 
 #define C_TFU (1.0e19) /* Thin film units, i.e. 1e15 at./cm2 is actually 1e19/m^2 in SI-units */
 #define C_EV_TFU (C_EV/C_TFU) /* Units for stopping cross sections (eV/(1e15 at./cm2)) */
