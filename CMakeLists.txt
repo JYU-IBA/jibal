@@ -28,5 +28,10 @@ if(DEBUG_MODE_ENABLE)
   endif()
 endif()
 
+
+if(APPLE)
+    include(rpathmagic.cmake)
+endif()
+
 add_subdirectory(jibal)
 add_subdirectory(tools)
