@@ -7,6 +7,7 @@ if(WIN32)
     set(PLATFORM_DEPS ${PLATFORM_DEPS} Pathcch.lib)
 endif()
 
+
 include(CheckSymbolExists)
 set(CMAKE_REQUIRED_LIBRARIES "m")
 
@@ -14,8 +15,10 @@ set(CMAKE_C_STANDARD 99)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(INCLUDE_INSTALL_DIR include/jibal)
-set(LIB_INSTALL_DIR lib/)
+
+include(GNUInstallDirs)
+set(JIBAL_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}/jibal")
+set(JIBAL_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
 
 option(DEVELOPER_MODE_ENABLE "Enable developer mode" OFF)
 if(DEVELOPER_MODE_ENABLE)
@@ -70,7 +73,7 @@ target_link_libraries(jibal GSL::gsl ${PLATFORM_DEPS})
 target_include_directories(jibal
         INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-        $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
+        $<INSTALL_INTERFACE:${JIBAL_INCLUDEDIR}>
         )
 
 set_property(TARGET jibal PROPERTY VERSION ${Jibal_VERSION})
@@ -80,11 +83,11 @@ set_property(TARGET jibal APPEND PROPERTY COMPATIBLE_INTERFACE_STRING Jibal_MAJO
 
 install(TARGETS jibal EXPORT JibalTargets
         RUNTIME DESTINATION bin COMPONENT runtime #This includes the DLL on Windows
-        LIBRARY DESTINATION lib COMPONENT libraries
-        ARCHIVE DESTINATION lib COMPONENT libraries)
+        LIBRARY DESTINATION ${JIBAL_LIBDIR} COMPONENT libraries
+        ARCHIVE DESTINATION ${JIBAL_LIBDIR} COMPONENT libraries)
 # install headers, note there's a subdirectory
 install(FILES ${PUBLIC_HEADERS}
-        DESTINATION ${INCLUDE_INSTALL_DIR}
+        DESTINATION ${JIBAL_INCLUDEDIR}
         COMPONENT headers
 )
 
@@ -96,15 +99,15 @@ install(FILES ${DATAFILES}
 
 # install pkg-config file
 install(FILES ${CMAKE_BINARY_DIR}/jibal.pc
-        DESTINATION lib/pkgconfig)
+        DESTINATION ${JIBAL_LIBDIR}/pkgconfig)
 
 include(CMakePackageConfigHelpers)
 
 # config file from a template, includes exports
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
         "${CMAKE_CURRENT_BINARY_DIR}/JibalConfig.cmake"
-        INSTALL_DESTINATION "lib/Jibal/cmake"
-        PATH_VARS INCLUDE_INSTALL_DIR
+        INSTALL_DESTINATION "${JIBAL_LIBDIR}/Jibal/cmake"
+        PATH_VARS JIBAL_INCLUDEDIR
 #        NO_SET_AND_CHECK_MACRO
 #        NO_CHECK_REQUIRED_COMPONENTS_MACRO
         )
@@ -121,7 +124,7 @@ export(EXPORT JibalTargets
         )
 # install the configuration file to binary directory too so "installing" the library is not necessary
 
-set(ConfigPackageLocation lib/Jibal/cmake)
+set(ConfigPackageLocation ${JIBAL_LIBDIR}/Jibal/cmake)
 
 install(EXPORT JibalTargets
   FILE JibalTargets.cmake

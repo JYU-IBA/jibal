@@ -1,7 +1,7 @@
 prefix="@CMAKE_INSTALL_PREFIX@"
 exec_prefix="${prefix}"
-libdir="${prefix}/@CMAKE_INSTALL_LIBDIR@"
-includedir="${prefix}/include/jibal"
+libdir="${prefix}/@JIBAL_LIBDIR@"
+includedir="${prefix}/@JIBAL_INCLUDEDIR@"
 
 Name: JIBAL
 Description: @jibal_DESCRIPTION@
