@@ -29,11 +29,11 @@
 #include "jibaltool_get_stop.h"
 
 void jibaltool_stop_usage() {
-    fprintf(stderr, "Usage: jibaltool stop <incident ion> <energy> -l <material> -t <thickness> [-l <material> -t <thickness>] ...\n\n");
-    fprintf(stderr, "Example: jibaltool stop 4He 2MeV -l Si -t 1000tfu\n\n");
+    fprintf(stderr, "Usage: jibaltool stop -l <material> -t <thickness> [-l <material> -t <thickness>] ... <incident ion> <energy>\n\n");
+    fprintf(stderr, "Example: jibaltool stop -l Si -t 1000tfu 4He 2MeV\n\n");
     fprintf(stderr, "If you give only one layer and omit the thickness, stopping data will outputted instead of layer stopping.\n");
-    fprintf(stderr, "Usage: jibaltool stop <incident ion> <energy> [<energy step> <energy high>]\n");
-    fprintf(stderr, "Example: jibaltool stop 4He 1MeV 100keV 3MeV -l Si\n");
+    fprintf(stderr, "Usage: jibaltool stop -l <material> <incident ion> <energy> [<energy step> <energy high>]\n");
+    fprintf(stderr, "Example: jibaltool stop -l Si 4He 1MeV 100keV 3MeV \n");
 }
 
 int jibaltool_get_stop_read_options(get_stop_global *global, int *argc, char ***argv) {
