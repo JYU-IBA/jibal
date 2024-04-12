@@ -378,6 +378,9 @@ void r33_parse_reaction_string(r33_file *rfile) {
     char *p_str[R33_N_NUCLEI]; /* Should be 4. */
     char *s;
     p_str[0] = strdup(rfile->reaction);
+    while(*p_str[0] == ' ') { /* Skip whitespace */
+        p_str[0]++;
+    }
     s = p_str[0];
     strsep(&s, "(");
     p_str[1] = s;
