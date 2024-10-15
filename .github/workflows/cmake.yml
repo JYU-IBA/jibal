@@ -19,10 +19,7 @@ jobs:
       run: sudo apt-get install -y libgsl27 libgsl-dev
 
     - name: Configure
-      run: >
-        cmake -B ${{ github.workspace }}/build_jibal 
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -S ${{ github.workspace }}/jibal
+      run: cmake -B ${{ github.workspace }}/build_jibal -S ${{ github.workspace }}/jibal
 
     - name: Build
-      run: cmake --build ${{ github.workspace }}/build_jibal --config ${{ matrix.build_type }}
+      run: cmake --build ${{ github.workspace }}/build_jibal
