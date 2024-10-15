@@ -6,6 +6,6 @@ authors:
 title: "Jyväskylä Ion Beam Analysis Library (JIBAL)"
 repository-code: "https://github.com/JYU-IBA/jibal"
 license: GPL-2.0-or-later
-version: 0.3.12
+version: 0.3.13
 doi: 10.5281/zenodo.5227133
-date-released: 2023-09-29
+date-released: 2024-10-15
