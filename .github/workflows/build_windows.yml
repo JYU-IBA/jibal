@@ -1,0 +1,40 @@
+name: CMake and packaging on Windows
+
+on:
+  [workflow_call, workflow_dispatch]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        path: jibal
+
+    - name: vcpkg build
+      uses: johnwason/vcpkg-action@v6
+      id: vcpkg
+      with:
+        pkgs: gsl
+        triplet: x64-windows-release
+        token: ${{ github.token }}
+        github-binarycache: true
+
+    - name: Configure
+      run: cmake ${{ steps.vcpkg.outputs.vcpkg-cmake-config }} -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -S ${{github.workspace}}\jibal
+
+    - name: Build JIBAL
+      run: cmake --build ${{ github.workspace }}\build --target PACKAGE --config ${{ env.build_type }}
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: artifact-windows
+        path: |
+            ${{ github.workspace }}/build/
+

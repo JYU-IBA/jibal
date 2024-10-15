@@ -1,0 +1,66 @@
+name: CMake on macOS and Linux, upload binary artifact
+
+on:
+  [workflow_call, workflow_dispatch]
+
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        build_type: [Release]
+        c_compiler: [gcc, clang]
+        include:
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: macos-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+        exclude:
+          - os: ubuntu-latest
+            c_compiler: clang
+          - os: macos-latest
+            c_compiler: gcc
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        path: jibal
+
+    - name: Install libraries and dependencies (ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get install -y libgsl27 libgsl-dev
+
+    - name: Install libraries and dependencies using Homebrew (macos)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install gsl
+
+    - name: Configure
+      run: >
+        cmake -B ${{ github.workspace }}/build_jibal
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -S ${{ github.workspace }}/jibal
+
+    - name: Build
+      run: cmake --build ${{ github.workspace }}/build_jibal --config ${{ matrix.build_type }}
+      
+    - name: Install JIBAL
+      run: | 
+        cmake --install ${{ github.workspace }}/build_jibal --prefix ${{ github.workspace }}/install
+        sudo cmake --install ${{ github.workspace }}/build_jibal
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: artifact-${{matrix.os}}
+        path: ${{ github.workspace }}/install
