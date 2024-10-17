@@ -4,7 +4,7 @@
 
 Library that provides stopping forces, straggling models, cross sections and various atomic data e.g. masses and abundances for typical IBA applications. The GNU General Public License applies to the source code (`*.c` and `*.h` files) and any programs compiled thereof, scripts (`*.sh` and `*.py` files) and the software as a whole, but not to any of the [data](data), since the author of this software can not claim authorship of the data. Please note the exceptions to the GPL license under the following notice.
 
-    Copyright (C) 2020 - 2023 Jaakko Julin
+    Copyright (C) 2020 - 2024 Jaakko Julin
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
