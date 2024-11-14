@@ -56,6 +56,7 @@ typedef struct {
     char unit_type; /* preferred unit, can't be changed (const), but no allocation issues */
     void *variable; /* this is the pointer to data. We don't free these, so memory must be allocated for the duration of use. Note that for strings variable is supposed to be char ** and we allocate new char * (and free old ones) as is necessary. */
     const jibal_option *option_list; /* Only used with type == JIBAL_CONFIG_VAR_OPTION */
+    const char *description;
 } jibal_config_var;
 
 typedef struct {
