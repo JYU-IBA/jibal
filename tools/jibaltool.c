@@ -437,7 +437,7 @@ void print_kin_erd(jibal *jibal, const jibal_isotope *incident, const jibal_isot
 int print_kin(jibaltool_global *global, int argc, char **argv) {
     jibal *jibal = global->jibal;
     if(argc < 4) {
-        fprintf(stderr, "Usage: jibaltool kin <incident ion> <target isotope> <energy> <angle>\n\nExample: jibaltool kin 4He 28Si 170deg 2MeV\n");
+        fprintf(stderr, "Usage: jibaltool kin <incident ion> <target isotope> <angle> <energy>\n\nExample: jibaltool kin 4He 28Si 170deg 2MeV\n");
         return EXIT_FAILURE;
     }
     const jibal_isotope *incident = jibal_isotope_find(jibal->isotopes, argv[0], 0, 0);
