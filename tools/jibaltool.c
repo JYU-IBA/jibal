@@ -350,8 +350,8 @@ int print_cs(jibaltool_global *global, int argc, char **argv) {
     double theta = jibal_get_val(jibal->units, JIBAL_UNIT_TYPE_ANGLE, argv[2]);
     double E = jibal_get_val(jibal->units, JIBAL_UNIT_TYPE_ENERGY, argv[3]);
 
-    double cs_rbs = 0.0;
-    double cs_erd = 0.0;
+    double cs_rbs = 0.0, cs_rbs_rutherford = 0.0;
+    double cs_erd = 0.0, cs_erd_rutherford = 0.0;
     int erd = theta < (90.0*C_DEG);
     for(size_t i_elem = 0; i_elem < target_material->n_elements; i_elem++) {
         jibal_element *e = &target_material->elements[i_elem];
@@ -363,19 +363,21 @@ int print_cs(jibaltool_global *global, int argc, char **argv) {
             if(!(incident->mass > isotope->mass && theta > theta_max)) { /* Scattering possible */
                 double sigma_rbs = jibal_cs_rbs(jibal->config, incident, isotope, theta, E);
                 cs_rbs += c * sigma_rbs;
+                cs_rbs_rutherford += c * jibal_cross_section_rbs(incident, isotope, theta, E, JIBAL_CS_RUTHERFORD);
             }
             if(erd) {
                 double sigma_erd = jibal_cs_erd(jibal->config, incident, isotope, theta, E);
                 cs_erd += c * sigma_erd;
+                cs_erd_rutherford += c * jibal_cross_section_erd(incident, isotope, theta, E, JIBAL_CS_RUTHERFORD);
             }
 #ifdef DEBUG
             fprintf(stderr, "Isotope %zu conc %lf\n", i_isotope, e->concs[i_isotope]);
 #endif
         }
     }
-    fprintf(stderr, "RBS cross section is %g mb/sr (%s)\n", cs_rbs/C_MB_SR, jibal_cs_rbs_name(jibal->config));
+    fprintf(stderr, "RBS cross section is %g mb/sr (%s). Ratio to Rutherford: %.5lf\n", cs_rbs/C_MB_SR, jibal_cs_rbs_name(jibal->config), cs_rbs/cs_rbs_rutherford);
     if(erd) {
-        fprintf(stderr, "ERD cross section is %g mb/sr (%s)\n", cs_erd / C_MB_SR, jibal_cs_erd_name(jibal->config));
+        fprintf(stderr, "ERD cross section is %g mb/sr (%s). Ratio to Rutherford: %.5lf\n", cs_erd / C_MB_SR, jibal_cs_erd_name(jibal->config), cs_erd/cs_erd_rutherford);
     }
     jibal_material_free(target_material);
     return EXIT_SUCCESS;
