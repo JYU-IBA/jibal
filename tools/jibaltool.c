@@ -356,7 +356,7 @@ int print_cs(jibaltool_global *global, int argc, char **argv) {
     for(size_t i_elem = 0; i_elem < target_material->n_elements; i_elem++) {
         jibal_element *e = &target_material->elements[i_elem];
         for(size_t i_isotope = 0; i_isotope < e->n_isotopes; i_isotope++) {
-            const jibal_isotope *isotope = e->isotopes[i_elem];
+            const jibal_isotope *isotope = e->isotopes[i_isotope];
             double theta_max=asin(isotope->mass/incident->mass);
 
             double c = e->concs[i_isotope];
